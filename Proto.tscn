@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://bv85w3l326ey3"]
+
+[ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="1_u00dc"]
+[ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_ev16g"]
+[ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="3_au883"]
+
+[node name="Proto" type="Node2D"]
+
+[node name="Hand" parent="." groups=["Hand"] instance=ExtResource("1_u00dc")]
+position = Vector2(998, 919)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(961, 538)
+
+[node name="Mouse" parent="." instance=ExtResource("2_ev16g")]
+position = Vector2(4, 5)
+
+[node name="Playzone" parent="." instance=ExtResource("3_au883")]
+position = Vector2(986, 116)
+scale = Vector2(2.93118, 1.64262)

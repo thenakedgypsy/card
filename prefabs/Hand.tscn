@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3 uid="uid://dehim58bbift2"]
+
+[ext_resource type="Script" path="res://scripts/Hand.cs" id="1_6yxyx"]
+[ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="2_jpijk"]
+
+[node name="Hand" type="Node2D" node_paths=PackedStringArray("quickAdd")]
+script = ExtResource("1_6yxyx")
+quickAdd = [NodePath("Card"), NodePath("Card2"), NodePath("Card3"), NodePath("Card4"), NodePath("Card5")]
+
+[node name="Card" parent="." instance=ExtResource("2_jpijk")]
+position = Vector2(-119, -1)
+
+[node name="Card2" parent="." instance=ExtResource("2_jpijk")]
+position = Vector2(3, -2)
+
+[node name="Card3" parent="." instance=ExtResource("2_jpijk")]
+position = Vector2(227, 5)
+
+[node name="Card4" parent="." instance=ExtResource("2_jpijk")]
+position = Vector2(-241, 5)
+
+[node name="Card5" parent="." instance=ExtResource("2_jpijk")]
+position = Vector2(122, 7)

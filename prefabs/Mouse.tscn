@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c1hk6eotc374n"]
+
+[ext_resource type="Script" path="res://scripts/Mouse.cs" id="1_wbdji"]
+
+[node name="Mouse" type="Node2D" groups=["Mouse"]]
+script = ExtResource("1_wbdji")
+
+[node name="Skin" type="Sprite2D" parent="."]

@@ -1,0 +1,36 @@
+[gd_scene load_steps=4 format=3 uid="uid://wfxyj66j7o6w"]
+
+[ext_resource type="Script" path="res://scripts/Card.cs" id="1_gb6rd"]
+[ext_resource type="Texture2D" uid="uid://bdhv58g8r5e2s" path="res://assets/cards/frame.png" id="2_ih1xg"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_m5nyi"]
+size = Vector2(64, 106)
+
+[node name="Card" type="Node2D"]
+scale = Vector2(3, 3)
+script = ExtResource("1_gb6rd")
+
+[node name="Frame" type="Sprite2D" parent="."]
+texture = ExtResource("2_ih1xg")
+
+[node name="Art" type="Sprite2D" parent="."]
+
+[node name="Text" type="RichTextLabel" parent="."]
+offset_left = -28.0
+offset_top = 2.0
+offset_right = 305.0
+offset_bottom = 234.0
+scale = Vector2(0.168059, 0.180852)
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 33
+text = "This is example text, the actual text will be shown on this card afer instantiation"
+scroll_active = false
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(0, 5)
+shape = SubResource("RectangleShape2D_m5nyi")
+
+[connection signal="mouse_entered" from="Area2D" to="." method="MouseOver"]
+[connection signal="mouse_exited" from="Area2D" to="." method="MouseOff"]
