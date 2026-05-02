@@ -4,14 +4,14 @@
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_ev16g"]
 [ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="3_au883"]
 [ext_resource type="PackedScene" uid="uid://dr4qbspcnyn6p" path="res://prefabs/Discard.tscn" id="4_2hmbs"]
-[ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="5_0glij"]
+[ext_resource type="PackedScene" uid="uid://blipo200djkeq" path="res://prefabs/temp/draw_button.tscn" id="6_khboj"]
 
 [node name="Proto" type="Node2D"]
 
 [node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_u00dc")]
 position = Vector2(1037, 854)
 rotation = 0.0771315
-cards = [NodePath("../Card"), NodePath("../Card2"), NodePath("../Card3"), NodePath("../Card4"), NodePath("../Card5")]
+cards = [NodePath(""), NodePath(""), NodePath(""), NodePath(""), NodePath("")]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 538)
@@ -26,17 +26,8 @@ scale = Vector2(2.93118, 1.64262)
 [node name="Discard" parent="." instance=ExtResource("4_2hmbs")]
 position = Vector2(46, 980)
 
-[node name="Card" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(916, 845)
-
-[node name="Card2" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(1038, 844)
-
-[node name="Card3" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(1118, 844)
-
-[node name="Card4" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(794, 851)
-
-[node name="Card5" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(657, 846)
+[node name="DrawButton" parent="." instance=ExtResource("6_khboj")]
+offset_left = 1706.0
+offset_top = 885.0
+offset_right = 1762.0
+offset_bottom = 916.0

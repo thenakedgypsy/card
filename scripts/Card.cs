@@ -1,5 +1,7 @@
 using Godot;
 using System;
+using System.Collections;
+using System.Diagnostics;
 
 public partial class Card : Node2D
 {
@@ -19,8 +21,18 @@ public partial class Card : Node2D
         Unpurchased
     }
 
+    public enum Element
+    {
+        Fire,
+        Water,
+        Wind,
+        Earth  
+    }
+
 
     public bool isDragging;
+    public int cost;
+    public Element element;
     public Location location;
     public CardType type;
 
@@ -33,8 +45,10 @@ public partial class Card : Node2D
     private bool _willPlay;
     private Vector2 _dragOffset;
     private bool _isBeingRemoved;
-    private Hand _hand; // IMPORTANT reference
+    private Hand _hand;
 	private Discard _discard;
+    private Sprite2D _art;
+    private RichTextLabel _text;
 
     public override void _Ready()
     {
@@ -42,8 +56,80 @@ public partial class Card : Node2D
 		_discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
 		_hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
 
-        _shouldReturnToHand = true; //temp
-        location = Location.Hand; //temp
+        _art = GetNode<Sprite2D>("Art");
+        _text = GetNode<RichTextLabel>("Text");
+    }
+
+    
+    // =========================
+    // CARD GENERATION
+    // =========================
+
+    public void Generate(string cardID, Location destination = Location.Unpurchased)
+    {
+        InstantiateArt(cardID);
+        InstantiateData(cardID);
+
+        switch (destination)
+        {
+            case Location.Hand:          
+                _shouldReturnToHand = true; //temp
+                location = Location.Hand; //temp
+                _hand.AddCard(this);
+                break;
+
+            case Location.Discard:
+                _discard.AddCard(this);
+                break;
+        }
+      
+    }
+
+    private void InstantiateData(string cardID)
+    {
+        string textPath = $"res://assets/cards/text/en_gb/{cardID}.json";       //lang stuffs
+        string dataPath = $"res://assets/cards/data/{cardID}.json";
+
+        // Load both JSON files
+        var data = LoadJson(dataPath);
+        var textData = LoadJson(textPath);
+
+        if (data == null)
+        {
+            GD.PrintErr($"Missing card data: {dataPath}");
+            return;
+        }
+
+        if (textData == null)
+        {
+            GD.PrintErr($"Missing card text: {textPath}");
+            return;
+        }
+
+        // ===== Gameplay data =====
+
+        cost = data.ContainsKey("cost") ? (int)data["cost"] : 0;
+
+        if (data.ContainsKey("type") &&
+            Enum.TryParse(data["type"].ToString(), out CardType parsedType))
+            type = parsedType;
+
+        if (data.ContainsKey("element") &&
+            Enum.TryParse(data["element"].ToString(), out Element parsedElement))
+            element = parsedElement;
+
+        // ===== Text data =====
+
+        Name = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
+        _text.Text = textData.ContainsKey("text") ? textData["text"].ToString() : "";
+    }
+
+    private void InstantiateArt(string cardID)
+    {
+        string path = $"res://assets/cards/art/{cardID}.png";
+
+        Texture2D texture = GD.Load<Texture2D>(path);
+        _art.Texture = texture;
     }
 
     // =========================
@@ -124,6 +210,16 @@ public partial class Card : Node2D
         QueueFree();
     }
 
+    public void EnterPlayZone()
+    {
+        _isInPlayzone = true;
+    }
+
+    public void ExitPlayZone()
+    {
+        _isInPlayzone = false;
+    }
+
     // =========================
     // MOUSE VISUALS
     // =========================
@@ -166,13 +262,29 @@ public partial class Card : Node2D
         _isScaledUp = false;
     }
 
-    public void EnterPlayZone()
+    public void ParseJSON(string jsonpath)
     {
-        _isInPlayzone = true;
+        
     }
 
-    public void ExitPlayZone()
+    // =========================
+    // HELPERS
+    // =========================
+    private Godot.Collections.Dictionary LoadJson(string path)
     {
-        _isInPlayzone = false;
+        if (!FileAccess.FileExists(path))
+            return null;
+
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+        string jsonText = file.GetAsText();
+
+        var json = new Json();
+        if (json.Parse(jsonText) != Error.Ok)
+        {
+            GD.PrintErr($"JSON parse error in {path}: {json.GetErrorMessage()}");
+            return null;
+        }
+
+        return json.Data.AsGodotDictionary();
     }
 }

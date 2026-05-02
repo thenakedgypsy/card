@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://blipo200djkeq"]
+
+[ext_resource type="Script" path="res://prefabs/temp/DrawButton.cs" id="1_cdl16"]
+
+[node name="DrawButton" type="Button"]
+text = "DRAW
+"
+script = ExtResource("1_cdl16")
+
+[connection signal="pressed" from="." to="." method="Press"]

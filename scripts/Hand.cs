@@ -13,13 +13,6 @@ public partial class Hand : Cardpile
 
     public override void _Ready()
     {
-		GD.Print("CARDS IN THIS LIST", cards);
-		for(int i = 0; i < cards.Length; i++)
-		{
-			AddCard(cards[i]);
-			GD.Print("Added card: ", cards[i]);
-		}
-        PositionHand();
     }
 
     public override void _Process(double delta)
