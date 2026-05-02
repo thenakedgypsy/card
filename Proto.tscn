@@ -9,7 +9,8 @@
 [node name="Proto" type="Node2D"]
 
 [node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_u00dc")]
-position = Vector2(1005, 837)
+position = Vector2(1037, 854)
+rotation = 0.0771315
 cards = [NodePath("../Card"), NodePath("../Card2"), NodePath("../Card3"), NodePath("../Card4"), NodePath("../Card5")]
 
 [node name="Camera2D" type="Camera2D" parent="."]
@@ -32,10 +33,10 @@ position = Vector2(916, 845)
 position = Vector2(1038, 844)
 
 [node name="Card3" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(1262, 851)
+position = Vector2(1118, 844)
 
 [node name="Card4" parent="." instance=ExtResource("5_0glij")]
 position = Vector2(794, 851)
 
 [node name="Card5" parent="." instance=ExtResource("5_0glij")]
-position = Vector2(1137, 880)
+position = Vector2(657, 846)

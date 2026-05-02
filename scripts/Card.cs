@@ -3,25 +3,47 @@ using System;
 
 public partial class Card : Node2D
 {
-    public bool MouseIsOver;
-    public bool IsDragging;
-    public bool IsScaledUp;
-    public bool ShouldReturnToHand = true;
-    public bool IsInPlayzone;
-    public bool WillPlay;
-    public bool InHand;
+     public enum CardType
+    {
+        Energy,
+        Summon,
+        Spell,
+        Enchant
+    }
+    public enum Location
+    {
+        Deck,
+        Hand,
+        Discard,
+        Exile,
+        Unpurchased
+    }
 
-    private Vector2 DragOffset;
+
+    public bool isDragging;
+    public Location location;
+    public CardType type;
+
+
+    private bool _mouseIsOver;
+    private bool _isScaledUp;
+    private bool _shouldReturnToHand;
+
+    private bool _isInPlayzone;
+    private bool _willPlay;
+    private Vector2 _dragOffset;
     private bool _isBeingRemoved;
-
-    public Hand hand; // IMPORTANT reference
-	public Discard discard;
+    private Hand _hand; // IMPORTANT reference
+	private Discard _discard;
 
     public override void _Ready()
     {
         ZIndex = 4;
-		discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
-		hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
+		_discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
+		_hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
+
+        _shouldReturnToHand = true; //temp
+        location = Location.Hand; //temp
     }
 
     // =========================
@@ -30,29 +52,29 @@ public partial class Card : Node2D
 
     public void StartDrag()
     {
-        IsDragging = true;
-        DragOffset = GlobalPosition - GetGlobalMousePosition();
+        isDragging = true;
+        _dragOffset = GlobalPosition - GetGlobalMousePosition();
 
-        if (!IsScaledUp)
+        if (!_isScaledUp)
             ScaleUp();
     }
 
     public void UpdateDrag(Vector2 mousePos)
     {
-        if (!IsDragging) return;
+        if (!isDragging) return;
 
-        GlobalPosition = mousePos + DragOffset;
+        GlobalPosition = mousePos + _dragOffset;
 		Rotation = 0;
     }
 
     public void EndDrag()
     {
-        IsDragging = false;
+        isDragging = false;
 
-        if (!MouseIsOver && IsScaledUp)
+        if (!_mouseIsOver && _isScaledUp)
             ScaleDown();
 
-        if (IsInPlayzone)
+        if (_isInPlayzone)
         {
             Play();
         }
@@ -66,25 +88,32 @@ public partial class Card : Node2D
     {
         GD.Print($"{Name} played");
 
-        WillPlay = false;
-        ShouldReturnToHand = false;
-        hand.QueueRemoveCard(this);
+        _willPlay = false;
+        _shouldReturnToHand = false;
+        _hand.QueueRemoveCard(this);
 
 		Discard();
     }
 
 	public void Discard()
 	{
-		GD.Print($"{Name} moved to discard");
-		discard.AddCard(this);
+		GD.Print($"{Name} moved to _discard");
+		_discard.AddCard(this);
+        location = Location.Discard;
 	}
 
 	public void AddToHand()
 	{
-		GD.Print($"{Name} moved to hand");
-		ShouldReturnToHand = true;
-		hand.AddCard(this);
+		GD.Print($"{Name} moved to _hand");
+		_shouldReturnToHand = true;
+		_hand.AddCard(this);
+        location = Location.Hand;
 	}
+
+    public void Exile()
+    {
+        location = Location.Exile;
+    }
 
     public void Remove()
     {
@@ -101,39 +130,49 @@ public partial class Card : Node2D
 
     public void MouseOver()
     {
-        MouseIsOver = true;
+        _mouseIsOver = true;
 
-        if (!IsScaledUp && !IsDragging)
+        if (!_isScaledUp && !isDragging)
             ScaleUp();
     }
 
     public void MouseOff()
     {
-        MouseIsOver = false;
+        _mouseIsOver = false;
 
-        if (!IsDragging && IsScaledUp)
+        if (!isDragging && _isScaledUp)
             ScaleDown();
     }
 
     public void ScaleUp()
     {
-        if (IsScaledUp) return;
+        if (_isScaledUp) return;
 
         Scale *= 1.2f;
         Position -= new Vector2(0f, 50f);
         ZIndex = 1000;
 
-        IsScaledUp = true;
+        _isScaledUp = true;
     }
 
     public void ScaleDown()
     {
-        if (!IsScaledUp) return;
+        if (!_isScaledUp) return;
 
         Scale /= 1.2f;
         Position += new Vector2(0f, 50f);
         ZIndex = 4;
 
-        IsScaledUp = false;
+        _isScaledUp = false;
+    }
+
+    public void EnterPlayZone()
+    {
+        _isInPlayzone = true;
+    }
+
+    public void ExitPlayZone()
+    {
+        _isInPlayzone = false;
     }
 }

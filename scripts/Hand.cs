@@ -35,7 +35,6 @@ public partial class Hand : Cardpile
     public override void AddCard(Card card)
     {
         base.AddCard(card);
-        card.InHand = true;
         UpdateHand();
     }
 
@@ -44,9 +43,6 @@ public partial class Hand : Cardpile
         if (!cardsInPile.Contains(card)) return;
 
         base.RemoveCard(card);
-
-        card.InHand = false;
-        card.ShouldReturnToHand = false;
 
         UpdateHand();
     }
@@ -93,7 +89,7 @@ public partial class Hand : Cardpile
             Card card = cardsInPile[i];
 
             // Don't fight the mouse
-            if (card.IsDragging) continue;
+            if (card.isDragging) continue;
 
             float x = i * CardSpacing - totalWidth / 2f;
             float y = Mathf.Abs(i - cardsInPile.Count / 2f) * FanHeight;
