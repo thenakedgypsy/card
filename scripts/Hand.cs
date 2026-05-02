@@ -35,7 +35,6 @@ public partial class Hand : Cardpile
     public override void AddCard(Card card)
     {
         base.AddCard(card);
-		card.hand = this;
         card.InHand = true;
         UpdateHand();
     }

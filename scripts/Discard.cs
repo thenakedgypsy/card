@@ -17,6 +17,17 @@ public partial class Discard : Cardpile
         
     }
 
+    public override void AddCard(Card card)
+    {
+        base.AddCard(card);
+        card.Position = Position;
+    }
+
+    public override void RemoveCard(Card card)
+    {
+        base.RemoveCard(card);
+    }
+
 
 
 }

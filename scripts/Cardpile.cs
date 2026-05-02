@@ -17,6 +17,7 @@ public partial class Cardpile : Node2D
     public virtual void AddCard(Card card)
     {
         cardsInPile.Add(card);
+        card.CallDeferred("reparent", this);    
     }
 
     public virtual void RemoveCard(Card card)

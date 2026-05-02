@@ -15,10 +15,13 @@ public partial class Card : Node2D
     private bool _isBeingRemoved;
 
     public Hand hand; // IMPORTANT reference
+	public Discard discard;
 
     public override void _Ready()
     {
         ZIndex = 4;
+		discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
+		hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
     }
 
     // =========================
@@ -39,6 +42,7 @@ public partial class Card : Node2D
         if (!IsDragging) return;
 
         GlobalPosition = mousePos + DragOffset;
+		Rotation = 0;
     }
 
     public void EndDrag()
@@ -73,8 +77,18 @@ public partial class Card : Node2D
         {
             hand.QueueRemoveCard(this);
         }
-		GlobalPosition = new Vector2(-2000, -2000);
+		Discard();
     }
+
+	public void Discard()
+	{
+		discard.AddCard(this);
+	}
+
+	public void AddToHand()
+	{
+		hand.AddCard(this);
+	}
 
     public void Remove()
     {

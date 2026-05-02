@@ -10,22 +10,7 @@
 
 [node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_u00dc")]
 position = Vector2(1005, 837)
-cards = [NodePath("Card"), NodePath("Card2"), NodePath("Card3"), NodePath("Card4"), NodePath("Card5")]
-
-[node name="Card" parent="Hand" instance=ExtResource("5_0glij")]
-position = Vector2(-1124, -908)
-
-[node name="Card2" parent="Hand" instance=ExtResource("5_0glij")]
-position = Vector2(-1002, -909)
-
-[node name="Card3" parent="Hand" instance=ExtResource("5_0glij")]
-position = Vector2(-778, -902)
-
-[node name="Card4" parent="Hand" instance=ExtResource("5_0glij")]
-position = Vector2(-1246, -902)
-
-[node name="Card5" parent="Hand" instance=ExtResource("5_0glij")]
-position = Vector2(-883, -900)
+cards = [NodePath("../Card"), NodePath("../Card2"), NodePath("../Card3"), NodePath("../Card4"), NodePath("../Card5")]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 538)
@@ -38,4 +23,19 @@ position = Vector2(986, 116)
 scale = Vector2(2.93118, 1.64262)
 
 [node name="Discard" parent="." instance=ExtResource("4_2hmbs")]
-position = Vector2(1694, 872)
+position = Vector2(46, 980)
+
+[node name="Card" parent="." instance=ExtResource("5_0glij")]
+position = Vector2(916, 845)
+
+[node name="Card2" parent="." instance=ExtResource("5_0glij")]
+position = Vector2(1038, 844)
+
+[node name="Card3" parent="." instance=ExtResource("5_0glij")]
+position = Vector2(1262, 851)
+
+[node name="Card4" parent="." instance=ExtResource("5_0glij")]
+position = Vector2(794, 851)
+
+[node name="Card5" parent="." instance=ExtResource("5_0glij")]
+position = Vector2(1137, 880)
