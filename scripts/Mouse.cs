@@ -1,18 +1,89 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class Mouse : Node2D
 {
-	public bool IsDragging;
-	public bool IsOverACard;
-	// Called when the node enters the scene tree for the first time.
-	public override void _Ready()
-	{
-	}
+    private List<Node2D> _overNodes = new List<Node2D>();
+    private Card _activeCard;
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
-		GlobalPosition = GetGlobalMousePosition();
-	}
+    public override void _Ready()
+    {
+    }
+
+    public override void _Process(double delta)
+    {
+        GlobalPosition = GetGlobalMousePosition();
+        CheckInput();
+    }
+
+    // =========================
+    // INPUT HANDLING
+    // =========================
+
+    private void CheckInput()
+    {
+        // Mouse pressed → pick a card
+        if (Input.IsActionJustPressed("lClick"))
+        {
+            _activeCard = GetTopCard();
+
+            if (_activeCard != null)
+            {
+                _activeCard.StartDrag();
+            }
+        }
+
+        // Mouse held → drag active card
+        if (Input.IsActionPressed("lClick") && _activeCard != null)
+        {
+            _activeCard.UpdateDrag(GlobalPosition);
+        }
+
+        // Mouse released → drop card
+        if (Input.IsActionJustReleased("lClick") && _activeCard != null)
+        {
+            _activeCard.EndDrag();
+            _activeCard = null;
+        }
+    }
+
+    // =========================
+    // CARD SELECTION
+    // =========================
+
+    private Card GetTopCard()
+    {
+        Card topCard = null;
+        int highestZ = int.MinValue;
+
+        foreach (Node2D node in _overNodes)
+        {
+            if (node.GetParent() is Card card)
+            {
+                if (card.ZIndex > highestZ)
+                {
+                    highestZ = card.ZIndex;
+                    topCard = card;
+                }
+            }
+        }
+
+        return topCard;
+    }
+
+    // =========================
+    // TRACK MOUSE OVER NODES
+    // =========================
+
+    public void MouseOverNode(Node2D node)
+    {
+        if (!_overNodes.Contains(node))
+            _overNodes.Add(node);
+    }
+
+    public void MouseOffNode(Node2D node)
+    {
+        _overNodes.Remove(node);
+    }
 }

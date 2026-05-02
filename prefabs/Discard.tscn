@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dr4qbspcnyn6p"]
+
+[ext_resource type="Script" path="res://scripts/Discard.cs" id="1_xo4xu"]
+
+[node name="Discard" type="Node2D" groups=["Discard"]]
+script = ExtResource("1_xo4xu")

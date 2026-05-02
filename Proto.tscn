@@ -1,13 +1,31 @@
-[gd_scene load_steps=4 format=3 uid="uid://bv85w3l326ey3"]
+[gd_scene load_steps=6 format=3 uid="uid://bv85w3l326ey3"]
 
 [ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="1_u00dc"]
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_ev16g"]
 [ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="3_au883"]
+[ext_resource type="PackedScene" uid="uid://dr4qbspcnyn6p" path="res://prefabs/Discard.tscn" id="4_2hmbs"]
+[ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="5_0glij"]
 
 [node name="Proto" type="Node2D"]
 
-[node name="Hand" parent="." groups=["Hand"] instance=ExtResource("1_u00dc")]
-position = Vector2(998, 919)
+[node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_u00dc")]
+position = Vector2(1005, 837)
+cards = [NodePath("Card"), NodePath("Card2"), NodePath("Card3"), NodePath("Card4"), NodePath("Card5")]
+
+[node name="Card" parent="Hand" instance=ExtResource("5_0glij")]
+position = Vector2(-1124, -908)
+
+[node name="Card2" parent="Hand" instance=ExtResource("5_0glij")]
+position = Vector2(-1002, -909)
+
+[node name="Card3" parent="Hand" instance=ExtResource("5_0glij")]
+position = Vector2(-778, -902)
+
+[node name="Card4" parent="Hand" instance=ExtResource("5_0glij")]
+position = Vector2(-1246, -902)
+
+[node name="Card5" parent="Hand" instance=ExtResource("5_0glij")]
+position = Vector2(-883, -900)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 538)
@@ -18,3 +36,6 @@ position = Vector2(4, 5)
 [node name="Playzone" parent="." instance=ExtResource("3_au883")]
 position = Vector2(986, 116)
 scale = Vector2(2.93118, 1.64262)
+
+[node name="Discard" parent="." instance=ExtResource("4_2hmbs")]
+position = Vector2(1694, 872)

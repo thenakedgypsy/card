@@ -2,112 +2,111 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public partial class Hand : Node2D
+public partial class Hand : Cardpile
 {
+    [Export] public float CardSpacing = 150f;
+    [Export] public float FanHeight = 40f;
 	[Export]
-	Card[] quickAdd;
-	List<Card> cardsInHand;
-	// Called when the node enters the scene tree for the first time.
-	public override void _Ready()
-	{
-		cardsInHand = new List<Card>();
-		if (quickAdd.Length > 0)
+	public Card[] cards;
+
+    private List<Card> _pendingRemoval = new List<Card>();
+
+    public override void _Ready()
+    {
+		GD.Print("CARDS IN THIS LIST", cards);
+		for(int i = 0; i < cards.Length; i++)
 		{
-			foreach (Card card in quickAdd)
-			{
-				cardsInHand.Add(card);
-			}
+			AddCard(cards[i]);
+			GD.Print("Added card: ", cards[i]);
 		}
+        PositionHand();
+    }
 
-		PositionHand();
-	}
+    public override void _Process(double delta)
+    {
+        ProcessRemovals();
+        PositionHand();
+    }
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
-	}
+    // =========================
+    // CARD MANAGEMENT
+    // =========================
 
-	public void UpdateHand()
-	{
-		PositionHand();
-	}
+    public override void AddCard(Card card)
+    {
+        base.AddCard(card);
+		card.hand = this;
+        card.InHand = true;
+        UpdateHand();
+    }
 
-	private void PositionHand()
-	{
-    	int count = cardsInHand.Count;
-    	if (count == 0)
-		{
-    	    return;
-		}
+    public override void RemoveCard(Card card)
+    {
+        if (!cardsInPile.Contains(card)) return;
 
-    	float spacing = 500f / cardsInHand.Count;  
-		if (cardsInHand.Count < 3)
-		{
-			spacing = 80f;
-		}        // horizontal spacing
-    	float arcHeight = 25f;         // how much the middle lifts
-    	float rotationRange = Mathf.DegToRad(20); // optional tilt
+        base.RemoveCard(card);
 
-    	float centerOffset = (count - 1) / 2f;
-    	float angleStep = count > 1 ? rotationRange / (count - 1) : 0;
-    	float startAngle = -rotationRange / 2f;
+        card.InHand = false;
+        card.ShouldReturnToHand = false;
 
-		if (cardsInHand.Count > 1)
-		{
-			for (int i = 0; i < cardsInHand.Count; i++)
+        UpdateHand();
+    }
+
+    public void QueueRemoveCard(Card card)
+    {
+        if (!_pendingRemoval.Contains(card))
+            _pendingRemoval.Add(card);
+    }
+
+    private void ProcessRemovals()
+    {
+        if (_pendingRemoval.Count == 0) return;
+
+        foreach (Card card in _pendingRemoval)
+        {
+			if (cardsInPile.Contains(card))
 			{
-			    Card card = cardsInHand[i];
-
-			    if (card.WillPlay)
-			    {
-			        card.InHand = false;
-			        cardsInHand.RemoveAt(i);
-			        i--; // adjust index after removal
-			        continue;
-			    }
-
-			    float t = (i - centerOffset) / centerOffset;
-			    float x = (i - centerOffset) * spacing;
-			    float y = -arcHeight * (1 - t * t);
-
-			    if (!card.IsDragging && (!card.IsScaledUp || card.ShouldReturnToHand))
-			    {
-			        card.Position = new Vector2(x, y);
-
-			        float angle = startAngle + angleStep * i;
-			        card.Rotation = angle * 0.25f;
-			    }
-
-			    if (card.IsScaledUp)
-			    {
-			        card.ZIndex = cardsInHand.Count;
-			    }
-			    else
-			    {
-			        card.ZIndex = i;
-			        if (card.ShouldReturnToHand)
-					{
-			            card.ShouldReturnToHand = false;
-					}
-			    }
+            	RemoveCard(card);
+				GD.Print(card, " removed from hand");
 			}
-		}
-		else if (cardsInHand.Count == 1)
-		{
-			Card card = cardsInHand[0];
-			if (card.WillPlay)
-			{
-				//this card is going to trigger and be moved elsewhere. We need to remove it. 
-				cardsInHand.Remove(card);
-				card.InHand = false;
-			}
+        }
 
-			if (!card.IsDragging && (!card.IsScaledUp || card.ShouldReturnToHand))
-			{
-				card.GlobalPosition = GlobalPosition;
-			}
-			card.Rotation = 0;
-		}
-	}
+        _pendingRemoval.Clear();
+    }
 
+    public void UpdateHand()
+    {
+        PositionHand();
+    }
+
+    // =========================
+    // POSITIONING
+    // =========================
+
+    private void PositionHand()
+    {
+        if (cardsInPile.Count == 0) return;
+
+        float totalWidth = (cardsInPile.Count - 1) * CardSpacing;
+
+        for (int i = 0; i < cardsInPile.Count; i++)
+        {
+            Card card = cardsInPile[i];
+
+            // Don't fight the mouse
+            if (card.IsDragging) continue;
+
+            float x = i * CardSpacing - totalWidth / 2f;
+            float y = Mathf.Abs(i - cardsInPile.Count / 2f) * FanHeight;
+
+            Vector2 targetPos = new Vector2(x, y);
+
+            // Smooth movement
+            card.Position = card.Position.Lerp(targetPos, 0.2f);
+
+            // Optional fan rotation
+            float angle = (i - (cardsInPile.Count - 1) / 2f) * 0.05f;
+            card.Rotation = angle;
+        }
+    }
 }

@@ -3,184 +3,126 @@ using System;
 
 public partial class Card : Node2D
 {
+    public bool MouseIsOver;
+    public bool IsDragging;
+    public bool IsScaledUp;
+    public bool ShouldReturnToHand = true;
+    public bool IsInPlayzone;
+    public bool WillPlay;
+    public bool InHand;
 
-	public bool MouseIsOver;
-	public bool IsDragging;
-	private Vector2 DragOffset;
-	private Effect[] Effects;
-	public bool IsScaledUp;
-	private Mouse mouse;
-	public bool ShouldReturnToHand;
-	public bool IsInPlayzone;
-	public bool WillPlay;
-	public bool InHand;
-	private Hand hand;
+    private Vector2 DragOffset;
+    private bool _isBeingRemoved;
 
-	// Called when the node enters the scene tree for the first time.
-	public override void _Ready()
-	{
-		mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-		hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
-		// atm this is just true at start
-		InHand = true;
-		
-	}
+    public Hand hand; // IMPORTANT reference
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
-	public override void _Process(double delta)
-	{
-		HandleInteraction();
-		if (WillPlay && !InHand)
-		{
-			Play();
-		}
-	}
+    public override void _Ready()
+    {
+        ZIndex = 4;
+    }
 
-	public void ApplyEffects()
-	{
+    // =========================
+    // DRAG SYSTEM
+    // =========================
 
-	}
+    public void StartDrag()
+    {
+        IsDragging = true;
+        DragOffset = GlobalPosition - GetGlobalMousePosition();
 
-	public void Play()
-	{
-		ApplyEffects();
-		Discard();
-		hand.UpdateHand();
-	}
+        if (!IsScaledUp)
+            ScaleUp();
+    }
 
-	public void Discard()
-	{
-		Visible = false;
-		Position = new Vector2(-2000, -2000);
-		hand.UpdateHand();
-	}
-	public void HandleInteraction()
-	{
-		if (MouseIsOver && IsScaledUp || IsDragging )
-		{
-			CheckDragStatus();
-		}
-		if (MouseIsOver)
-		{
-			MouseOver();
-		}
-		if (!MouseIsOver && !IsDragging && IsScaledUp)
-		{
-			ScaleDown();
-		}
-	}
+    public void UpdateDrag(Vector2 mousePos)
+    {
+        if (!IsDragging) return;
 
-	public void MouseOver()
-	{
-		MouseIsOver = true;
-		//GD.Print("Mousing over card");
-		if (!mouse.IsDragging && !mouse.IsOverACard)
-		{			
-			mouse.IsOverACard = true;
-			ScaleUp();
-		}
-		hand.UpdateHand();
-	}
+        GlobalPosition = mousePos + DragOffset;
+    }
 
-	public void MouseOff()
-	{
-		//GD.Print("Mouse off card");
-		if (!IsDragging)
-		{
-			MouseIsOver = false;
-			
-			if (IsScaledUp)
-			{
-				mouse.IsOverACard = false;
-				ScaleDown();
-			}
-		}
-		hand.UpdateHand();
-	}
+    public void EndDrag()
+    {
+        IsDragging = false;
 
-	public void ScaleUp()
-	{
-		if (MouseIsOver || IsDragging)
-		{
-			Scale = Scale * 1.2f;
-			Position -= new Vector2(0f, 50f);
-			IsScaledUp = true;
-			hand.UpdateHand();
-		}
-	}
+        if (!MouseIsOver && IsScaledUp)
+            ScaleDown();
 
-	public void ScaleDown()
-	{
-		Scale = Scale / 1.2f;
-		Position += new Vector2(0f, 50f);
-		IsScaledUp = false;
-		hand.UpdateHand();
-	}
+        if (IsInPlayzone)
+        {
+            Play();
+        }
+        else 
+        {
+            // Hand will reposition it automatically
+        }
+    }
 
-	public void CheckDragStatus()
-	{
-		if (Input.IsActionPressed("lClick"))
-		{
-			if (!IsDragging)
-			{
-				DragOffset = GlobalPosition - GetGlobalMousePosition();
-			}
+    // =========================
+    // GAME LOGIC
+    // =========================
 
-			Drag();
-		}
-		else if (IsDragging)
-		{
-			mouse.IsDragging = false;
-			HandleDropDelay();
-		}
-		
-	}
+    public void Play()
+    {
+        GD.Print($"{Name} played");
 
-	private async void HandleDropDelay()
-	{
-	    await ToSignal(GetTree().CreateTimer(0.1f), "timeout"); // 100ms delay
-		if (!Input.IsActionPressed("lClick"))
-		{
-			Drop();
-		}
-	}
+        WillPlay = false;
+        ShouldReturnToHand = false;
 
-	private void Drop()
-	{	
-		IsDragging = false;
-		if (IsInPlayzone)
-		{
-			WillPlay = true;
-			hand.UpdateHand();
-		}
-		else
-		{
-			ShouldReturnToHand = true;
-			hand.UpdateHand();
-		}
-		
-	}
+        if (hand != null)
+        {
+            hand.QueueRemoveCard(this);
+        }
+		GlobalPosition = new Vector2(-2000, -2000);
+    }
 
-	public void Drag()
-	{
-		GlobalPosition = GetGlobalMousePosition() + DragOffset;
-		Rotation = 0;
+    public void Remove()
+    {
+        if (_isBeingRemoved) return;
+        _isBeingRemoved = true;
 
-		if (!IsDragging)
-		{
-			mouse.IsDragging = true;
-			IsDragging = true;
-		}
-	}
+        QueueFree();
+    }
 
-	private void _instantiateArt()
-	{
-		
-	}
+    // =========================
+    // MOUSE VISUALS
+    // =========================
 
-	private void _instantiateText()
-	{
-		
-	}
+    public void MouseOver()
+    {
+        MouseIsOver = true;
 
+        if (!IsScaledUp && !IsDragging)
+            ScaleUp();
+    }
+
+    public void MouseOff()
+    {
+        MouseIsOver = false;
+
+        if (!IsDragging && IsScaledUp)
+            ScaleDown();
+    }
+
+    public void ScaleUp()
+    {
+        if (IsScaledUp) return;
+
+        Scale *= 1.2f;
+        Position -= new Vector2(0f, 50f);
+        ZIndex = 1000;
+
+        IsScaledUp = true;
+    }
+
+    public void ScaleDown()
+    {
+        if (!IsScaledUp) return;
+
+        Scale /= 1.2f;
+        Position += new Vector2(0f, 50f);
+        ZIndex = 4;
+
+        IsScaledUp = false;
+    }
 }
