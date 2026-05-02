@@ -56,10 +56,6 @@ public partial class Card : Node2D
         {
             Play();
         }
-        else 
-        {
-            // Hand will reposition it automatically
-        }
     }
 
     // =========================
@@ -72,21 +68,21 @@ public partial class Card : Node2D
 
         WillPlay = false;
         ShouldReturnToHand = false;
+        hand.QueueRemoveCard(this);
 
-        if (hand != null)
-        {
-            hand.QueueRemoveCard(this);
-        }
 		Discard();
     }
 
 	public void Discard()
 	{
+		GD.Print($"{Name} moved to discard");
 		discard.AddCard(this);
 	}
 
 	public void AddToHand()
 	{
+		GD.Print($"{Name} moved to hand");
+		ShouldReturnToHand = true;
 		hand.AddCard(this);
 	}
 
@@ -95,6 +91,7 @@ public partial class Card : Node2D
         if (_isBeingRemoved) return;
         _isBeingRemoved = true;
 
+		GD.Print($"{Name} removed from existance");
         QueueFree();
     }
 

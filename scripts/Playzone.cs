@@ -21,7 +21,7 @@ public partial class Playzone : Node2D
 
     	if (parent is Card card)
     	{
-    	    GD.Print("A Card Entered: " + card.Name);
+    	    GD.Print("A Card Entered the playzone: " + card.Name);
 			card.IsInPlayzone = true;
     	}
 	}
@@ -32,7 +32,7 @@ public partial class Playzone : Node2D
 	
     	if (parent is Card card)
     	{
-    	    GD.Print("A card left: " + card.Name);
+    	    GD.Print("A card left the playzone: " + card.Name);
 			card.IsInPlayzone = false;
     	}
 	}
