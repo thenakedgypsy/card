@@ -55,7 +55,7 @@ public partial class Hand : Cardpile
 			if (cardsInPile.Contains(card))
 			{
             	RemoveCard(card);
-				GD.Print(card, " removed from hand");
+				GD.Print(card.cardName, " removed from hand");
 			}
         }
 

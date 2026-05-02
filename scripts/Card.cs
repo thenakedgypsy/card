@@ -35,6 +35,7 @@ public partial class Card : Node2D
     public Element element;
     public Location location;
     public CardType type;
+    public string  cardName;
 
 
     private bool _mouseIsOver;
@@ -48,6 +49,8 @@ public partial class Card : Node2D
     private Hand _hand;
 	private Discard _discard;
     private Sprite2D _art;
+    private RichTextLabel _title;
+    private RichTextLabel _costDisplay;
     private RichTextLabel _text;
 
     public override void _Ready()
@@ -55,9 +58,13 @@ public partial class Card : Node2D
         ZIndex = 4;
 		_discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
 		_hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
-
+       
         _art = GetNode<Sprite2D>("Art");
         _text = GetNode<RichTextLabel>("Text");
+         _title = GetNode<RichTextLabel>("CardName");
+        _costDisplay = GetNode<RichTextLabel>("Cost");
+
+        _title.Text = cardName = "Uninstantiated Card";
     }
 
     
@@ -81,8 +88,7 @@ public partial class Card : Node2D
             case Location.Discard:
                 _discard.AddCard(this);
                 break;
-        }
-      
+        }     
     }
 
     private void InstantiateData(string cardID)
@@ -109,6 +115,7 @@ public partial class Card : Node2D
         // ===== Gameplay data =====
 
         cost = data.ContainsKey("cost") ? (int)data["cost"] : 0;
+        _costDisplay.Text = cost.ToString();
 
         if (data.ContainsKey("type") &&
             Enum.TryParse(data["type"].ToString(), out CardType parsedType))
@@ -120,7 +127,8 @@ public partial class Card : Node2D
 
         // ===== Text data =====
 
-        Name = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
+        cardName = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
+        _title.Text = cardName;
         _text.Text = textData.ContainsKey("text") ? textData["text"].ToString() : "";
     }
 
@@ -172,7 +180,7 @@ public partial class Card : Node2D
 
     public void Play()
     {
-        GD.Print($"{Name} played");
+        GD.Print($"{cardName} played");
 
         _willPlay = false;
         _shouldReturnToHand = false;
@@ -183,14 +191,14 @@ public partial class Card : Node2D
 
 	public void Discard()
 	{
-		GD.Print($"{Name} moved to _discard");
+		GD.Print($"{cardName} moved to _discard");
 		_discard.AddCard(this);
         location = Location.Discard;
 	}
 
 	public void AddToHand()
 	{
-		GD.Print($"{Name} moved to _hand");
+		GD.Print($"{cardName} moved to _hand");
 		_shouldReturnToHand = true;
 		_hand.AddCard(this);
         location = Location.Hand;
@@ -260,11 +268,6 @@ public partial class Card : Node2D
         ZIndex = 4;
 
         _isScaledUp = false;
-    }
-
-    public void ParseJSON(string jsonpath)
-    {
-        
     }
 
     // =========================

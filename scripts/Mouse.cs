@@ -32,6 +32,10 @@ public partial class Mouse : Node2D
             {
                 _activeCard.StartDrag();
             }
+            else
+            {
+                //check other nodes here we can reorganise this stuff later if needs be
+            }
         }
 
         // Mouse held → drag active card

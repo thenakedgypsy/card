@@ -31,10 +31,31 @@ theme_override_font_sizes/normal_font_size = 33
 text = "This is example text, the actual text will be shown on this card afer instantiation"
 scroll_active = false
 
+[node name="Cost" type="RichTextLabel" parent="."]
+offset_left = 26.3333
+offset_top = -48.0
+offset_right = 72.3333
+offset_bottom = -4.0
+scale = Vector2(0.168059, 0.180852)
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 33
+text = "2"
+scroll_active = false
+
+[node name="CardName" type="RichTextLabel" parent="."]
+offset_left = -32.0
+offset_top = -48.6667
+offset_right = 301.0
+offset_bottom = 1.33332
+scale = Vector2(0.168059, 0.180852)
+mouse_filter = 2
+theme_override_font_sizes/normal_font_size = 33
+text = "Title"
+scroll_active = false
+
 [node name="Area2D" type="Area2D" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
-visible = false
 position = Vector2(0, 5)
 shape = SubResource("RectangleShape2D_m5nyi")
 
