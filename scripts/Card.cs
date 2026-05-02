@@ -52,6 +52,7 @@ public partial class Card : Node2D
     private RichTextLabel _title;
     private RichTextLabel _costDisplay;
     private RichTextLabel _text;
+    private RichTextLabel _typeDisplay;
 
     public override void _Ready()
     {
@@ -63,6 +64,7 @@ public partial class Card : Node2D
         _text = GetNode<RichTextLabel>("Text");
          _title = GetNode<RichTextLabel>("CardName");
         _costDisplay = GetNode<RichTextLabel>("Cost");
+        _typeDisplay = GetNode<RichTextLabel>("Type");
 
         _title.Text = cardName = "Uninstantiated Card";
     }
@@ -120,6 +122,7 @@ public partial class Card : Node2D
         if (data.ContainsKey("type") &&
             Enum.TryParse(data["type"].ToString(), out CardType parsedType))
             type = parsedType;
+            _typeDisplay.Text = type.ToString();
 
         if (data.ContainsKey("element") &&
             Enum.TryParse(data["element"].ToString(), out Element parsedElement))
