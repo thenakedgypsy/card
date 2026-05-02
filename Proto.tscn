@@ -10,8 +10,7 @@
 
 [node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_u00dc")]
 position = Vector2(1037, 854)
-rotation = 0.0771315
-cards = [NodePath(""), NodePath(""), NodePath(""), NodePath(""), NodePath("")]
+cards = []
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 538)
