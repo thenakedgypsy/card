@@ -3,5 +3,12 @@ using System;
 
 public partial class Effect : Node2D
 {
-    //stub
+    public enum EffectType
+    {
+        EnemyDamage,
+        Summon,
+        SummonModify,
+        CoreModify,
+        DeckModify      
+    }
 }

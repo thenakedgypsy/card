@@ -1,7 +1,5 @@
 using Godot;
 using System;
-using System.Collections;
-using System.Diagnostics;
 
 public partial class Card : Node2D
 {
