@@ -28,18 +28,19 @@ scale = Vector2(2.93118, 1.64262)
 [node name="Discard" parent="." instance=ExtResource("4_2hmbs")]
 position = Vector2(46, 980)
 
+[node name="EnergyManager" parent="." instance=ExtResource("8_g3chx")]
+position = Vector2(993, 73)
+scale = Vector2(2, 2)
+
+[node name="TurnManager" parent="." instance=ExtResource("6_vl3d2")]
+position = Vector2(993, -80)
+energyPlayLimit = 1
+
 [node name="DrawButton" parent="." instance=ExtResource("6_khboj")]
 offset_left = 1706.0
 offset_top = 885.0
 offset_right = 1762.0
 offset_bottom = 916.0
-
-[node name="EnergyManager" parent="." instance=ExtResource("8_g3chx")]
-position = Vector2(993, 43)
-
-[node name="TurnManager" parent="." instance=ExtResource("6_vl3d2")]
-position = Vector2(993, -80)
-energyPlayLimit = 1
 
 [node name="Node2D" parent="." instance=ExtResource("7_vfd28")]
 offset_left = 1687.0

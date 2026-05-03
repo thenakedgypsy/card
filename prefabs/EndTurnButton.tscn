@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" path="res://scripts/EndTurnButton.cs" id="1_c5mcr"]
 
-[node name="Node2D" type="Button"]
+[node name="EndTurnButton" type="Button"]
 offset_right = 106.0
 offset_bottom = 41.0
 text = "END TURN"

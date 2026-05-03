@@ -88,6 +88,7 @@ public partial class EnergyManager : Node2D
 
 	public void GainRegen(int amount, Card.Element element)
 	{
+		CurrentEnergy[element] += amount;
 		EnergyRegen[element] += amount;
 		UpdateLabels();
 	}
