@@ -77,8 +77,6 @@ public partial class Card : Node2D
         _typeDisplay = GetNode<RichTextLabel>("Type");
 
         _title.Text = cardName = "Uninstantiated Card";
-
-
     }
 
     
@@ -90,7 +88,6 @@ public partial class Card : Node2D
     {
         InstantiateArt(cardID);
         InstantiateData(cardID);
-
         switch (destination)
         {
             case Location.Hand:          
@@ -128,9 +125,6 @@ public partial class Card : Node2D
 
         // ===== Gameplay data =====
 
-        cost = data.ContainsKey("cost") ? (int)data["cost"] : 0;
-        _costDisplay.Text = cost.ToString();
-
         if (data.ContainsKey("type") &&
             Enum.TryParse(data["type"].ToString(), out CardType parsedType))
             type = parsedType;
@@ -139,6 +133,13 @@ public partial class Card : Node2D
         if (data.ContainsKey("element") &&
             Enum.TryParse(data["element"].ToString(), out Element parsedElement))
             element = parsedElement;
+
+        cost = data.ContainsKey("cost") ? (int)data["cost"] : 0;
+        _costDisplay.Text = cost.ToString();
+        if (type == CardType.Energy)
+        {
+            _costDisplay.Visible = false;
+        }
 
         // ===== Text data =====
 
@@ -214,9 +215,9 @@ public partial class Card : Node2D
 
     public bool CanPlay()
     {
-        if (_turnManager.State == TurnManager.GameState.PlayerTurn)
+        if (_turnManager.State == TurnManager.GameState.PlayerTurn) //only play cards on your turn
         {
-            if (type == CardType.Energy)
+            if (type == CardType.Energy) //for energy cards
             {
                 if (_turnManager.CanPlayEnergy())
                 {
@@ -227,7 +228,7 @@ public partial class Card : Node2D
                     GD.Print("Cant play energy, already played one this turn");
                 }
             }
-            else if (_energyManager.TrySpendEnergy(cost, element))
+            else if (_energyManager.TrySpendEnergy(cost, element))  //for cards with a cost we spend in the check
             {
                 return true;
             }
