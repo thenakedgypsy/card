@@ -1,0 +1,66 @@
+[gd_scene load_steps=3 format=3 uid="uid://cjcmdn2c2kjp"]
+
+[ext_resource type="Texture2D" uid="uid://dkgs526ssrnw0" path="res://assets/interface/energyframe.png" id="1_gg5l0"]
+[ext_resource type="Script" path="res://scripts/EnergyManager.cs" id="1_xslb8"]
+
+[node name="EnergyManager" type="Node2D" groups=["EnergyManager"]]
+script = ExtResource("1_xslb8")
+
+[node name="Frame" type="Sprite2D" parent="."]
+texture = ExtResource("1_gg5l0")
+
+[node name="FireLabel" type="RichTextLabel" parent="."]
+offset_left = -117.0
+offset_top = -29.0
+offset_right = -77.0
+offset_bottom = 11.0
+text = "1"
+
+[node name="FireLabel2" type="RichTextLabel" parent="."]
+offset_left = -87.0
+offset_top = -1.0
+offset_right = -47.0
+offset_bottom = 39.0
+text = "1"
+
+[node name="WindLabel" type="RichTextLabel" parent="."]
+offset_left = -50.0
+offset_top = -21.0
+offset_right = -10.0
+offset_bottom = 19.0
+text = "1"
+
+[node name="WindLabel2" type="RichTextLabel" parent="."]
+offset_left = -22.0
+offset_top = 1.0
+offset_right = 18.0
+offset_bottom = 41.0
+text = "1"
+
+[node name="WaterLabel" type="RichTextLabel" parent="."]
+offset_left = 13.0
+offset_top = -22.0
+offset_right = 53.0
+offset_bottom = 18.0
+text = "1"
+
+[node name="WaterLabel2" type="RichTextLabel" parent="."]
+offset_left = 42.0
+offset_top = 2.0
+offset_right = 82.0
+offset_bottom = 42.0
+text = "1"
+
+[node name="EarthLabel" type="RichTextLabel" parent="."]
+offset_left = 77.0
+offset_top = -29.0
+offset_right = 117.0
+offset_bottom = 11.0
+text = "1"
+
+[node name="EarthLabel2" type="RichTextLabel" parent="."]
+offset_left = 106.0
+offset_top = 5.0
+offset_right = 146.0
+offset_bottom = 45.0
+text = "1"

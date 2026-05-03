@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://budqpbjl0ncgm"]
+
+[ext_resource type="Script" path="res://scripts/TurnManager.cs" id="1_wp1me"]
+
+[node name="TurnManager" type="Node2D" groups=["TurnManager"]]
+script = ExtResource("1_wp1me")

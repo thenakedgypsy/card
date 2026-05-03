@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cp810nuhfua1l"]
+
+[ext_resource type="Script" path="res://scripts/EndTurnButton.cs" id="1_c5mcr"]
+
+[node name="Node2D" type="Button"]
+offset_right = 106.0
+offset_bottom = 41.0
+text = "END TURN"
+script = ExtResource("1_c5mcr")
+
+[connection signal="pressed" from="." to="." method="Press"]

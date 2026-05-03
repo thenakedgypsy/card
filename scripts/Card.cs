@@ -27,6 +27,15 @@ public partial class Card : Node2D
         Earth  
     }
 
+    public enum Rarity
+    {
+        Common,
+        Uncommon,
+        Rare,
+        Epic,
+        Legendary
+    }
+
 
     public bool isDragging;
     public int cost;
@@ -41,7 +50,6 @@ public partial class Card : Node2D
     private bool _shouldReturnToHand;
 
     private bool _isInPlayzone;
-    private bool _willPlay;
     private Vector2 _dragOffset;
     private bool _isBeingRemoved;
     private Hand _hand;
@@ -51,12 +59,16 @@ public partial class Card : Node2D
     private RichTextLabel _costDisplay;
     private RichTextLabel _text;
     private RichTextLabel _typeDisplay;
+    private TurnManager _turnManager;
+    private EnergyManager _energyManager;
 
     public override void _Ready()
     {
         ZIndex = 4;
 		_discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
 		_hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
+        _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
+        _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
        
         _art = GetNode<Sprite2D>("Art");
         _text = GetNode<RichTextLabel>("Text");
@@ -65,6 +77,8 @@ public partial class Card : Node2D
         _typeDisplay = GetNode<RichTextLabel>("Type");
 
         _title.Text = cardName = "Uninstantiated Card";
+
+
     }
 
     
@@ -171,7 +185,10 @@ public partial class Card : Node2D
 
         if (_isInPlayzone)
         {
-            Play();
+            if (CanPlay())
+            {
+                Play();
+            }
         }
     }
 
@@ -183,11 +200,44 @@ public partial class Card : Node2D
     {
         GD.Print($"{cardName} played");
 
-        _willPlay = false;
+        if (type == CardType.Energy)
+        {
+            _turnManager.PlayEnergy();
+            _energyManager.GainRegen(1, element);
+        }
+
         _shouldReturnToHand = false;
         _hand.QueueRemoveCard(this);
 
 		Discard();
+    }
+
+    public bool CanPlay()
+    {
+        if (_turnManager.State == TurnManager.GameState.PlayerTurn)
+        {
+            if (type == CardType.Energy)
+            {
+                if (_turnManager.CanPlayEnergy())
+                {
+                    return true;              
+                }
+                else
+                {
+                    GD.Print("Cant play energy, already played one this turn");
+                }
+            }
+            else if (_energyManager.TrySpendEnergy(cost, element))
+            {
+                return true;
+            }
+            else
+            {
+                GD.Print("Cant play card, not enough energy");
+            }
+        }
+
+        return false;
     }
 
 	public void Discard()

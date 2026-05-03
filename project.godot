@@ -29,6 +29,8 @@ project/assembly_name="Card"
 Mouse=""
 Hand=""
 Discard=""
+TurnManager=""
+EnergyManager=""
 
 [input]
 

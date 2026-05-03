@@ -13,36 +13,71 @@ public partial class TurnManager : Node
 
     
 
-    public GameState gameState;
+    public GameState State {get; private set;}
+    private int energyPlayedThisTurn;
+    [Export]
+    private int energyPlayLimit;
+
+    private bool _expectingStateChange;
+    private EnergyManager _energyManager;
 
     public override void _Ready()
     {
-        
+        _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
+         BeginPlayerTurn();
     }
 
     public override void _Process(double delta)
     {
-        
+
     }
+
+    // =========================
+    // SETUP
+    // =========================
+
     public void BeginSetup()
-    {
-        gameState = GameState.Setup;
+    {       
+        State = GameState.Setup;
     }
-    public void UpdateSetup()
+
+    public void EndSetup()
     {
-        
     }
+
+    // =========================
+    // PLAYER TURN
+    // =========================
 
     public void BeginPlayerTurn()
     {
-        gameState = GameState.PlayerTurn;
+        State = GameState.PlayerTurn;
+        _energyManager.RegenerateEnergy();
+        energyPlayedThisTurn = 0;
     }
 
-    public void UpdatePlayerTurn()
+    public bool CanPlayEnergy()
     {
-        
+        return energyPlayedThisTurn + 1 <= energyPlayLimit;
     }
 
+    public void PlayEnergy()
+    {
+        energyPlayedThisTurn++;
+    }
 
+    public void EndPlayerTurn()
+    {
+        BeginPlayerTurn();
+    }
+
+    // =========================
+    // HELPERS
+    // =========================
+
+    public int GetEnergyLimit()
+    {
+        return energyPlayLimit;
+    }
     
 }

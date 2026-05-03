@@ -1,10 +1,13 @@
-[gd_scene load_steps=6 format=3 uid="uid://bv85w3l326ey3"]
+[gd_scene load_steps=9 format=3 uid="uid://bv85w3l326ey3"]
 
 [ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="1_u00dc"]
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_ev16g"]
 [ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="3_au883"]
 [ext_resource type="PackedScene" uid="uid://dr4qbspcnyn6p" path="res://prefabs/Discard.tscn" id="4_2hmbs"]
 [ext_resource type="PackedScene" uid="uid://blipo200djkeq" path="res://prefabs/temp/draw_button.tscn" id="6_khboj"]
+[ext_resource type="PackedScene" uid="uid://budqpbjl0ncgm" path="res://prefabs/TurnManager.tscn" id="6_vl3d2"]
+[ext_resource type="PackedScene" uid="uid://cp810nuhfua1l" path="res://prefabs/EndTurnButton.tscn" id="7_vfd28"]
+[ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="8_g3chx"]
 
 [node name="Proto" type="Node2D"]
 
@@ -30,3 +33,16 @@ offset_left = 1706.0
 offset_top = 885.0
 offset_right = 1762.0
 offset_bottom = 916.0
+
+[node name="EnergyManager" parent="." instance=ExtResource("8_g3chx")]
+position = Vector2(993, 43)
+
+[node name="TurnManager" parent="." instance=ExtResource("6_vl3d2")]
+position = Vector2(993, -80)
+energyPlayLimit = 1
+
+[node name="Node2D" parent="." instance=ExtResource("7_vfd28")]
+offset_left = 1687.0
+offset_top = 964.0
+offset_right = 1793.0
+offset_bottom = 1005.0
