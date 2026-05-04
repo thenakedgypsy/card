@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bv85w3l326ey3"]
+[gd_scene load_steps=14 format=3 uid="uid://bv85w3l326ey3"]
 
 [ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="1_u00dc"]
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_ev16g"]
@@ -11,11 +11,12 @@
 [ext_resource type="PackedScene" uid="uid://ciwyjb20oblvq" path="res://prefabs/Board.tscn" id="9_nen3a"]
 [ext_resource type="PackedScene" uid="uid://dules16lpku10" path="res://prefabs/Enemy.tscn" id="10_rbtst"]
 [ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="10_xbp43"]
+[ext_resource type="PackedScene" uid="uid://bv684y1crutsm" path="res://prefabs/Summon.tscn" id="12_0uwgr"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_n8wid"]
-vertices = PackedVector2Array(936.32, 282.117, -925.977, 278.938, -926.977, -386.008, 926.141, -388.977)
-polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 288.932, 946.486, 292.143, 936, -399)])
+vertices = PackedVector2Array(926.141, -388.977, 936.32, 281.898, 658.102, 275.711, -926.977, -386.008, 574.93, 281.5, -925.977, 278.938)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3), PackedInt32Array(3, 2, 4, 5)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 288.932, 575.346, 291.51, 658.333, 285.722, 946.486, 292.143, 936, -399)])
 
 [node name="Proto" type="Node2D"]
 
@@ -82,3 +83,19 @@ moveDistance = 100.0
 position = Vector2(888.645, -293.213)
 scale = Vector2(1.05165, 1.07012)
 moveDistance = 100.0
+
+[node name="Summon" parent="Board/Nav" instance=ExtResource("12_0uwgr")]
+position = Vector2(641.507, -169.079)
+scale = Vector2(1.05165, 1.07012)
+
+[node name="Summon2" parent="Board/Nav" instance=ExtResource("12_0uwgr")]
+position = Vector2(640.455, -101.661)
+scale = Vector2(1.05165, 1.07012)
+
+[node name="Summon3" parent="Board/Nav" instance=ExtResource("12_0uwgr")]
+position = Vector2(644.662, -33.1736)
+scale = Vector2(1.05165, 1.07012)
+
+[node name="Summon4" parent="Board/Nav" instance=ExtResource("12_0uwgr")]
+position = Vector2(646.765, 36.3842)
+scale = Vector2(1.05165, 1.07012)

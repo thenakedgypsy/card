@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://bv684y1crutsm"]
+
+[ext_resource type="Script" path="res://scripts/Summon.cs" id="1_ajj2b"]
+[ext_resource type="Texture2D" uid="uid://c3ey22qgunkee" path="res://assets/summons/iceblock.png" id="2_w4enq"]
+
+[node name="Summon" type="Node2D"]
+script = ExtResource("1_ajj2b")
+
+[node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
+radius = 49.38
+vertices = PackedVector2Array(-32, -31, 33, -31, 32, 31, -34, 32)
+affect_navigation_mesh = true
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_w4enq")

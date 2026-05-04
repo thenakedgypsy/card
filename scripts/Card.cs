@@ -170,7 +170,7 @@ public partial class Card : Node2D
             }
 
             _effect = new CardEffect();
-            _effect.ConstructEffect(element, effectData);
+            _effect.ConstructEffect(element, effectData, cardID);
         }
     }
 

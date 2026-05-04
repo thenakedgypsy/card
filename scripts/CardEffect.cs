@@ -16,16 +16,18 @@ public partial class CardEffect : Node2D
     public EffectType type;
     public Card.Element element;
     public Dictionary<string, Variant> effectData;
+    public string cardID;
 
     public override void _Ready()
     {
     
     }
 
-    public void ConstructEffect(Card.Element ele, Dictionary<string, Variant> data)
+    public void ConstructEffect(Card.Element ele, Dictionary<string, Variant> data, string cardId)
     {
         element = ele;
         effectData = data;
+        cardID = cardId;
         if (effectData.ContainsKey("effectType") &&
             Enum.TryParse(effectData["effectType"].ToString(), out EffectType parsedElement))
             type = parsedElement;
@@ -35,7 +37,8 @@ public partial class CardEffect : Node2D
     {
         if (type == EffectType.Summon)
         {
-            
+            string health = effectData["health"].ToString();
+            GD.Print($"Summoning a summon with {health} hp");
         }
         if (type == EffectType.EnemyDamage)
         {

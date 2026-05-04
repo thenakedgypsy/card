@@ -10,6 +10,8 @@ radius = 32.0156
 script = ExtResource("1_dng6c")
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
+avoidance_enabled = true
+time_horizon_obstacles = 0.35
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("CircleShape2D_vhex0")

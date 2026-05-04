@@ -54,10 +54,10 @@ text = "Title"
 scroll_active = false
 
 [node name="Type" type="RichTextLabel" parent="."]
-offset_left = -11.3333
-offset_top = -10.6667
-offset_right = 117.667
-offset_bottom = 39.3333
+offset_left = -11.0
+offset_top = -11.0
+offset_right = 173.0
+offset_bottom = 39.0
 scale = Vector2(0.168059, 0.180852)
 mouse_filter = 2
 theme_override_font_sizes/normal_font_size = 33
