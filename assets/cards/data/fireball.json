@@ -1,5 +1,9 @@
 {
   "type": "Spell",
   "cost": 2,
-  "element": "Fire"
+  "element": "Fire",
+  "effectData": 
+  {
+    "effectType": "EnemyDamage"
+  }
 }

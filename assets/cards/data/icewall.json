@@ -1,0 +1,11 @@
+{
+  "type": "Summon",
+  "cost": 1,
+  "element": "Water",
+  "effectData": 
+  {
+    "effectType": "Summon",
+    "health": 10,
+    "damage": 0
+  }
+}

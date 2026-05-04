@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class Card : Node2D
 {
@@ -62,6 +63,7 @@ public partial class Card : Node2D
     private RichTextLabel _typeDisplay;
     private TurnManager _turnManager;
     private EnergyManager _energyManager;
+    private CardEffect _effect;
 
     public override void _Ready()
     {
@@ -77,6 +79,7 @@ public partial class Card : Node2D
         _costDisplay = GetNode<RichTextLabel>("Cost");
         _typeDisplay = GetNode<RichTextLabel>("Type");
         _frame = GetNode<Sprite2D>("Frame");
+        
 
         _title.Text = cardName = "Uninstantiated Card";
     }
@@ -149,6 +152,26 @@ public partial class Card : Node2D
         cardName = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
         _title.Text = cardName;
         _text.Text = textData.ContainsKey("text") ? textData["text"].ToString() : "";
+
+        //----- Effect Data -----
+
+        if (data.ContainsKey("effectData"))
+        {
+            var effectDict = data["effectData"].AsGodotDictionary();
+
+            Dictionary<string, Variant> effectData = new Dictionary<string, Variant>();
+            
+            foreach (var key in effectDict.Keys)
+            {
+                string name = key.ToString();
+                var valueVar = effectDict[key];
+
+                effectData.Add(name, valueVar);
+            }
+
+            _effect = new CardEffect();
+            _effect.ConstructEffect(element, effectData);
+        }
     }
 
     private void InstantiateArt(string cardID)
@@ -211,6 +234,11 @@ public partial class Card : Node2D
             _turnManager.PlayEnergy();
             _energyManager.GainRegen(1, element);
         }
+        else
+        {
+            _effect.Trigger(); 
+        }  //maybe we should add to some kind of stack or sequencer here
+
 
         _shouldReturnToHand = false;
         _hand.QueueRemoveCard(this);

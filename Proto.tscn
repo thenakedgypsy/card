@@ -67,7 +67,6 @@ navigation_polygon = SubResource("NavigationPolygon_n8wid")
 
 [node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_xbp43")]
 position = Vector2(-876.025, -123.064)
-scale = Vector2(1, 1)
 
 [node name="Enemy" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 position = Vector2(886.542, -98.451)
@@ -80,6 +79,6 @@ scale = Vector2(1.05165, 1.07012)
 moveDistance = 100.0
 
 [node name="Enemy3" parent="Board/Nav" instance=ExtResource("10_rbtst")]
-position = Vector2(888.645, -291.073)
+position = Vector2(888.645, -293.213)
 scale = Vector2(1.05165, 1.07012)
 moveDistance = 100.0
