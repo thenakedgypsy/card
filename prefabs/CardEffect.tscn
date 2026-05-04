@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtcjqkckbs7ab"]
+
+[ext_resource type="Script" path="res://scripts/CardEffect.cs" id="1_smwit"]
+
+[node name="CardEffect" type="Node2D"]
+script = ExtResource("1_smwit")

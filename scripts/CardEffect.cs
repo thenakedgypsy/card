@@ -37,13 +37,32 @@ public partial class CardEffect : Node2D
     {
         if (type == EffectType.Summon)
         {
-            string health = effectData["health"].ToString();
-            GD.Print($"Summoning a summon with {health} hp");
+            _Summon();
+            QueueFree();
         }
         if (type == EffectType.EnemyDamage)
         {
-            String damage = effectData["damage"].ToString();
-            GD.Print($"BLAMMO YOU WOULD DO {damage} DAMAGE NOW");
+            _EnemyDamage();
+            QueueFree();
         }
+    }
+
+    private void _Summon()
+    {
+        string health = effectData["health"].ToString();
+        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SummonSpawner.tscn");
+        SummonSpawner spawner = scene.Instantiate() as SummonSpawner;
+        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;           
+        mouse.AddChild(spawner);
+        
+        spawner.Setup(element, effectData, cardID);
+        GD.Print($"Summoning a summon with {health} hp");
+           
+    }
+
+    private void _EnemyDamage()
+    {
+        String damage = effectData["damage"].ToString();
+        GD.Print($"BLAMMO YOU WOULD DO {damage} DAMAGE NOW");
     }
 }

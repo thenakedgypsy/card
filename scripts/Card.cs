@@ -169,8 +169,13 @@ public partial class Card : Node2D
                 effectData.Add(name, valueVar);
             }
 
-            _effect = new CardEffect();
+            PackedScene scene = GD.Load<PackedScene>("res://prefabs/CardEffect.tscn");
+            _effect = scene.Instantiate() as CardEffect;
+
+            AddChild(_effect);
             _effect.ConstructEffect(element, effectData, cardID);
+
+
         }
     }
 

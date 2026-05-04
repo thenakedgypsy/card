@@ -21,17 +21,17 @@ public partial class DrawButton : Button
 		AddChild(card);
 
 		Random random = new Random();
-		int num = random.Next(4);
+		int num = random.Next(2);
 		
-		if (num == 0)
+		if (num == 5)
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else if (num == 1)
+		else if (num == 5)
 		{
 			card.Generate("energy_red", Card.Location.Hand);
 		}
-		else if (num == 2)
+		else if (num == 1)
 		{
 			card.Generate("energy_blue", Card.Location.Hand);
 		}
