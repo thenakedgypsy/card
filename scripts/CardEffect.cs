@@ -31,11 +31,6 @@ public partial class CardEffect : Node2D
             type = parsedElement;
     }
 
-    private void _parseEffectData()
-    {
-
-    }
-
     public void Trigger()
     {
         if (type == EffectType.Summon)
@@ -44,7 +39,8 @@ public partial class CardEffect : Node2D
         }
         if (type == EffectType.EnemyDamage)
         {
-            GD.Print("BLAMMO YOU WOULD DO SOME ENEMY DAMAGE NOW");
+            String damage = effectData["damage"].ToString();
+            GD.Print($"BLAMMO YOU WOULD DO {damage} DAMAGE NOW");
         }
     }
 }

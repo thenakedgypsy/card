@@ -4,6 +4,7 @@
   "element": "Fire",
   "effectData": 
   {
-    "effectType": "EnemyDamage"
+    "effectType": "EnemyDamage",
+    "damage": 2
   }
 }
