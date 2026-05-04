@@ -1,0 +1,17 @@
+"filename", "language", "C#", "comment", "blank", "total"
+"c:\GP\card\scripts\Card.cs", "C#", 288, 19, 76, 383
+"c:\GP\card\scripts\CardEffect.cs", "C#", 58, 0, 10, 68
+"c:\GP\card\scripts\Cardpile.cs", "C#", 20, 1, 8, 29
+"c:\GP\card\scripts\Deck.cs", "C#", 16, 2, 7, 25
+"c:\GP\card\scripts\Discard.cs", "C#", 23, 1, 9, 33
+"c:\GP\card\scripts\EndTurnButton.cs", "C#", 25, 2, 4, 31
+"c:\GP\card\scripts\Enemy.cs", "C#", 59, 0, 16, 75
+"c:\GP\card\scripts\EnergyManager.cs", "C#", 83, 1, 13, 97
+"c:\GP\card\scripts\Exile.cs", "C#", 19, 2, 9, 30
+"c:\GP\card\scripts\Hand.cs", "C#", 68, 9, 23, 100
+"c:\GP\card\scripts\Mouse.cs", "C#", 59, 12, 16, 87
+"c:\GP\card\scripts\Playzone.cs", "C#", 28, 4, 8, 40
+"c:\GP\card\scripts\Summon.cs", "C#", 26, 2, 8, 36
+"c:\GP\card\scripts\SummonSpawner.cs", "C#", 56, 0, 14, 70
+"c:\GP\card\scripts\TurnManager.cs", "C#", 76, 0, 20, 96
+"Total", "-", 904, 55, 241, 1200

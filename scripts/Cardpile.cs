@@ -25,5 +25,10 @@ public partial class Cardpile : Node2D
        cardsInPile.Remove(card); 
     }
 
+    public int GetNumCards()
+    {
+        return cardsInPile.Count;
+    }
+
 
 }

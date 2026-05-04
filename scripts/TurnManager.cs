@@ -1,3 +1,4 @@
+using System;
 using Godot;
 
 public partial class TurnManager : Node
@@ -18,13 +19,53 @@ public partial class TurnManager : Node
 
     private EnergyManager _energyManager;
     private Node2D _playercore;
+    private Hand _hand;
 
     private int _enemiesActing = 0;
 
     public override void _Ready()
     {
         _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
-        BeginPlayerTurn();
+        _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
+
+        Setup();
+    }
+
+    public void Setup()
+    {
+        for (int i = 0; i < 5; i++)
+        {
+            DrawCardTemp();
+        }
+       BeginPlayerTurn(); 
+    }
+
+    public void DrawCardTemp()
+    {
+        PackedScene scene = GD.Load<PackedScene>("res://prefabs/Card.tscn");
+		Card card = scene.Instantiate() as Card;
+
+		AddChild(card);
+
+		Random random = new Random();
+		int num = random.Next(2);
+		
+		if (num == 5)
+		{
+			card.Generate("fireball", Card.Location.Hand);
+		}
+		else if (num == 5)
+		{
+			card.Generate("energy_red", Card.Location.Hand);
+		}
+		else if (num == 1)
+		{
+			card.Generate("energy_blue", Card.Location.Hand);
+		}
+		else
+		{
+			card.Generate("blockOfIce", Card.Location.Hand);
+		}
     }
 
     public void BeginPlayerTurn()
@@ -32,6 +73,11 @@ public partial class TurnManager : Node
         State = GameState.PlayerTurn;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
+
+        for (; _hand.GetNumCards() < 4;)
+        {
+            DrawCardTemp();
+        }
     }
 
     public bool CanPlayEnergy()
