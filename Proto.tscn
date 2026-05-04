@@ -33,7 +33,7 @@ position = Vector2(993, 73)
 scale = Vector2(2, 2)
 
 [node name="TurnManager" parent="." instance=ExtResource("6_vl3d2")]
-position = Vector2(993, -80)
+position = Vector2(965, 1204)
 energyPlayLimit = 1
 
 [node name="EndTurnButton" parent="." instance=ExtResource("7_vfd28")]
@@ -64,14 +64,14 @@ position = Vector2(-876.025, -123.064)
 [node name="Enemy" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 position = Vector2(886.542, -98.451)
 scale = Vector2(1.05165, 1.07012)
-moveDistance = 100.0
+AttackRange = 150.0
 
 [node name="Enemy2" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 position = Vector2(862.354, 78.1187)
 scale = Vector2(1.05165, 1.07012)
-moveDistance = 100.0
+AttackRange = 150.0
 
 [node name="Enemy3" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 position = Vector2(888.645, -293.213)
 scale = Vector2(1.05165, 1.07012)
-moveDistance = 100.0
+AttackRange = 150.0

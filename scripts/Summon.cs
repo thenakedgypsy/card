@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public partial class Summon : Node2D
 {
 	public int Health;
+	private int _currentHealth;
 	public int Damage;
 	public Card.Element Element;
 	private Sprite2D _sprite;
@@ -24,6 +25,7 @@ public partial class Summon : Node2D
 	{
 		Element = ele;
 		Health = data["health"].ToString().ToInt();
+		_currentHealth = Health;
 		Damage = data["damage"].ToString().ToInt();
 
         string path = $"res://assets/summons/{summonID}.png";
@@ -31,5 +33,17 @@ public partial class Summon : Node2D
         Texture2D texture = GD.Load<Texture2D>(path);
 
 		_sprite.Texture = texture;
+	}
+
+	public void TakeDamage(int value)
+	{
+		_currentHealth -= value;
+		GD.Print($"Summon takes {value} damage");
+
+		if (_currentHealth <= 0)
+		{
+			GD.Print("IS DESTROYED");
+			QueueFree();
+		}
 	}
 }

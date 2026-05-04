@@ -33,6 +33,7 @@ TurnManager=""
 EnergyManager=""
 Enemies=""
 Core=""
+Summons=""
 
 [input]
 

@@ -3,7 +3,7 @@
 [ext_resource type="Script" path="res://scripts/Summon.cs" id="1_ajj2b"]
 [ext_resource type="Texture2D" uid="uid://c3ey22qgunkee" path="res://assets/summons/iceblock.png" id="2_w4enq"]
 
-[node name="Summon" type="Node2D"]
+[node name="Summon" type="Node2D" groups=["Summons"]]
 script = ExtResource("1_ajj2b")
 
 [node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
