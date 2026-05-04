@@ -4,37 +4,28 @@ using System.Collections.Generic;
 
 public partial class Mouse : Node2D
 {
-    private List<Node2D> _overNodes = new List<Node2D>();
     private Card _activeCard;
-
-    public override void _Ready()
-    {
-    }
 
     public override void _Process(double delta)
     {
         GlobalPosition = GetGlobalMousePosition();
-        CheckInput();
+        HandleInput();
     }
 
     // =========================
     // INPUT HANDLING
     // =========================
 
-    private void CheckInput()
+    private void HandleInput()
     {
-        // Mouse pressed → pick a card
+        // Mouse pressed → pick a card under cursor
         if (Input.IsActionJustPressed("lClick"))
         {
-            _activeCard = GetTopCard();
+            _activeCard = GetCardUnderMouse();
 
             if (_activeCard != null)
             {
                 _activeCard.StartDrag();
-            }
-            else
-            {
-                //check other nodes here we can reorganise this stuff later if needs be
             }
         }
 
@@ -53,19 +44,37 @@ public partial class Mouse : Node2D
     }
 
     // =========================
-    // CARD SELECTION
+    // CARD PICKING (ROBUST)
     // =========================
 
-    private Card GetTopCard()
+    private Card GetCardUnderMouse()
     {
+        var space = GetWorld2D().DirectSpaceState;
+
+        var query = new PhysicsPointQueryParameters2D
+        {
+            Position = GlobalPosition,
+            CollideWithAreas = true,
+            CollideWithBodies = false
+        };
+
+        var results = space.IntersectPoint(query);
+
         Card topCard = null;
         int highestZ = int.MinValue;
 
-        foreach (Node2D node in _overNodes)
+        foreach (var hit in results)
         {
-            if (node.GetParent() is Card card)
+            var colliderObj = hit["collider"].AsGodotObject();
+            
+            if (colliderObj is Node collider)
             {
-                if (card.ZIndex > highestZ)
+                // Adjust depending on your structure:
+                // If collider IS the card → cast directly
+                // If collider is child → use GetParent()
+                Card card = collider.GetParent() as Card;
+
+                if (card != null && card.ZIndex > highestZ)
                 {
                     highestZ = card.ZIndex;
                     topCard = card;
@@ -74,20 +83,5 @@ public partial class Mouse : Node2D
         }
 
         return topCard;
-    }
-
-    // =========================
-    // TRACK MOUSE OVER NODES
-    // =========================
-
-    public void MouseOverNode(Node2D node)
-    {
-        if (!_overNodes.Contains(node))
-            _overNodes.Add(node);
-    }
-
-    public void MouseOffNode(Node2D node)
-    {
-        _overNodes.Remove(node);
     }
 }
