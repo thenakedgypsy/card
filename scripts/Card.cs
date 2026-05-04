@@ -24,7 +24,7 @@ public partial class Card : Node2D
         Fire,
         Water,
         Wind,
-        Earth  
+        Earth,
     }
 
     public enum Rarity
@@ -55,6 +55,7 @@ public partial class Card : Node2D
     private Hand _hand;
 	private Discard _discard;
     private Sprite2D _art;
+    private Sprite2D _frame;
     private RichTextLabel _title;
     private RichTextLabel _costDisplay;
     private RichTextLabel _text;
@@ -75,6 +76,7 @@ public partial class Card : Node2D
          _title = GetNode<RichTextLabel>("CardName");
         _costDisplay = GetNode<RichTextLabel>("Cost");
         _typeDisplay = GetNode<RichTextLabel>("Type");
+        _frame = GetNode<Sprite2D>("Frame");
 
         _title.Text = cardName = "Uninstantiated Card";
     }
@@ -86,8 +88,9 @@ public partial class Card : Node2D
 
     public void Generate(string cardID, Location destination = Location.Unpurchased)
     {
-        InstantiateArt(cardID);
+        
         InstantiateData(cardID);
+        InstantiateArt(cardID);
         switch (destination)
         {
             case Location.Hand:          
@@ -153,7 +156,9 @@ public partial class Card : Node2D
         string path = $"res://assets/cards/art/{cardID}.png";
 
         Texture2D texture = GD.Load<Texture2D>(path);
+        Texture2D frame = GD.Load<Texture2D>($"res://assets/cards/cardFrames/{element}.png");
         _art.Texture = texture;
+        _frame.Texture = frame;
     }
 
     // =========================

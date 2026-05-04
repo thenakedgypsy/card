@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://bv85w3l326ey3"]
+[gd_scene load_steps=13 format=3 uid="uid://bv85w3l326ey3"]
 
 [ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="1_u00dc"]
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_ev16g"]
@@ -8,6 +8,14 @@
 [ext_resource type="PackedScene" uid="uid://budqpbjl0ncgm" path="res://prefabs/TurnManager.tscn" id="6_vl3d2"]
 [ext_resource type="PackedScene" uid="uid://cp810nuhfua1l" path="res://prefabs/EndTurnButton.tscn" id="7_vfd28"]
 [ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="8_g3chx"]
+[ext_resource type="PackedScene" uid="uid://ciwyjb20oblvq" path="res://prefabs/Board.tscn" id="9_nen3a"]
+[ext_resource type="PackedScene" uid="uid://dules16lpku10" path="res://prefabs/Enemy.tscn" id="10_rbtst"]
+[ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="10_xbp43"]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_n8wid"]
+vertices = PackedVector2Array(936.32, 282.117, -925.977, 278.938, -926.977, -386.008, 926.141, -388.977)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 288.932, 946.486, 292.143, 936, -399)])
 
 [node name="Proto" type="Node2D"]
 
@@ -15,15 +23,8 @@
 position = Vector2(1037, 854)
 cards = []
 
-[node name="Camera2D" type="Camera2D" parent="."]
-position = Vector2(961, 538)
-
 [node name="Mouse" parent="." instance=ExtResource("2_ev16g")]
 position = Vector2(4, 5)
-
-[node name="Playzone" parent="." instance=ExtResource("3_au883")]
-position = Vector2(986, 116)
-scale = Vector2(2.93118, 1.64262)
 
 [node name="Discard" parent="." instance=ExtResource("4_2hmbs")]
 position = Vector2(46, 980)
@@ -47,3 +48,38 @@ offset_left = 1679.0
 offset_top = 938.0
 offset_right = 1785.0
 offset_bottom = 979.0
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(961, 541)
+
+[node name="Playzone" parent="." instance=ExtResource("3_au883")]
+position = Vector2(991, 168.999)
+scale = Vector2(5.05943, 2.27162)
+
+[node name="Board" parent="." instance=ExtResource("9_nen3a")]
+position = Vector2(964, 489)
+scale = Vector2(1.16333, 1.2578)
+
+[node name="Nav" type="NavigationRegion2D" parent="Board"]
+position = Vector2(-2.57886, 41.342)
+scale = Vector2(0.817383, 0.742944)
+navigation_polygon = SubResource("NavigationPolygon_n8wid")
+
+[node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_xbp43")]
+position = Vector2(-876.025, -123.064)
+scale = Vector2(1, 1)
+
+[node name="Enemy" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(886.542, -98.451)
+scale = Vector2(1.05165, 1.07012)
+moveDistance = 100.0
+
+[node name="Enemy2" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(862.354, 78.1187)
+scale = Vector2(1.05165, 1.07012)
+moveDistance = 100.0
+
+[node name="Enemy3" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(888.645, -291.073)
+scale = Vector2(1.05165, 1.07012)
+moveDistance = 100.0

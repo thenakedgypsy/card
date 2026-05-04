@@ -1,14 +1,14 @@
 [gd_scene load_steps=5 format=3 uid="uid://wfxyj66j7o6w"]
 
 [ext_resource type="Script" path="res://scripts/Card.cs" id="1_gb6rd"]
-[ext_resource type="Texture2D" uid="uid://bnfltdrjiq2gh" path="res://assets/cards/cardFrames/frame.png" id="2_ih1xg"]
+[ext_resource type="Texture2D" uid="uid://bnfltdrjiq2gh" path="res://assets/cards/cardFrames/Neutral.png" id="2_ih1xg"]
 [ext_resource type="Texture2D" uid="uid://be8y6tatdsjtm" path="res://assets/cards/art/Blank.png" id="2_psn5w"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_m5nyi"]
 size = Vector2(64, 106)
 
 [node name="Card" type="Node2D"]
-scale = Vector2(3, 3)
+scale = Vector2(2.5, 2.5)
 script = ExtResource("1_gb6rd")
 
 [node name="Art" type="Sprite2D" parent="."]

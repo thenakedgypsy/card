@@ -1,0 +1,3 @@
+[gd_scene format=3 uid="uid://cf2730r1hoxub"]
+
+[node name="PlayerCore" type="Node2D" groups=["Core"]]
