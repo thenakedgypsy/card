@@ -258,7 +258,7 @@ public partial class Card : Node2D
                 }
                 else
                 {
-                    GD.Print("Cant play energy, already played one this turn");
+                    GD.Print("WARN: Cant play energy, already played one this turn");
                 }
             }
             else if (_energyManager.TrySpendEnergy(cost, element))  //for cards with a cost we spend in the check
@@ -267,7 +267,7 @@ public partial class Card : Node2D
             }
             else
             {
-                GD.Print("Cant play card, not enough energy");
+                GD.Print("WARN: Cant play card, not enough energy");
             }
         }
 
