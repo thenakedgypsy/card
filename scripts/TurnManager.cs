@@ -48,7 +48,7 @@ public partial class TurnManager : Node
 		AddChild(card);
 
 		Random random = new Random();
-		int num = random.Next(2);
+		int num = random.Next(3);
 		
 		if (num == 5)
 		{

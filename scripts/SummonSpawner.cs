@@ -11,11 +11,12 @@ public partial class SummonSpawner : Node2D
     private string _summonID;
     private Card.Element _element;
     private bool _readyToPlace;
-
+    private Mouse _mouse;
 
     public override void _Ready()
     {
         _readyToPlace = true;
+        _mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
     }
 
     public override void _Process(Double delta)
@@ -30,10 +31,30 @@ public partial class SummonSpawner : Node2D
 
     public void CheckInput()
     {
-        if (Input.IsActionJustPressed("lClick"))
+        if (Input.IsActionJustPressed("lClick") && _mouse.getOverBoard())
         {
             Place();
         }
+        else if (Input.IsActionJustPressed("lClick"))
+        {
+            FlashRed();
+            GD.Print("RED");
+        }
+    }
+
+    public async void FlashRed()
+    {
+        Color original = SelfModulate;
+
+        Tween tween = CreateTween();
+
+        // Flash red
+        tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.1f);
+
+        // Return to original color
+        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+
+        await ToSignal(tween, Tween.SignalName.Finished);
     }
 
     public void Setup(Card.Element ele, Dictionary<string, Variant> data, string summonID)

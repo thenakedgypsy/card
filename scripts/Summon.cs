@@ -37,13 +37,22 @@ public partial class Summon : Node2D
 
 	public void TakeDamage(int value)
 	{
-		_currentHealth -= value;
-		GD.Print($"Summon takes {value} damage");
-
-		if (_currentHealth <= 0)
-		{
-			GD.Print("IS DESTROYED");
-			QueueFree();
-		}
+	    _currentHealth -= value;
+	    GD.Print($"Summon takes {value} damage");
+	
+	    if (_currentHealth <= 0)
+	    {
+	        GD.Print("IS DESTROYED");
+	
+	        // Prevent double-death logic
+	        SetProcess(false);
+	        SetPhysicsProcess(false);
+	
+	        // Optional: stop collisions if you have them
+	        SetDeferred("monitoring", false);
+	
+	        // Safely remove from tree at end of frame
+	        CallDeferred(Node.MethodName.QueueFree);
+	    }
 	}
 }

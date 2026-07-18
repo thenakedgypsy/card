@@ -1,6 +1,20 @@
-[gd_scene load_steps=2 format=3 uid="uid://ciwyjb20oblvq"]
+[gd_scene load_steps=4 format=3 uid="uid://ciwyjb20oblvq"]
 
 [ext_resource type="Texture2D" uid="uid://4utbjrtyidni" path="res://assets/environs/board.png" id="1_abgyj"]
+[ext_resource type="Script" path="res://scripts/Board.cs" id="2_wiy5p"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_2n02a"]
+size = Vector2(1538.59, 444.427)
 
 [node name="Board" type="Sprite2D"]
 texture = ExtResource("1_abgyj")
+script = ExtResource("2_wiy5p")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+position = Vector2(-0.942383, -34.5842)
+shape = SubResource("RectangleShape2D_2n02a")
+
+[connection signal="mouse_entered" from="Area2D" to="." method="MouseEnter"]
+[connection signal="mouse_exited" from="Area2D" to="." method="MouseExit"]

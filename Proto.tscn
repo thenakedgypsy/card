@@ -12,11 +12,12 @@
 [ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="10_xbp43"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_n8wid"]
-vertices = PackedVector2Array(926.031, -388.977, 928.031, 276.75, 658.008, 275.719, -926.977, -386.008, 574.93, 281.5, -925.977, 278.938)
-polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3), PackedInt32Array(3, 2, 4, 5)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 288.932, 575.346, 291.51, 658.333, 285.722, 938.072, 286.792, 936, -399)])
+vertices = PackedVector2Array(935.273, 186.859, -925.977, 180.508, -926.977, -386.008, 926.148, -388.977)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 190.481, 945.434, 196.902, 936, -399)])
 
 [node name="Proto" type="Node2D"]
+scale = Vector2(1.00062, 1)
 
 [node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_u00dc")]
 position = Vector2(1037, 854)
@@ -62,9 +63,15 @@ navigation_polygon = SubResource("NavigationPolygon_n8wid")
 position = Vector2(-876.025, -123.064)
 
 [node name="Enemy" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+modulate = Color(0.312725, 0.0835094, 0.0501244, 0.808)
 position = Vector2(886.542, -98.451)
 scale = Vector2(1.05165, 1.07012)
+AttacksSummons = true
 AttackRange = 150.0
+
+[node name="Sprite2D" parent="Board/Nav/Enemy" index="2"]
+modulate = Color(0, 0.401097, 0.401097, 1)
+self_modulate = Color(0.739789, 1.93726e-06, 9.62615e-07, 1)
 
 [node name="Enemy2" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 position = Vector2(862.354, 78.1187)
@@ -75,3 +82,5 @@ AttackRange = 150.0
 position = Vector2(888.645, -293.213)
 scale = Vector2(1.05165, 1.07012)
 AttackRange = 150.0
+
+[editable path="Board/Nav/Enemy"]

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 public partial class Mouse : Node2D
 {
     private Card _activeCard;
+    private bool OverBoard;
 
     public override void _Process(double delta)
     {
@@ -83,5 +84,15 @@ public partial class Mouse : Node2D
         }
 
         return topCard;
+    }
+
+    public void setOverBoard(bool value)
+    {
+        OverBoard = value;
+    }
+
+    public bool getOverBoard()
+    {
+        return OverBoard;
     }
 }
