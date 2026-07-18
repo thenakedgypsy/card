@@ -21,7 +21,6 @@ disabled = true
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
 avoidance_enabled = true
 time_horizon_obstacles = 0.35
-debug_enabled = true
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_r8a2w")

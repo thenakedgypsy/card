@@ -38,10 +38,11 @@ position = Vector2(965, 1204)
 energyPlayLimit = 1
 
 [node name="EndTurnButton" parent="." instance=ExtResource("7_vfd28")]
-offset_left = 1679.0
-offset_top = 938.0
-offset_right = 1785.0
-offset_bottom = 979.0
+offset_left = 1283.2
+offset_top = 27.0
+offset_right = 1389.2
+offset_bottom = 68.0
+scale = Vector2(1.53039, 2.25578)
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 541)
@@ -60,7 +61,7 @@ scale = Vector2(0.817383, 0.742944)
 navigation_polygon = SubResource("NavigationPolygon_n8wid")
 
 [node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_xbp43")]
-position = Vector2(-876.025, -123.064)
+position = Vector2(-839.323, -102.731)
 
 [node name="Enemy4" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 self_modulate = Color(0.483295, 0.121199, 0.175947, 1)
@@ -69,7 +70,7 @@ scale = Vector2(0.934977, 0.986287)
 AttacksSummons = true
 AttackRange = 150.0
 
-[node name="Sprite2D" parent="Board/Nav/Enemy4" index="1"]
+[node name="Sprite2D" parent="Board/Nav/Enemy4" index="2"]
 self_modulate = Color(0.521418, 0.0028967, 0.837903, 1)
 
 [node name="Enemy2" parent="Board/Nav" instance=ExtResource("10_rbtst")]

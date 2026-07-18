@@ -48,17 +48,17 @@ public partial class TurnManager : Node
 		AddChild(card);
 
 		Random random = new Random();
-		int num = random.Next(4);
+		int num = random.Next(6);
 		
-		if (num == 0)
+		if (num == 0 || num == 1)
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else  if (num == 1)
+		else  if (num == 2)
 		{
 			card.Generate("energy_red", Card.Location.Hand);
 		}
-		else if (num == 2)
+		else if (num == 3)
 		{
 			card.Generate("energy_blue", Card.Location.Hand);
 		}
@@ -73,11 +73,8 @@ public partial class TurnManager : Node
         State = GameState.PlayerTurn;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
+        DrawCardTemp();
 
-        for (; _hand.GetNumCards() < 4;)
-        {
-            DrawCardTemp();
-        }
     }
 
     public bool CanPlayEnergy()
