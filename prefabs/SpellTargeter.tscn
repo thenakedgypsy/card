@@ -1,0 +1,11 @@
+[gd_scene load_steps=3 format=3 uid="uid://bedf2xcnvckqf"]
+
+[ext_resource type="Script" path="res://scripts/SpellTargeter.cs" id="1_n2s5v"]
+[ext_resource type="Texture2D" uid="uid://dey7827fglfbj" path="res://assets/interface/Target.png" id="2_0rbos"]
+
+[node name="SpellTargeter" type="Node2D"]
+position = Vector2(33, -11)
+script = ExtResource("1_n2s5v")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_0rbos")

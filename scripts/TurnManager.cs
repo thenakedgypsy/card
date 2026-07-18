@@ -48,17 +48,17 @@ public partial class TurnManager : Node
 		AddChild(card);
 
 		Random random = new Random();
-		int num = random.Next(3);
+		int num = random.Next(4);
 		
-		if (num == 5)
+		if (num == 0)
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else if (num == 5)
+		else  if (num == 1)
 		{
 			card.Generate("energy_red", Card.Location.Hand);
 		}
-		else if (num == 1)
+		else if (num == 2)
 		{
 			card.Generate("energy_blue", Card.Location.Hand);
 		}

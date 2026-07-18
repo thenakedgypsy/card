@@ -60,9 +60,39 @@ public partial class CardEffect : Node2D
            
     }
 
-    private void _EnemyDamage()
+private void _EnemyDamage()
+{
+    PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+
+    if (scene == null)
     {
-        String damage = effectData["damage"].ToString();
-        GD.Print($"BLAMMO YOU WOULD DO {damage} DAMAGE NOW");
+        GD.Print("ERROR: SpellTargeter scene not found");
+        return;
     }
+
+
+    SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
+
+    if (targeter == null)
+    {
+        GD.Print("ERROR: Could not create SpellTargeter");
+        return;
+    }
+
+
+    Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+
+    if (mouse == null)
+    {
+        GD.Print("ERROR: Mouse not found");
+        return;
+    }
+
+
+    mouse.AddChild(targeter);
+
+    targeter.Setup(element, effectData, cardID);
+
+    GD.Print("SpellTargeter created");
+}
 }

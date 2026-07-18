@@ -27,7 +27,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     // Did we fail to reach the player because summons blocked navigation?
     private bool _playerPathBlocked = false;
     private Sprite2D _sprite;
-
+    private bool _isHovered;
 
     public override void _Ready()
     {
@@ -249,7 +249,18 @@ public partial class Enemy : CharacterBody2D, IHealth
         Color original = SelfModulate;
         Tween tween = CreateTween();
         // Flash red
-        tween.TweenProperty(_sprite, "self_modulate", Colors.OrangeRed, 0.25f);
+        tween.TweenProperty(_sprite, "self_modulate", Colors.Orange, 0.25f);
+        // Return to original color
+        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+        await ToSignal(tween, Tween.SignalName.Finished);
+    }
+    
+    public async void FlashRed()
+    {
+        Color original = SelfModulate;
+        Tween tween = CreateTween();
+        // Flash red
+        tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.25f);
         // Return to original color
         tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
@@ -316,4 +327,64 @@ public partial class Enemy : CharacterBody2D, IHealth
 	{
 		return CurrentHealth;
 	}
+    
+    public void TakeDamage(int value)
+	{
+	    CurrentHealth -= value;
+	    GD.Print($"Summon takes {value} damage");
+
+		FlashRed();
+	
+	    if (CurrentHealth <= 0)
+	    {
+	        GD.Print("IS DESTROYED");
+	
+	        // Prevent double-death logic
+	        SetProcess(false);
+	        SetPhysicsProcess(false);
+	
+	        // Optional: stop collisions if you have them
+	        SetDeferred("monitoring", false);
+	
+	        // Safely remove from tree at end of frame
+	        CallDeferred(Node.MethodName.QueueFree);
+	    }
+	}
+
+    public void MouseOver()
+    {
+        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+    
+        if(mouse != null)
+            mouse.SetHoveredEnemy(this);
+    
+        _sprite.SelfModulate = Colors.Yellow;
+    }
+    
+    
+    public void MouseOff()
+    {
+        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+    
+        if(mouse != null)
+            mouse.SetHoveredEnemy(null);
+    
+        _sprite.SelfModulate = Colors.White;
+    }
+
+    private void _on_area_2d_mouse_entered()
+    {
+        MouseOver();
+    }
+
+
+    private void _on_area_2d_mouse_exited()
+    {
+        MouseOff();
+    }
+    
+    public bool IsHovered()
+    {
+        return _isHovered;
+    }
 }

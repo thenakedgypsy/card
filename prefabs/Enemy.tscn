@@ -4,28 +4,43 @@
 [ext_resource type="Texture2D" uid="uid://d3eb3fxcxwjyc" path="res://assets/enemies/placeholder.png" id="2_r8a2w"]
 [ext_resource type="PackedScene" uid="uid://nm1d2agawpwo" path="res://prefabs/healthbar.tscn" id="3_ax228"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_vhex0"]
-radius = 32.0156
+[sub_resource type="CircleShape2D" id="CircleShape2D_s5750"]
+radius = 41.0
 
 [node name="Enemy" type="CharacterBody2D" groups=["Enemies"]]
+y_sort_enabled = true
+collision_layer = 2
+collision_mask = 2
 script = ExtResource("1_dng6c")
 AttackDamage = 5
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_s5750")
+disabled = true
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
 avoidance_enabled = true
 time_horizon_obstacles = 0.35
 debug_enabled = true
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_vhex0")
-disabled = true
-
 [node name="Sprite2D" type="Sprite2D" parent="."]
 texture = ExtResource("2_r8a2w")
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]
+z_index = 1000
+z_as_relative = false
 offset_left = -23.0
 offset_top = -55.0
 offset_right = 41.0
 offset_bottom = -43.0
 scale = Vector2(0.918926, 1.00798)
+
+[node name="Area2D" type="Area2D" parent="."]
+collision_layer = 2
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_s5750")
+
+[connection signal="mouse_entered" from="Area2D" to="." method="_on_area_2d_mouse_entered"]
+[connection signal="mouse_exited" from="Area2D" to="." method="_on_area_2d_mouse_exited"]

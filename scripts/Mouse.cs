@@ -6,6 +6,7 @@ public partial class Mouse : Node2D
 {
     private Card _activeCard;
     private bool OverBoard;
+    private Enemy HoveredEnemy;
 
     public override void _Process(double delta)
     {
@@ -95,4 +96,16 @@ public partial class Mouse : Node2D
     {
         return OverBoard;
     }
+
+    public void SetHoveredEnemy(Enemy enemy)
+    {
+        HoveredEnemy = enemy;
+    }
+
+
+    public Enemy GetHoveredEnemy()
+    {
+        return HoveredEnemy;
+    }
+
 }
