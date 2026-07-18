@@ -2,10 +2,10 @@ using Godot;
 using System;
 using System.Collections.Generic;
 
-public partial class Summon : Node2D
+public partial class Summon : Node2D, IHealth
 {
 	public int Health;
-	private int _currentHealth;
+	public int CurrentHealth;
 	public int Damage;
 	public Card.Element Element;
 	private Sprite2D _sprite;
@@ -21,11 +21,22 @@ public partial class Summon : Node2D
 	{
 	}
 
+	public async void FlashRed()
+    {
+        Color original = SelfModulate;
+        Tween tween = CreateTween();
+        // Flash red
+        tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.1f);
+        // Return to original color
+        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+        await ToSignal(tween, Tween.SignalName.Finished);
+    }
+
 	public void Generate(Card.Element ele, Dictionary<string, Variant> data, string summonID)
 	{
 		Element = ele;
 		Health = data["health"].ToString().ToInt();
-		_currentHealth = Health;
+		CurrentHealth = Health;
 		Damage = data["damage"].ToString().ToInt();
 
         string path = $"res://assets/summons/{summonID}.png";
@@ -37,10 +48,12 @@ public partial class Summon : Node2D
 
 	public void TakeDamage(int value)
 	{
-	    _currentHealth -= value;
+	    CurrentHealth -= value;
 	    GD.Print($"Summon takes {value} damage");
+
+		FlashRed();
 	
-	    if (_currentHealth <= 0)
+	    if (CurrentHealth <= 0)
 	    {
 	        GD.Print("IS DESTROYED");
 	
@@ -54,5 +67,15 @@ public partial class Summon : Node2D
 	        // Safely remove from tree at end of frame
 	        CallDeferred(Node.MethodName.QueueFree);
 	    }
+	}
+
+	public float GetMaxHealth()
+	{
+		return Health;
+	}
+
+	public float GetCurrentHealth()
+	{
+		return CurrentHealth;
 	}
 }

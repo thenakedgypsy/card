@@ -62,16 +62,15 @@ navigation_polygon = SubResource("NavigationPolygon_n8wid")
 [node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_xbp43")]
 position = Vector2(-876.025, -123.064)
 
-[node name="Enemy" parent="Board/Nav" instance=ExtResource("10_rbtst")]
-modulate = Color(0.312725, 0.0835094, 0.0501244, 0.808)
-position = Vector2(886.542, -98.451)
-scale = Vector2(1.05165, 1.07012)
+[node name="Enemy4" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+self_modulate = Color(0.483295, 0.121199, 0.175947, 1)
+position = Vector2(856.99, -118.783)
+scale = Vector2(0.934977, 0.986287)
 AttacksSummons = true
 AttackRange = 150.0
 
-[node name="Sprite2D" parent="Board/Nav/Enemy" index="2"]
-modulate = Color(0, 0.401097, 0.401097, 1)
-self_modulate = Color(0.739789, 1.93726e-06, 9.62615e-07, 1)
+[node name="Sprite2D" parent="Board/Nav/Enemy4" index="2"]
+self_modulate = Color(0.521418, 0.0028967, 0.837903, 1)
 
 [node name="Enemy2" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 position = Vector2(862.354, 78.1187)
@@ -83,4 +82,4 @@ position = Vector2(888.645, -293.213)
 scale = Vector2(1.05165, 1.07012)
 AttackRange = 150.0
 
-[editable path="Board/Nav/Enemy"]
+[editable path="Board/Nav/Enemy4"]

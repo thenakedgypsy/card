@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Enemy : CharacterBody2D
+public partial class Enemy : CharacterBody2D, IHealth
 {
     [Signal]
     public delegate void TurnFinishedEventHandler(Enemy enemy);
@@ -9,6 +9,7 @@ public partial class Enemy : CharacterBody2D
     [Export] public float Speed = 120f;
     [Export] public float MoveDistance = 100f;
     [Export] public int Health = 10;
+    public int CurrentHealth;
     [Export] public int AttackDamage = 1;
     [Export] public bool AttacksSummons = false;
     [Export] public float AttackRange = 50f;
@@ -25,6 +26,7 @@ public partial class Enemy : CharacterBody2D
 
     // Did we fail to reach the player because summons blocked navigation?
     private bool _playerPathBlocked = false;
+    private Sprite2D _sprite;
 
 
     public override void _Ready()
@@ -34,6 +36,10 @@ public partial class Enemy : CharacterBody2D
         _agent.PathDesiredDistance = 4.0f;
         _agent.TargetDesiredDistance = 4.0f;
         _agent.AvoidanceEnabled = true;
+
+        _sprite = GetNode<Sprite2D>("Sprite2D");
+
+        CurrentHealth = Health;
     }
 
 
@@ -232,9 +238,21 @@ public partial class Enemy : CharacterBody2D
 
         GD.Print($"[{Name}] ATTACK → '{target.Name}'");
 
+        FlashYellow();
 
         if (target.HasMethod("TakeDamage"))
             target.Call("TakeDamage", AttackDamage);
+    }
+
+    public async void FlashYellow()
+    {
+        Color original = SelfModulate;
+        Tween tween = CreateTween();
+        // Flash red
+        tween.TweenProperty(_sprite, "self_modulate", Colors.OrangeRed, 0.25f);
+        // Return to original color
+        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+        await ToSignal(tween, Tween.SignalName.Finished);
     }
 
 
@@ -288,4 +306,14 @@ public partial class Enemy : CharacterBody2D
 
         EmitSignal(SignalName.TurnFinished, this);
     }
+
+	public float GetMaxHealth()
+	{
+		return Health;
+	}
+
+	public float GetCurrentHealth()
+	{
+		return CurrentHealth;
+	}
 }

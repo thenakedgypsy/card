@@ -1,10 +1,18 @@
-[gd_scene load_steps=3 format=3 uid="uid://bv684y1crutsm"]
+[gd_scene load_steps=4 format=3 uid="uid://bv684y1crutsm"]
 
 [ext_resource type="Script" path="res://scripts/Summon.cs" id="1_ajj2b"]
+[ext_resource type="PackedScene" uid="uid://nm1d2agawpwo" path="res://prefabs/healthbar.tscn" id="2_fpra5"]
 [ext_resource type="Texture2D" uid="uid://c3ey22qgunkee" path="res://assets/summons/iceblock.png" id="2_w4enq"]
 
 [node name="Summon" type="Node2D" groups=["Summons"]]
 script = ExtResource("1_ajj2b")
+
+[node name="HealthBar" parent="." instance=ExtResource("2_fpra5")]
+offset_left = -39.0
+offset_top = -62.0
+offset_right = 25.0
+offset_bottom = -50.0
+scale = Vector2(1.22229, 0.945615)
 
 [node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
 radius = 72.0
