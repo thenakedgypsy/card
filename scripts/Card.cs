@@ -224,7 +224,22 @@ public partial class Card : Node2D
             {
                 Play();
             }
+            else
+            {
+                FlashRed();
+            }
         }
+    }
+
+    public async void FlashRed()
+    {
+        Color original = SelfModulate;
+        Tween tween = CreateTween();
+        // Flash red
+        tween.TweenProperty(_frame, "self_modulate", Colors.Red, 0.25f);
+        // Return to original color
+        tween.TweenProperty(_frame, "self_modulate", original, 0.1f);
+        await ToSignal(tween, Tween.SignalName.Finished);
     }
 
     // =========================
@@ -238,7 +253,14 @@ public partial class Card : Node2D
         if (type == CardType.Energy)
         {
             _turnManager.PlayEnergy();
-            _energyManager.TryGainRegen(1, element, false);
+            if (element == Element.Neutral)
+            {
+                _energyManager.GainEnergy(1, element);
+            }
+            else
+            {
+                _energyManager.TryGainRegen(1, element, false);
+            }
         }
         else
         {

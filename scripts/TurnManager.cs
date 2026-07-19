@@ -22,6 +22,7 @@ public partial class TurnManager : Node
     private Hand _hand;
 
     private int _enemiesActing = 0;
+    
 
     public override void _Ready()
     {
@@ -48,16 +49,20 @@ public partial class TurnManager : Node
 		AddChild(card);
 
 		Random random = new Random();
-		int num = random.Next(2);
+		int num = random.Next(101);
 		
-		if (num == 0)
+		if (num < 41)
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else
+		else if (num < 81)
 		{
 			card.Generate("blockOfIce", Card.Location.Hand);
 		}
+        else if (num < 101)
+        {
+            card.Generate("energy_neutral", Card.Location.Hand);
+        }
     }
 
     public void BeginPlayerTurn()
@@ -65,7 +70,10 @@ public partial class TurnManager : Node
         State = GameState.PlayerTurn;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
-        DrawCardTemp();
+        while (_hand.GetNumCards() < 5)
+        {
+            DrawCardTemp();
+        }
 
     }
 
@@ -86,6 +94,8 @@ public partial class TurnManager : Node
 
     public void BeginEnemyTurn()
     {
+        RebakeNav();
+        
         State = GameState.EnemyTurn;
         _playercore = GetParent().GetNode<Node2D>("Board/Nav/PlayerCore");
 
@@ -127,5 +137,11 @@ public partial class TurnManager : Node
     public int GetEnergyLimit()
     {
         return energyPlayLimit;
+    }
+
+    public void RebakeNav()
+    {
+        NavigationRegion2D nav = GetTree().CurrentScene.GetNode<NavigationRegion2D>("Board/Nav");
+        nav.BakeNavigationPolygon();
     }
 }
