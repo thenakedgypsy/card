@@ -51,11 +51,11 @@ public partial class TurnManager : Node
 		Random random = new Random();
 		int num = random.Next(101);
 		
-		if (num < 41)
+		if (num < 46)
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else if (num < 81)
+		else if (num < 92)
 		{
 			card.Generate("blockOfIce", Card.Location.Hand);
 		}
