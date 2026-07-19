@@ -18,6 +18,10 @@ public partial class Summon : Node2D, IHealth
 	private Sprite2D _sprite;
 	private NavigationObstacle2D _obstacle;
 	private HealthBar _healthBar;
+	private Line2D _line;
+
+	private int _drawLineRequestId = 0;
+
 	[Export(PropertyHint.Range, "0.0,1.0")]
 	public float NavigationSectionStart = 0.4f;
 
@@ -30,11 +34,62 @@ public partial class Summon : Node2D, IHealth
 		_sprite = GetNode<Sprite2D>("Sprite2D");
 		_obstacle = GetNode<NavigationObstacle2D>("NavigationObstacle2D");
     	_healthBar = GetNode<HealthBar>("HealthBar");
+		_line = GetNodeOrNull<Line2D>("Line2D");
+		if (_line == null)
+		{
+			_line = new Line2D();
+			_line.Name = "Line2D";
+			_line.ZIndex = 100;
+			_line.Width = 2f;
+			_line.DefaultColor = Colors.White;
+			_line.Points = new Vector2[] { Vector2.Zero, Vector2.Zero };
+			_line.Visible = false;
+			AddChild(_line);
+		}
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+	}
+
+	public async void DrawLineBetween(Vector2 target, float width = 2f)
+	{
+		if (_line == null)
+			return;
+
+		Color color;
+		if (Element == Card.Element.Fire)
+			color = Colors.Red;
+		else if (Element == Card.Element.Water)
+			color = Colors.Blue;
+		else if (Element == Card.Element.Earth)
+			color = Colors.Green;
+		else if (Element == Card.Element.Wind)
+			color = Colors.LightBlue;
+		else
+			color = Colors.Gray;
+
+		_line.Points = new Vector2[] { Vector2.Zero, target - (GlobalPosition - new Vector2(0, 50)) };
+		_line.Width = width;
+		_line.DefaultColor = color;
+		_line.ZIndex = 100;
+		_line.Visible = true;
+
+		int requestId = ++_drawLineRequestId;
+		await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
+		if (requestId == _drawLineRequestId)
+		{
+			ClearDrawLine();
+		}
+	}
+
+	public void ClearDrawLine()
+	{
+		if (_line == null)
+			return;
+
+		_line.Visible = false;
 	}
 
 	public void TakeTurn()
@@ -79,6 +134,7 @@ public partial class Summon : Node2D, IHealth
 		if (enemy.HasMethod("TakeDamage"))
             enemy.Call("TakeDamage", AttackDamage);
 		FlashRed();
+		DrawLineBetween(enemy.GlobalPosition, 5f);
 	}
 
 	private void EndTurn()
