@@ -21,6 +21,8 @@ public partial class TurnManager : Node
     private Node2D _playercore;
     private Hand _hand;
 
+    [Export] private float enemyTurnDelay = 1f;
+
     private int _enemiesActing = 0;
     private int _summonsActing = 0;
     
@@ -97,8 +99,10 @@ public partial class TurnManager : Node
         BeginSummonTurn();
     }
 
-    public void BeginEnemyTurn()
+    public async void BeginEnemyTurn()
     {
+        await ToSignal(GetTree().CreateTimer(enemyTurnDelay), SceneTreeTimer.SignalName.Timeout);
+
         RebakeNav();
 
         State = GameState.EnemyTurn;

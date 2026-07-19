@@ -103,4 +103,40 @@ position = Vector2(807.718, -300.704)
 scale = Vector2(1.05165, 1.07012)
 AttackRange = 150.0
 
+[node name="Enemy8" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+self_modulate = Color(0.483295, 0.121199, 0.175947, 1)
+position = Vector2(719.309, -72.7685)
+scale = Vector2(0.934977, 0.986287)
+Health = 15
+AttacksSummons = true
+
+[node name="Sprite2D" parent="Board/Nav/Enemy8" index="2"]
+self_modulate = Color(0.521418, 0.0028967, 0.837903, 1)
+
+[node name="Enemy9" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(716.265, 77.0481)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy10" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(752.941, 132.694)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy11" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(753.992, -174.43)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy12" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(713.003, -338.158)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy13" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(742.556, -294.284)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
 [editable path="Board/Nav/Enemy4"]
+[editable path="Board/Nav/Enemy8"]
