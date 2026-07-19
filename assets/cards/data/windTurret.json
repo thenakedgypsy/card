@@ -6,7 +6,7 @@
   {
 	"effectType": "Summon",
 	"health": 30,
-	"damage": 30,
+	"damage": 3,
 	"range": 100,
 	"attacksEnemies": true
   }

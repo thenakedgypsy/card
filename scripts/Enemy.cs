@@ -331,13 +331,13 @@ public partial class Enemy : CharacterBody2D, IHealth
     public void TakeDamage(int value)
 	{
 	    CurrentHealth -= value;
-	    GD.Print($"Summon takes {value} damage");
+	    GD.Print($"Enemy {Name} takes {value} damage");
 
 		FlashRed();
 	
 	    if (CurrentHealth <= 0)
 	    {
-	        GD.Print("IS DESTROYED");
+	        GD.Print($"Enemy {Name} IS DESTROYED");
 	
 	        // Prevent double-death logic
 	        SetProcess(false);

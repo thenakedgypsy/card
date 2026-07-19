@@ -76,7 +76,8 @@ public partial class Summon : Node2D, IHealth
 			return;
 
 		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
-		// TODO: implement summon attack effects and damage here.
+		if (enemy.HasMethod("TakeDamage"))
+            enemy.Call("TakeDamage", AttackDamage);
 		FlashRed();
 	}
 
@@ -104,6 +105,7 @@ public partial class Summon : Node2D, IHealth
 		AttackDamage = data["damage"].ToString().ToInt();
 		AttackRange = data["range"].ToString().ToFloat();
 		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
+		Name = summonID;	
 
         string path = $"res://assets/summons/{summonID}.png";
 

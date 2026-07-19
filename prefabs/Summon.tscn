@@ -9,7 +9,7 @@ y_sort_enabled = true
 script = ExtResource("1_ajj2b")
 
 [node name="HealthBar" parent="." instance=ExtResource("2_fpra5")]
-z_index = 2
+z_index = 1000
 offset_left = -39.0
 offset_top = -62.0
 offset_right = 25.0

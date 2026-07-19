@@ -72,8 +72,8 @@ Health = 42.0
 self_modulate = Color(0.483295, 0.121199, 0.175947, 1)
 position = Vector2(784.471, -79.1888)
 scale = Vector2(0.934977, 0.986287)
+Health = 15
 AttacksSummons = true
-AttackRange = 150.0
 
 [node name="Sprite2D" parent="Board/Nav/Enemy4" index="2"]
 self_modulate = Color(0.521418, 0.0028967, 0.837903, 1)
