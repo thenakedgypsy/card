@@ -15,6 +15,7 @@
 vertices = PackedVector2Array(935.273, 186.859, -925.977, 180.508, -926.977, -386.008, 926.148, -388.977)
 polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
 outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 190.481, 945.434, 196.902, 936, -399)])
+agent_radius = 36.53
 
 [node name="Proto" type="Node2D"]
 scale = Vector2(1.00062, 1)

@@ -16,11 +16,15 @@ public partial class Summon : Node2D, IHealth
 	public int Damage;
 	public Card.Element Element;
 	private Sprite2D _sprite;
+	private NavigationObstacle2D _obstacle;
+	private HealthBar _healthBar;
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_sprite = GetNode<Sprite2D>("Sprite2D");
+		_obstacle = GetNode<NavigationObstacle2D>("NavigationObstacle2D");
+    	_healthBar = GetNode<HealthBar>("HealthBar");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -101,6 +105,8 @@ public partial class Summon : Node2D, IHealth
         Texture2D texture = GD.Load<Texture2D>(path);
 
 		_sprite.Texture = texture;
+
+		UpdateVisualBounds();
 	}
 
 	public void TakeDamage(int value)
@@ -134,5 +140,65 @@ public partial class Summon : Node2D, IHealth
 	public float GetCurrentHealth()
 	{
 		return CurrentHealth;
+	}
+
+	private void UpdateVisualBounds()
+	{
+    	if (_sprite.Texture == null)
+    	    return;
+
+    	// Actual displayed size
+    	Vector2 size = _sprite.Texture.GetSize() * _sprite.Scale;
+
+    	float width = size.X;
+    	float height = size.Y;
+
+    	//
+    	// Health bar
+    	//
+    	const float padding = 4f;
+    	_healthBar.Position = new Vector2(0, -(height * 0.5f) - padding);
+
+    	//
+    	// Navigation obstacle
+    	//
+		float radius = Mathf.Max(size.X, size.Y) * 0.45f;
+		_obstacle.Radius = radius;
+		UpdateNavigationObstacle();
+	}
+
+	private void UpdateNavigationObstacle()
+	{
+	    if (_sprite.Texture == null)
+	        return;
+
+	    Image image = _sprite.Texture.GetImage();
+
+	    List<Vector2> points = new();
+
+	    const int step = 2;
+
+	    for (int y = 0; y < image.GetHeight(); y += step)
+	    {
+	        for (int x = 0; x < image.GetWidth(); x += step)
+	        {
+	            if (image.GetPixel(x, y).A > 0.1f)
+	                points.Add(new Vector2(x, y));
+	        }
+	    }
+
+	    if (points.Count < 3)
+	        return;
+
+	    Vector2[] hull = Geometry2D.ConvexHull(points.ToArray());
+
+	    Vector2 offset = new Vector2(image.GetSize().X / 2.0f, image.GetSize().Y / 2.0f);
+
+	    for (int i = 0; i < hull.Length; i++)
+	    {
+	        hull[i] = (hull[i] - offset) * _sprite.Scale;
+	    }
+
+	    _obstacle.Vertices = hull;
 	}
 }
