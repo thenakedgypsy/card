@@ -12,10 +12,10 @@
 [ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="10_xbp43"]
 
 [sub_resource type="NavigationPolygon" id="NavigationPolygon_n8wid"]
-vertices = PackedVector2Array(935.273, 186.859, -925.977, 180.508, -926.977, -386.008, 926.148, -388.977)
+vertices = PackedVector2Array(788.352, -379.188, 910.922, 177.938, -914.672, 175.852, -800.906, -382.328)
 polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
-outlines = Array[PackedVector2Array]([PackedVector2Array(-937, -396, -935.969, 190.481, 945.434, 196.902, 936, -399)])
-agent_radius = 36.53
+outlines = Array[PackedVector2Array]([PackedVector2Array(-817.252, -402.365, -939.168, 195.832, 935.815, 197.972, 804.44, -399.155)])
+agent_radius = 20.0
 
 [node name="Proto" type="Node2D"]
 scale = Vector2(1.00062, 1)
@@ -53,21 +53,24 @@ position = Vector2(991, 168.999)
 scale = Vector2(5.05943, 2.27162)
 
 [node name="Board" parent="." instance=ExtResource("9_nen3a")]
+z_index = -1
+y_sort_enabled = true
 position = Vector2(963, 461)
 scale = Vector2(1.16333, 1.2578)
 
 [node name="Nav" type="NavigationRegion2D" parent="Board"]
+y_sort_enabled = true
 position = Vector2(-2.57886, 41.342)
 scale = Vector2(0.817383, 0.742944)
 navigation_polygon = SubResource("NavigationPolygon_n8wid")
 
 [node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_xbp43")]
-position = Vector2(-839.323, -102.731)
+position = Vector2(-831.966, -149.817)
 Health = 42.0
 
 [node name="Enemy4" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 self_modulate = Color(0.483295, 0.121199, 0.175947, 1)
-position = Vector2(856.99, -118.783)
+position = Vector2(784.471, -79.1888)
 scale = Vector2(0.934977, 0.986287)
 AttacksSummons = true
 AttackRange = 150.0
@@ -76,12 +79,27 @@ AttackRange = 150.0
 self_modulate = Color(0.521418, 0.0028967, 0.837903, 1)
 
 [node name="Enemy2" parent="Board/Nav" instance=ExtResource("10_rbtst")]
-position = Vector2(862.354, 78.1187)
+position = Vector2(781.427, 70.6278)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy5" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(818.103, 126.274)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy6" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(819.154, -180.85)
+scale = Vector2(1.05165, 1.07012)
+AttackRange = 150.0
+
+[node name="Enemy7" parent="Board/Nav" instance=ExtResource("10_rbtst")]
+position = Vector2(778.165, -344.578)
 scale = Vector2(1.05165, 1.07012)
 AttackRange = 150.0
 
 [node name="Enemy3" parent="Board/Nav" instance=ExtResource("10_rbtst")]
-position = Vector2(888.645, -293.213)
+position = Vector2(807.718, -300.704)
 scale = Vector2(1.05165, 1.07012)
 AttackRange = 150.0
 

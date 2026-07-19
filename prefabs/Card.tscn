@@ -8,6 +8,7 @@
 size = Vector2(64, 106)
 
 [node name="Card" type="Node2D"]
+light_mask = 0
 scale = Vector2(2.5, 2.5)
 script = ExtResource("1_gb6rd")
 

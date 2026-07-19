@@ -18,6 +18,11 @@ public partial class Summon : Node2D, IHealth
 	private Sprite2D _sprite;
 	private NavigationObstacle2D _obstacle;
 	private HealthBar _healthBar;
+	[Export(PropertyHint.Range, "0.0,1.0")]
+	public float NavigationSectionStart = 0.4f;
+
+	[Export(PropertyHint.Range, "0.0,1.0")]
+	public float NavigationSectionEnd = 0.6f;
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -148,22 +153,22 @@ public partial class Summon : Node2D, IHealth
     	    return;
 
     	// Actual displayed size
-    	Vector2 size = _sprite.Texture.GetSize() * _sprite.Scale;
+    	Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
+    	Vector2 barSize = _healthBar.Size * _healthBar.Scale;
 
-    	float width = size.X;
-    	float height = size.Y;
+    	float height = spriteSize.Y;
 
     	//
     	// Health bar
     	//
     	const float padding = 4f;
-    	_healthBar.Position = new Vector2(0, -(height * 0.5f) - padding);
+    	_healthBar.Position = new Vector2(-barSize.X * 0.5f, -(height * 0.5f) - padding - barSize.Y);
 
     	//
     	// Navigation obstacle
     	//
-		float radius = Mathf.Max(size.X, size.Y) * 0.45f;
-		_obstacle.Radius = radius;
+		float radius = Mathf.Max(spriteSize.X, spriteSize.Y) * 0.45f;
+		//_obstacle.Radius = radius;
 		UpdateNavigationObstacle();
 	}
 
@@ -178,7 +183,10 @@ public partial class Summon : Node2D, IHealth
 
 	    const int step = 2;
 
-	    for (int y = 0; y < image.GetHeight(); y += step)
+	    int startY = (int)(image.GetHeight() * NavigationSectionStart);
+	    int endY = (int)(image.GetHeight() * NavigationSectionEnd);
+
+	    for (int y = startY; y < endY; y += step)
 	    {
 	        for (int x = 0; x < image.GetWidth(); x += step)
 	        {
@@ -192,7 +200,10 @@ public partial class Summon : Node2D, IHealth
 
 	    Vector2[] hull = Geometry2D.ConvexHull(points.ToArray());
 
-	    Vector2 offset = new Vector2(image.GetSize().X / 2.0f, image.GetSize().Y / 2.0f);
+	    Vector2 offset = new Vector2(
+	        image.GetSize().X / 2.0f,
+	        image.GetSize().Y / 2.0f
+	    );
 
 	    for (int i = 0; i < hull.Length; i++)
 	    {
