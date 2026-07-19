@@ -22,6 +22,7 @@ public partial class TurnManager : Node
     private Hand _hand;
 
     private int _enemiesActing = 0;
+    private int _summonsActing = 0;
     
 
     public override void _Ready()
@@ -89,13 +90,13 @@ public partial class TurnManager : Node
 
     public void EndPlayerTurn()
     {
-        BeginEnemyTurn();
+        BeginSummonTurn();
     }
 
     public void BeginEnemyTurn()
     {
         RebakeNav();
-        
+
         State = GameState.EnemyTurn;
         _playercore = GetParent().GetNode<Node2D>("Board/Nav/PlayerCore");
 
@@ -108,7 +109,6 @@ public partial class TurnManager : Node
             if (enemy == null) continue;
 
             _enemiesActing++;
-
             enemy.TurnFinished += OnEnemyFinishedTurn;
             enemy.TakeTurn(_playercore);
         }
@@ -134,6 +134,45 @@ public partial class TurnManager : Node
         }
     }
 
+    private void OnSummonFinishedTurn(Summon summon)
+    {
+        if (summon != null)
+        {
+            summon.TurnFinished -= OnSummonFinishedTurn;
+        }
+
+        _summonsActing--;
+
+        if (_summonsActing <= 0)
+        {
+            BeginEnemyTurn();
+        }
+    }
+
+    public void BeginSummonTurn()
+    {
+        State = GameState.SummonTurn;
+
+        var summons = GetTree().GetNodesInGroup("Summons");
+        _summonsActing = 0;
+
+        foreach (Node node in summons)
+        {
+            Summon summon = node as Summon;
+            if (summon == null)
+                continue;
+
+            _summonsActing++;
+            summon.TurnFinished += OnSummonFinishedTurn;
+            summon.TakeTurn();
+        }
+
+        if (_summonsActing == 0)
+        {
+            BeginEnemyTurn();
+        }
+    }
+
     public int GetEnergyLimit()
     {
         return energyPlayLimit;
@@ -142,6 +181,9 @@ public partial class TurnManager : Node
     public void RebakeNav()
     {
         NavigationRegion2D nav = GetTree().CurrentScene.GetNode<NavigationRegion2D>("Board/Nav");
+        if (!nav.IsBaking())
+        {
         nav.BakeNavigationPolygon();
+        }
     }
 }

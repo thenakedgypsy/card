@@ -4,6 +4,13 @@ using System.Collections.Generic;
 
 public partial class Summon : Node2D, IHealth
 {
+	[Signal]
+	public delegate void TurnFinishedEventHandler(Summon summon);
+
+	[Export] public bool AttacksEnemies = false;
+	[Export] public int AttackDamage = 1;
+	[Export] public float AttackRange = 100f;
+
 	public int Health;
 	public int CurrentHealth;
 	public int Damage;
@@ -19,6 +26,54 @@ public partial class Summon : Node2D, IHealth
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+	}
+
+	public void TakeTurn()
+	{
+		if (!AttacksEnemies)
+		{
+			EndTurn();
+			return;
+		}
+
+		Enemy nearestEnemy = null;
+		float minDistance = float.MaxValue;
+
+		var enemies = GetTree().GetNodesInGroup("Enemies");
+		foreach (Node node in enemies)
+		{
+			if (node is Enemy enemy && GodotObject.IsInstanceValid(enemy))
+			{
+				float dist = GlobalPosition.DistanceTo(enemy.GlobalPosition);
+				if (dist < minDistance)
+				{
+					minDistance = dist;
+					nearestEnemy = enemy;
+				}
+			}
+		}
+
+		if (nearestEnemy != null && GlobalPosition.DistanceTo(nearestEnemy.GlobalPosition) <= AttackRange)
+		{
+			Attack(nearestEnemy);
+		}
+
+		EndTurn();
+	}
+
+	private void Attack(Enemy enemy)
+	{
+		if (!GodotObject.IsInstanceValid(enemy))
+			return;
+
+		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
+		// TODO: implement summon attack effects and damage here.
+		FlashRed();
+	}
+
+	private void EndTurn()
+	{
+		EmitSignal(SignalName.TurnFinished, this);
 	}
 
 	public async void FlashRed()
@@ -37,7 +92,9 @@ public partial class Summon : Node2D, IHealth
 		Element = ele;
 		Health = data["health"].ToString().ToInt();
 		CurrentHealth = Health;
-		Damage = data["damage"].ToString().ToInt();
+		AttackDamage = data["damage"].ToString().ToInt();
+		AttackRange = data["range"].ToString().ToFloat();
+		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
 
         string path = $"res://assets/summons/{summonID}.png";
 

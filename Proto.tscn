@@ -62,6 +62,7 @@ navigation_polygon = SubResource("NavigationPolygon_n8wid")
 
 [node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_xbp43")]
 position = Vector2(-839.323, -102.731)
+Health = 42.0
 
 [node name="Enemy4" parent="Board/Nav" instance=ExtResource("10_rbtst")]
 self_modulate = Color(0.483295, 0.121199, 0.175947, 1)
