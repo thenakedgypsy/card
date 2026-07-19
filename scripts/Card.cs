@@ -26,6 +26,7 @@ public partial class Card : Node2D
         Water,
         Wind,
         Earth,
+        Neutral
     }
 
     public enum Rarity
@@ -237,7 +238,7 @@ public partial class Card : Node2D
         if (type == CardType.Energy)
         {
             _turnManager.PlayEnergy();
-            _energyManager.GainRegen(1, element);
+            _energyManager.TryGainRegen(1, element, false);
         }
         else
         {

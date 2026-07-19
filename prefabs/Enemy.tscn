@@ -23,15 +23,16 @@ avoidance_enabled = true
 time_horizon_obstacles = 0.35
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
+y_sort_enabled = true
 texture = ExtResource("2_r8a2w")
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]
 z_index = 1000
 z_as_relative = false
-offset_left = -23.0
-offset_top = -55.0
-offset_right = 41.0
-offset_bottom = -43.0
+offset_left = -29.0
+offset_top = -57.0
+offset_right = 35.0
+offset_bottom = -45.0
 scale = Vector2(0.918926, 1.00798)
 
 [node name="Area2D" type="Area2D" parent="."]

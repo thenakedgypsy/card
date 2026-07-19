@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://cjcmdn2c2kjp"]
+[gd_scene load_steps=4 format=3 uid="uid://cjcmdn2c2kjp"]
 
 [ext_resource type="Texture2D" uid="uid://dkgs526ssrnw0" path="res://assets/interface/energyframe.png" id="1_gg5l0"]
 [ext_resource type="Script" path="res://scripts/EnergyManager.cs" id="1_xslb8"]
+[ext_resource type="Script" path="res://scripts/EnergyButton.cs" id="3_n7hmn"]
 
 [node name="EnergyManager" type="Node2D" groups=["EnergyManager"]]
 script = ExtResource("1_xslb8")
@@ -64,3 +65,102 @@ offset_top = 5.0
 offset_right = 146.0
 offset_bottom = 45.0
 text = "1"
+
+[node name="NeutralLabel" type="RichTextLabel" parent="."]
+offset_left = -202.0
+offset_top = -21.0
+offset_right = -130.0
+offset_bottom = 27.0
+theme_override_font_sizes/normal_font_size = 29
+text = "4"
+
+[node name="Fire+" type="Button" parent="."]
+offset_left = -82.0
+offset_top = -18.0
+offset_right = -64.0
+offset_bottom = 13.0
+scale = Vector2(0.985739, 0.609335)
+text = "+"
+script = ExtResource("3_n7hmn")
+element = "Fire"
+
+[node name="Fire-" type="Button" parent="."]
+offset_left = -82.0
+offset_top = 12.0
+offset_right = -64.0
+offset_bottom = 43.0
+scale = Vector2(0.985739, 0.609335)
+text = "-"
+script = ExtResource("3_n7hmn")
+element = "Fire"
+negative = true
+
+[node name="Wind+" type="Button" parent="."]
+offset_left = -18.0
+offset_top = -18.0
+offset_bottom = 13.0
+scale = Vector2(0.985739, 0.609335)
+text = "+"
+script = ExtResource("3_n7hmn")
+element = "Wind"
+
+[node name="Wind-" type="Button" parent="."]
+offset_left = -18.0
+offset_top = 12.0
+offset_bottom = 43.0
+scale = Vector2(0.985739, 0.609335)
+text = "-"
+script = ExtResource("3_n7hmn")
+element = "Wind"
+negative = true
+
+[node name="Water+" type="Button" parent="."]
+offset_left = 45.0
+offset_top = -18.0
+offset_right = 63.0
+offset_bottom = 13.0
+scale = Vector2(0.985739, 0.609335)
+text = "+"
+script = ExtResource("3_n7hmn")
+element = "Water"
+
+[node name="Water-" type="Button" parent="."]
+offset_left = 45.0
+offset_top = 12.0
+offset_right = 63.0
+offset_bottom = 43.0
+scale = Vector2(0.985739, 0.609335)
+text = "-"
+script = ExtResource("3_n7hmn")
+element = "Water"
+negative = true
+
+[node name="Earth+" type="Button" parent="."]
+offset_left = 109.0
+offset_top = -18.0
+offset_right = 127.0
+offset_bottom = 13.0
+scale = Vector2(0.985739, 0.609335)
+text = "+"
+script = ExtResource("3_n7hmn")
+element = "Earth"
+
+[node name="Earth-" type="Button" parent="."]
+offset_left = 109.0
+offset_top = 12.0
+offset_right = 127.0
+offset_bottom = 43.0
+scale = Vector2(0.985739, 0.609335)
+text = "-"
+script = ExtResource("3_n7hmn")
+element = "Earth"
+negative = true
+
+[connection signal="pressed" from="Fire+" to="Fire+" method="Clicked"]
+[connection signal="pressed" from="Fire-" to="Fire-" method="Clicked"]
+[connection signal="pressed" from="Wind+" to="Wind+" method="Clicked"]
+[connection signal="pressed" from="Wind-" to="Wind-" method="Clicked"]
+[connection signal="pressed" from="Water+" to="Water+" method="Clicked"]
+[connection signal="pressed" from="Water-" to="Water-" method="Clicked"]
+[connection signal="pressed" from="Earth+" to="Earth+" method="Clicked"]
+[connection signal="pressed" from="Earth-" to="Earth-" method="Clicked"]

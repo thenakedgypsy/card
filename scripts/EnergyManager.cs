@@ -14,11 +14,13 @@ public partial class EnergyManager : Node2D
 	private RichTextLabel WaterRegenLabel;
 	private RichTextLabel WindRegenLabel;
 	private RichTextLabel EarthRegenLabel;
+	private RichTextLabel  NeutralLabel;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{		
 		CurrentEnergy = new Dictionary<Card.Element, int>();
 		EnergyRegen = new Dictionary<Card.Element, int>();
+		NeutralLabel = GetNode<RichTextLabel>("NeutralLabel");
 		FireLabel = GetNode<RichTextLabel>("FireLabel");
 		WaterLabel = GetNode<RichTextLabel>("WaterLabel");
 		EarthLabel = GetNode<RichTextLabel>("EarthLabel");
@@ -40,6 +42,7 @@ public partial class EnergyManager : Node2D
 		CurrentEnergy.Add(Card.Element.Water, 0);
 		CurrentEnergy.Add(Card.Element.Wind, 0);
 		CurrentEnergy.Add(Card.Element.Earth, 0);
+		CurrentEnergy.Add(Card.Element.Neutral, 4);
 
 		EnergyRegen.Add(Card.Element.Fire, 0);
 		EnergyRegen.Add(Card.Element.Water, 0);
@@ -50,6 +53,7 @@ public partial class EnergyManager : Node2D
 
 	public void UpdateLabels()
 	{
+		NeutralLabel.Text = CurrentEnergy[Card.Element.Neutral].ToString();
 		FireLabel.Text = CurrentEnergy[Card.Element.Fire].ToString();
 		WaterLabel.Text = CurrentEnergy[Card.Element.Water].ToString();
 		WindLabel.Text = CurrentEnergy[Card.Element.Wind].ToString();
@@ -66,7 +70,10 @@ public partial class EnergyManager : Node2D
 	{
 		foreach (Card.Element element in CurrentEnergy.Keys)
 		{
-			CurrentEnergy[element] = EnergyRegen[element];
+			if (element != Card.Element.Neutral)
+			{
+				CurrentEnergy[element] = EnergyRegen[element];
+			}
 		}
 		UpdateLabels();
 	}
@@ -86,11 +93,51 @@ public partial class EnergyManager : Node2D
 		}
 	}
 
-	public void GainRegen(int amount, Card.Element element)
+	public void TryGainRegen(int amount, Card.Element element, bool reduceNeutral)
+	{
+		
+		if (reduceNeutral)
+		{
+			if (TryLoseEnergy(amount, Card.Element.Neutral))
+			{
+				EnergyRegen[element] += amount;
+			}
+		}
+		else
+		{
+			EnergyRegen[element] += amount;
+		}
+		UpdateLabels();
+	}
+
+	public void TryLoseRegen(int amount, Card.Element element, bool gainNeutral)
+	{
+		if (EnergyRegen[element] > 0)
+		{
+			EnergyRegen[element] -= amount;
+			if (gainNeutral)
+			{
+				GainEnergy(amount, Card.Element.Neutral);
+			}
+			UpdateLabels();
+		}
+	}
+
+	public void GainEnergy(int amount, Card.Element element)
 	{
 		CurrentEnergy[element] += amount;
-		EnergyRegen[element] += amount;
 		UpdateLabels();
+	}
+
+	public bool TryLoseEnergy(int amount, Card.Element element)
+	{
+		if (CurrentEnergy[element] > 0)
+		{
+			CurrentEnergy[element] -= amount;
+			UpdateLabels();
+			return true;
+		}
+		return false;
 	}
 
 }
