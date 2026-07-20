@@ -1,5 +1,6 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 public partial class Enemy : CharacterBody2D, IHealth
 {
@@ -7,22 +8,21 @@ public partial class Enemy : CharacterBody2D, IHealth
     public delegate void TurnFinishedEventHandler(Enemy enemy);
 
     [Export] public float Speed = 120f;
-    [Export] public float MoveDistance = 100f;
+    [Export] public int MoveDistance = 3; // tiles per turn
     [Export] public int Health = 10;
     public int CurrentHealth;
     [Export] public int AttackDamage = 1;
     [Export] public bool AttacksSummons = false;
-    [Export] public float AttackRange = 50f;
+    [Export] public int AttackRange = 1; // tiles
     [Export] public string SummonGroupName = "Summons";
-    [Export] public float PathEndTolerance = 100f;
 
-    private NavigationAgent2D _agent;
     private Node2D _target;
 
-    private float _remainingMoveDistance = 0f;
-    private Vector2 _lastPosition;
+    private List<Vector2> _pathWaypoints = new();
+    private int _waypointIndex = 0;
+
     private bool _isTakingTurn = false;
-    private bool _hasMovedAtLeastOneFrame = false;
+    private TurnManager _turnManager;
 
     // Did we fail to reach the player because summons blocked navigation?
     private bool _playerPathBlocked = false;
@@ -31,13 +31,8 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public override void _Ready()
     {
-        _agent = GetNode<NavigationAgent2D>("NavigationAgent2D");
-
-        _agent.PathDesiredDistance = 4.0f;
-        _agent.TargetDesiredDistance = 4.0f;
-        _agent.AvoidanceEnabled = true;
-
         _sprite = GetNode<Sprite2D>("Sprite2D");
+        _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
         CurrentHealth = Health;
     }
@@ -45,15 +40,13 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public void TakeTurn(Node2D playerCore)
     {
-        _remainingMoveDistance = MoveDistance;
-        _lastPosition = GlobalPosition;
         _isTakingTurn = true;
-        _hasMovedAtLeastOneFrame = false;
         _target = null;
         _playerPathBlocked = false;
+        _pathWaypoints.Clear();
+        _waypointIndex = 0;
 
         GD.Print($"[{Name}] TakeTurn START");
-
 
         // 1. Attack player immediately if already in range
         if (IsInRange(playerCore))
@@ -63,46 +56,53 @@ public partial class Enemy : CharacterBody2D, IHealth
             return;
         }
 
-
         // 2. Check if player is reachable
-        _agent.TargetPosition = playerCore.GlobalPosition;
-        _agent.GetNextPathPosition();
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
-        var path = _agent.GetCurrentNavigationPath();
+        List<Vector2I> pathToPlayer = _turnManager.FindPath(myCell, playerCell);
 
-        bool hasPath = path.Length > 1;
+        _playerPathBlocked = pathToPlayer == null || pathToPlayer.Count == 0;
 
-        float pathEndDist = hasPath
-            ? path[path.Length - 1].DistanceTo(playerCore.GlobalPosition)
-            : float.MaxValue;
-
-
-        _playerPathBlocked = !hasPath || pathEndDist > PathEndTolerance;
-
-
-        // 3. If blocked, move toward nearest summon
+        // 3. If blocked, move toward the summon blocking the route
         if (_playerPathBlocked || AttacksSummons)
         {
-            Node2D blockingSummon = GetNearestSummon();
+            Node2D targetSummon = null;
 
-            if (blockingSummon != null)
+            if (_playerPathBlocked)
             {
-                if (IsInRange(blockingSummon))
+                targetSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
+            }
+            
+            // Fallback just in case no route block was found
+            if (targetSummon == null)
+            {
+                targetSummon = GetNearestSummon();
+            }
+
+            if (targetSummon != null)
+            {
+                if (IsInRange(targetSummon))
                 {
-                    Attack(blockingSummon);
+                    Attack(targetSummon);
                     EndTurn();
                     return;
                 }
 
-
-                if (TrySetTarget(blockingSummon))
+                if (TrySetTarget(targetSummon))
                     return;
             }
         }
 
-
         // 4. Otherwise move toward player
-        _target = playerCore;
+        if (!_playerPathBlocked)
+        {
+            _target = playerCore;
+            BeginMoveAlong(pathToPlayer);
+            return;
+        }
+
+        EndTurn();
     }
 
 
@@ -111,21 +111,52 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(target))
             return false;
 
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
 
-        _agent.TargetPosition = target.GlobalPosition;
-        _agent.GetNextPathPosition();
+        List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
 
-        var path = _agent.GetCurrentNavigationPath();
-
-
-        if (path.Length > 1 || IsInRange(target))
+        if (path != null && path.Count > 0)
         {
             _target = target;
+            BeginMoveAlong(path);
             return true;
         }
 
-
         return false;
+    }
+
+    
+
+
+    private void BeginMoveAlong(List<Vector2I> path)
+    {
+        _pathWaypoints.Clear();
+        _waypointIndex = 0;
+
+        int steps = Mathf.Min(path.Count, MoveDistance);
+
+        for (int i = 0; i < steps; i++)
+        {
+            _pathWaypoints.Add(_turnManager.CellToWorld(path[i]));
+        }
+    }
+
+
+    public int GetRouteDistanceTo(Node2D target)
+    {
+        if (!GodotObject.IsInstanceValid(target))
+            return int.MaxValue;
+
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
+
+        List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
+
+        if (path == null || path.Count == 0)
+            return int.MaxValue;
+
+        return path.Count;
     }
 
 
@@ -145,76 +176,46 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
 
 
-        bool navFinished = _agent.IsNavigationFinished();
-
-        bool shouldStop =
-            (_hasMovedAtLeastOneFrame && navFinished) ||
-            (_remainingMoveDistance <= 0f);
-
-
-
-        if (shouldStop)
+        if (_waypointIndex >= _pathWaypoints.Count)
         {
-            /*
-             * If allowed, attack any summon nearby.
-             */
-            if (AttacksSummons)
-            {
-                Node2D summon = GetNearestSummon();
-
-                if (summon != null && IsInRange(summon))
-                {
-                    Velocity = Vector2.Zero;
-                    Attack(summon);
-                    EndTurn();
-                    return;
-                }
-            }
-
-
-            /*
-             * Otherwise only attack summons when they blocked
-             * access to the player.
-             */
-            else if (_playerPathBlocked || AttacksSummons)
-            {
-                Node2D blockingSummon = GetNearestSummon();
-
-                if (blockingSummon != null && IsInRange(blockingSummon))
-                {
-                    Velocity = Vector2.Zero;
-                    Attack(blockingSummon);
-                    EndTurn();
-                    return;
-                }
-            }
-
-
-            EndTurn();
+            HandleEndOfMovement();
             return;
         }
 
 
-
-        // Movement
-        Vector2 nextPoint = _agent.GetNextPathPosition();
-
-        Vector2 direction = (nextPoint - GlobalPosition).Normalized();
-
+        // Movement toward current tile waypoint
+        Vector2 waypoint = _pathWaypoints[_waypointIndex];
+        Vector2 direction = (waypoint - GlobalPosition).Normalized();
 
         Velocity = direction * Speed;
-
         MoveAndSlide();
 
+        if (GlobalPosition.DistanceTo(waypoint) <= 4f)
+        {
+            _waypointIndex++;
 
-        float moved = GlobalPosition.DistanceTo(_lastPosition);
+            if (_waypointIndex >= _pathWaypoints.Count)
+            {
+                HandleEndOfMovement();
+            }
+        }
+    }
 
-        _remainingMoveDistance -= moved;
 
-        _lastPosition = GlobalPosition;
+    private void HandleEndOfMovement()
+    {
+        Velocity = Vector2.Zero;
 
+        // Since _target is explicitly set to the blocking summon (or player) in TakeTurn,
+        // we can simply check if we are in range of our assigned target.
+        if (_target != null && IsInRange(_target))
+        {
+            Attack(_target);
+            EndTurn();
+            return;
+        }
 
-        _hasMovedAtLeastOneFrame = true;
+        EndTurn();
     }
 
 
@@ -224,8 +225,10 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(target))
             return false;
 
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
 
-        return GlobalPosition.DistanceTo(target.GlobalPosition) <= AttackRange;
+        return _turnManager.TileDistance(myCell, targetCell) <= AttackRange;
     }
 
 
@@ -265,6 +268,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
     }
+    
 
 
 
@@ -307,8 +311,6 @@ public partial class Enemy : CharacterBody2D, IHealth
     private void EndTurn()
     {
         _isTakingTurn = false;
-
-        _hasMovedAtLeastOneFrame = false;
 
         Velocity = Vector2.Zero;
 

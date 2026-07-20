@@ -1,0 +1,90 @@
+[gd_scene load_steps=12 format=3 uid="uid://iua0l5tdn75t"]
+
+[ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="1_3psbe"]
+[ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="2_5vha7"]
+[ext_resource type="PackedScene" uid="uid://dr4qbspcnyn6p" path="res://prefabs/Discard.tscn" id="3_l0s8x"]
+[ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="4_sfuxp"]
+[ext_resource type="PackedScene" uid="uid://budqpbjl0ncgm" path="res://prefabs/TurnManager.tscn" id="5_mtppg"]
+[ext_resource type="PackedScene" uid="uid://cp810nuhfua1l" path="res://prefabs/EndTurnButton.tscn" id="6_acl6j"]
+[ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="7_0y256"]
+[ext_resource type="PackedScene" uid="uid://ciwyjb20oblvq" path="res://prefabs/Board.tscn" id="8_mb4wi"]
+[ext_resource type="PackedScene" uid="uid://dules16lpku10" path="res://prefabs/Enemy.tscn" id="9_7diid"]
+[ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="10_py7uk"]
+
+[sub_resource type="NavigationPolygon" id="NavigationPolygon_4rfav"]
+vertices = PackedVector2Array(510.68, -21, -1, 235, -510.68, -21, -1, -275)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+outlines = Array[PackedVector2Array]([PackedVector2Array(-0.99939, -275, -510.683, -21, -0.99939, 235, 510.683, -21)])
+agent_radius = 0.0
+
+[node name="Proto" type="Node2D"]
+scale = Vector2(1.00062, 1)
+
+[node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("1_3psbe")]
+position = Vector2(1037, 854)
+cards = []
+
+[node name="Mouse" parent="." instance=ExtResource("2_5vha7")]
+position = Vector2(4, 5)
+
+[node name="Discard" parent="." instance=ExtResource("3_l0s8x")]
+position = Vector2(46, 980)
+
+[node name="EnergyManager" parent="." instance=ExtResource("4_sfuxp")]
+position = Vector2(993, 73)
+scale = Vector2(2, 2)
+
+[node name="TurnManager" parent="." instance=ExtResource("5_mtppg")]
+position = Vector2(965, 1204)
+energyPlayLimit = 1
+
+[node name="EndTurnButton" parent="." instance=ExtResource("6_acl6j")]
+offset_left = 1283.2
+offset_top = 27.0
+offset_right = 1389.2
+offset_bottom = 68.0
+scale = Vector2(1.53039, 2.25578)
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(961, 541)
+
+[node name="Playzone" parent="." instance=ExtResource("7_0y256")]
+visible = false
+position = Vector2(991, 168.999)
+scale = Vector2(5.05943, 2.27162)
+
+[node name="Board" parent="." instance=ExtResource("8_mb4wi")]
+z_index = -1
+position = Vector2(997.382, 446)
+
+[node name="Nav" type="NavigationRegion2D" parent="Board"]
+visible = false
+navigation_polygon = SubResource("NavigationPolygon_4rfav")
+
+[node name="Enemy" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(483.7, -19)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy2" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(449.721, -2)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy3" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(415.742, 13)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy4" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(419.74, -21)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy5" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(417.741, -50)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy6" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(450.721, -34)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="PlayerCore" parent="Board" instance=ExtResource("10_py7uk")]
+position = Vector2(-479.703, -17)
+scale = Vector2(1.04922, 1.37884)
