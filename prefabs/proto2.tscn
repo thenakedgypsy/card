@@ -55,7 +55,7 @@ scale = Vector2(5.05943, 2.27162)
 
 [node name="Board" parent="." instance=ExtResource("8_mb4wi")]
 z_index = -1
-position = Vector2(1016.37, 581)
+position = Vector2(997.382, 446)
 
 [node name="Nav" type="NavigationRegion2D" parent="Board"]
 visible = false
@@ -71,6 +71,18 @@ scale = Vector2(0.730357, 0.7385)
 
 [node name="Enemy3" parent="Board" instance=ExtResource("9_7diid")]
 position = Vector2(415.742, 13)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy4" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(419.74, -21)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy5" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(417.741, -50)
+scale = Vector2(0.730357, 0.7385)
+
+[node name="Enemy6" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(450.721, -34)
 scale = Vector2(0.730357, 0.7385)
 
 [node name="PlayerCore" parent="Board" instance=ExtResource("10_py7uk")]

@@ -48,7 +48,6 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         GD.Print($"[{Name}] TakeTurn START");
 
-
         // 1. Attack player immediately if already in range
         if (IsInRange(playerCore))
         {
@@ -56,7 +55,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             EndTurn();
             return;
         }
-
 
         // 2. Check if player is reachable
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
@@ -66,27 +64,35 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         _playerPathBlocked = pathToPlayer == null || pathToPlayer.Count == 0;
 
-
-        // 3. If blocked, move toward nearest summon
+        // 3. If blocked, move toward the summon blocking the route
         if (_playerPathBlocked || AttacksSummons)
         {
-            Node2D blockingSummon = GetNearestSummon();
+            Node2D targetSummon = null;
 
-            if (blockingSummon != null)
+            if (_playerPathBlocked)
             {
-                if (IsInRange(blockingSummon))
+                targetSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
+            }
+            
+            // Fallback just in case no route block was found
+            if (targetSummon == null)
+            {
+                targetSummon = GetNearestSummon();
+            }
+
+            if (targetSummon != null)
+            {
+                if (IsInRange(targetSummon))
                 {
-                    Attack(blockingSummon);
+                    Attack(targetSummon);
                     EndTurn();
                     return;
                 }
 
-
-                if (TrySetTarget(blockingSummon))
+                if (TrySetTarget(targetSummon))
                     return;
             }
         }
-
 
         // 4. Otherwise move toward player
         if (!_playerPathBlocked)
@@ -119,6 +125,8 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         return false;
     }
+
+    
 
 
     private void BeginMoveAlong(List<Vector2I> path)
@@ -198,37 +206,14 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         Velocity = Vector2.Zero;
 
-        /*
-         * If allowed, attack any summon nearby.
-         */
-        if (AttacksSummons)
+        // Since _target is explicitly set to the blocking summon (or player) in TakeTurn,
+        // we can simply check if we are in range of our assigned target.
+        if (_target != null && IsInRange(_target))
         {
-            Node2D summon = GetNearestSummon();
-
-            if (summon != null && IsInRange(summon))
-            {
-                Attack(summon);
-                EndTurn();
-                return;
-            }
+            Attack(_target);
+            EndTurn();
+            return;
         }
-
-        /*
-         * Otherwise only attack summons when they blocked
-         * access to the player.
-         */
-        else if (_playerPathBlocked)
-        {
-            Node2D blockingSummon = GetNearestSummon();
-
-            if (blockingSummon != null && IsInRange(blockingSummon))
-            {
-                Attack(blockingSummon);
-                EndTurn();
-                return;
-            }
-        }
-
 
         EndTurn();
     }
@@ -283,6 +268,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
     }
+    
 
 
 

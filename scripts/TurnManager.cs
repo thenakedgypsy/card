@@ -34,7 +34,7 @@ public partial class TurnManager : Node
     private int _summonsStarted = 0;
     private int _summonsScheduled = 0;
 
-    private TileMapLayer _board;
+    private Board _board;
     private AStarGrid2D _astarGrid;
 
 
@@ -91,6 +91,8 @@ public partial class TurnManager : Node
         //    card.Generate("energy_neutral", Card.Location.Hand);
         //}
     }
+
+
 
     public void BeginPlayerTurn()
     {
@@ -200,7 +202,7 @@ public partial class TurnManager : Node
     public async void BeginSummonTurn()
     {
         State = GameState.SummonTurn;
-
+        RebakeNav();
         var summons = GetTree().GetNodesInGroup("Summons");
         var summonList = new List<Summon>();
         _summonsActing = 0;
@@ -246,42 +248,57 @@ public partial class TurnManager : Node
 
     private void BuildGrid()
     {
-        _board = GetTree().CurrentScene.GetNode<TileMapLayer>("Board");
+        _board = GetTree().CurrentScene.GetNode<Board>("Board") as Board;
 
-            _astarGrid = new AStarGrid2D();
-
-            // Adjust the starting point to -12, and increase the size to cover the span.
-            // If your range is -12 to 6 (X), the width is 18 (6 - (-12)).
-            // Adjust these numbers until they encompass your entire map.
-            _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
-
-            _astarGrid.CellSize = new Vector2(64, 32);
-            _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
-            _astarGrid.Update();
+        _astarGrid = new AStarGrid2D();
+        // Adjust the starting point to -12, and increase the size to cover the span.
+        // If your range is -12 to 6 (X), the width is 18 (6 - (-12)).
+        // Adjust these numbers until they encompass your entire map.
+        _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
+        _astarGrid.CellSize = new Vector2(64, 32);
+        _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
+        _astarGrid.Update();
     }
+    
     public void RebakeNav()
-    {
-        if (_astarGrid == null)
         {
-            BuildGrid();
-        }
-        else
-        {
-            _astarGrid.Region = _board.GetUsedRect();
-            _astarGrid.Update();
-        }
-
-        var summons = GetTree().GetNodesInGroup("Summons");
-        foreach (Node node in summons)
-        {
-            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            if (_astarGrid == null)
             {
-                Vector2I cell = WorldToCell(summon.GlobalPosition);
-
-                if (_astarGrid.IsInBoundsv(cell))
-                    _astarGrid.SetPointSolid(cell, true);
+                BuildGrid();
             }
-        }
+            else
+            {
+                _astarGrid.Region = _board.GetUsedRect();
+                _astarGrid.Update();
+            }
+
+            // Iterate through all cells in the grid region to check walkability
+            Rect2I region = _astarGrid.Region;
+            for (int x = region.Position.X; x < region.End.X; x++)
+            {
+                for (int y = region.Position.Y; y < region.End.Y; y++)
+                {
+                    Vector2I cell = new Vector2I(x, y);
+
+                    // If the tile is NOT walkable on the board, mark it solid in the AStarGrid
+                    if (!_board.IsCellWalkable(cell))
+                    {
+                        _astarGrid.SetPointSolid(cell, true);
+                    }
+                }
+            }
+
+            var summons = GetTree().GetNodesInGroup("Summons");
+            foreach (Node node in summons)
+            {
+                if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+                {
+                    Vector2I cell = WorldToCell(summon.GlobalPosition);
+
+                    if (_astarGrid.IsInBoundsv(cell))
+                        _astarGrid.SetPointSolid(cell, true);
+                }
+            }
     }
 
     public Vector2I WorldToCell(Vector2 worldPosition)
@@ -310,13 +327,21 @@ public partial class TurnManager : Node
             return null;
         }
 
-        if (_astarGrid.IsPointSolid(to))
+        // 1. Remember if the destination is solid and temporarily disable it
+        bool wasTargetSolid = _astarGrid.IsPointSolid(to);
+        if (wasTargetSolid)
         {
-            GD.PrintErr($"Pathfinding failed: End {to} is solid. Grid Region: {_astarGrid.Region}");
-            return null;
+            _astarGrid.SetPointSolid(to, false);
         }
 
+        // 2. Calculate the path
         Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
+
+        // 3. Restore the destination's solid state so other calculations aren't messed up
+        if (wasTargetSolid)
+        {
+            _astarGrid.SetPointSolid(to, true);
+        }
 
         if (pathArray.Count <= 1)
             return null;
@@ -324,5 +349,66 @@ public partial class TurnManager : Node
         var path = new List<Vector2I>(pathArray);
         path.RemoveAt(0); // drop the starting cell, keep only steps to move through
         return path;
+    }
+
+    public void ClearCell(Vector2 worldPosition)
+    {
+        if (_astarGrid == null) return;
+        
+        Vector2I cell = WorldToCell(worldPosition);
+        
+        if (_astarGrid.IsInBoundsv(cell))
+        {
+            _astarGrid.SetPointSolid(cell, false);
+        }
+    }
+
+    public Node2D GetFirstBlockingSummon(Vector2I from, Vector2I to)
+    {
+        if (_astarGrid == null) return null;
+
+        var summons = GetTree().GetNodesInGroup("Summons");
+        
+        // 1. Temporarily make summons walkable to find the ideal route
+        foreach (Node node in summons)
+        {
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            {
+                Vector2I cell = WorldToCell(summon.GlobalPosition);
+                if (_astarGrid.IsInBoundsv(cell))
+                    _astarGrid.SetPointSolid(cell, false);
+            }
+        }
+
+        // 2. Get the path ignoring summons
+        Godot.Collections.Array<Vector2I> idealPath = _astarGrid.GetIdPath(from, to);
+
+        // 3. Restore summon collisions
+        foreach (Node node in summons)
+        {
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            {
+                Vector2I cell = WorldToCell(summon.GlobalPosition);
+                if (_astarGrid.IsInBoundsv(cell))
+                    _astarGrid.SetPointSolid(cell, true);
+            }
+        }
+
+        // 4. Find the first summon that sits on this ideal path
+        foreach (Vector2I cell in idealPath)
+        {
+            foreach (Node node in summons)
+            {
+                if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+                {
+                    if (WorldToCell(summon.GlobalPosition) == cell)
+                    {
+                        return summon;
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 }

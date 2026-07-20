@@ -20,10 +20,12 @@ public partial class Summon : Node2D, IHealth
 	private Line2D _line;
 
 	private int _drawLineRequestId = 0;
+	private TurnManager _turnManager;
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
+		_turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 		_sprite = GetNode<Sprite2D>("Sprite2D");
     	_healthBar = GetNode<HealthBar>("HealthBar");
 		_line = GetNodeOrNull<Line2D>("Line2D");
@@ -178,7 +180,8 @@ public partial class Summon : Node2D, IHealth
 	    if (CurrentHealth <= 0)
 	    {
 	        GD.Print("IS DESTROYED");
-	
+
+			_turnManager.ClearCell(GlobalPosition);
 	        // Prevent double-death logic
 	        SetProcess(false);
 	        SetPhysicsProcess(false);
