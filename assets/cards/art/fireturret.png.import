@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ddobu35utvakl"
-path="res://.godot/imported/windturret.png-4cab00f747bb723b8b7890bac8a2c265.ctex"
+uid="uid://ckplwycguxqie"
+path="res://.godot/imported/fireturret.png-30e6e48a73b3257646bdcfb402e9a8c3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/summons/windturret.png"
-dest_files=["res://.godot/imported/windturret.png-4cab00f747bb723b8b7890bac8a2c265.ctex"]
+source_file="res://assets/cards/art/fireturret.png"
+dest_files=["res://.godot/imported/fireturret.png-30e6e48a73b3257646bdcfb402e9a8c3.ctex"]
 
 [params]
 

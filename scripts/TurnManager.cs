@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 
 public partial class TurnManager : Node
@@ -22,9 +23,14 @@ public partial class TurnManager : Node
     private Hand _hand;
 
     [Export] private float enemyTurnDelay = 1f;
+    [Export] private float actionSpacingDelay = 0.3f;
 
     private int _enemiesActing = 0;
     private int _summonsActing = 0;
+    private int _enemiesStarted = 0;
+    private int _enemiesScheduled = 0;
+    private int _summonsStarted = 0;
+    private int _summonsScheduled = 0;
     
 
     public override void _Ready()
@@ -61,7 +67,11 @@ public partial class TurnManager : Node
 		else if (num < 46)
 		{
 			card.Generate("blockOfIce", Card.Location.Hand);
-		}        		
+		}
+        else if (num < 69) //nice
+		{
+			card.Generate("fireturret", Card.Location.Hand);
+		}      		
 		else if (num < 90)
 		{
 			card.Generate("windturret", Card.Location.Hand);
@@ -109,21 +119,39 @@ public partial class TurnManager : Node
         _playercore = GetParent().GetNode<Node2D>("Board/Nav/PlayerCore");
 
         var enemies = GetTree().GetNodesInGroup("Enemies");
+        var enemyList = new List<Enemy>();
         _enemiesActing = 0;
+        _enemiesStarted = 0;
+        _enemiesScheduled = 0;
 
         foreach (Node node in enemies)
         {
             Enemy enemy = node as Enemy;
             if (enemy == null) continue;
 
-            _enemiesActing++;
-            enemy.TurnFinished += OnEnemyFinishedTurn;
-            enemy.TakeTurn(_playercore);
+            enemyList.Add(enemy);
         }
 
-        if (_enemiesActing == 0)
+        _enemiesScheduled = enemyList.Count;
+
+        if (_enemiesScheduled == 0)
         {
             BeginPlayerTurn();
+            return;
+        }
+
+        for (int i = 0; i < enemyList.Count; i++)
+        {
+            if (i > 0)
+            {
+                await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
+            }
+
+            Enemy enemy = enemyList[i];
+            _enemiesActing++;
+            _enemiesStarted++;
+            enemy.TurnFinished += OnEnemyFinishedTurn;
+            enemy.TakeTurn(_playercore);
         }
     }
 
@@ -136,7 +164,7 @@ public partial class TurnManager : Node
 
         _enemiesActing--;
 
-        if (_enemiesActing <= 0)
+        if (_enemiesActing <= 0 && _enemiesStarted >= _enemiesScheduled)
         {
             BeginPlayerTurn();
         }
@@ -151,18 +179,21 @@ public partial class TurnManager : Node
 
         _summonsActing--;
 
-        if (_summonsActing <= 0)
+        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled)
         {
             BeginEnemyTurn();
         }
     }
 
-    public void BeginSummonTurn()
+    public async void BeginSummonTurn()
     {
         State = GameState.SummonTurn;
 
         var summons = GetTree().GetNodesInGroup("Summons");
+        var summonList = new List<Summon>();
         _summonsActing = 0;
+        _summonsStarted = 0;
+        _summonsScheduled = 0;
 
         foreach (Node node in summons)
         {
@@ -170,14 +201,29 @@ public partial class TurnManager : Node
             if (summon == null)
                 continue;
 
-            _summonsActing++;
-            summon.TurnFinished += OnSummonFinishedTurn;
-            summon.TakeTurn();
+            summonList.Add(summon);
         }
 
-        if (_summonsActing == 0)
+        _summonsScheduled = summonList.Count;
+
+        if (_summonsScheduled == 0)
         {
             BeginEnemyTurn();
+            return;
+        }
+
+        for (int i = 0; i < summonList.Count; i++)
+        {
+            if (i > 0)
+            {
+                await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
+            }
+
+            Summon summon = summonList[i];
+            _summonsActing++;
+            _summonsStarted++;
+            summon.TurnFinished += OnSummonFinishedTurn;
+            summon.TakeTurn();
         }
     }
 

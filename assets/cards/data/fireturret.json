@@ -1,0 +1,13 @@
+{
+  "type": "Summon",
+  "cost": 3,
+  "element": "Fire",
+  "effectData": 
+  {
+    "effectType": "Summon",
+    "health": 30,
+    "damage": 10,
+    "range": 250,
+    "attacksEnemies": true
+  }
+}

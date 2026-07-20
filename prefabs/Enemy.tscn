@@ -19,10 +19,11 @@ AttackDamage = 5
 scale = Vector2(0.676607, 1.46738)
 shape = SubResource("CircleShape2D_s5750")
 disabled = true
+one_way_collision = true
 
 [node name="NavigationAgent2D" type="NavigationAgent2D" parent="."]
 avoidance_enabled = true
-radius = 45.0
+radius = 73.11
 time_horizon_obstacles = 0.35
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
