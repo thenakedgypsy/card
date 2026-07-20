@@ -77,9 +77,9 @@ public partial class SummonSpawner : Node2D
     public void Place()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/Summon.tscn");
-        Node2D nav = GetTree().CurrentScene.GetNode<Node2D>("Board/Nav");
+        Node2D board = GetTree().CurrentScene.GetNode<Node2D>("Board");
         Summon summon = scene.Instantiate() as Summon;
-        nav.AddChild(summon);
+        board.AddChild(summon);
         summon.Generate(_element, _data, _summonID);
 
         Vector2I cell = TurnManager.Instance.WorldToCell(GlobalPosition);

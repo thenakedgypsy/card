@@ -73,22 +73,23 @@ public partial class TurnManager : Node
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else if (num < 46)
+		else
 		{
 			card.Generate("blockOfIce", Card.Location.Hand);
 		}
-        else if (num < 69) //nice
-		{
-			card.Generate("fireturret", Card.Location.Hand);
-		}      		
-		else if (num < 90)
-		{
-			card.Generate("windturret", Card.Location.Hand);
-		}
-        else if (num < 101)
-        {
-            card.Generate("energy_neutral", Card.Location.Hand);
-        }
+
+        //else if (num < 69) //nice
+		//{
+		//	card.Generate("fireturret", Card.Location.Hand);
+		//}      		
+		//else if (num < 90)
+		//{
+		//	card.Generate("windturret", Card.Location.Hand);
+		//}
+        //else if (num < 101)
+        //{
+        //    card.Generate("energy_neutral", Card.Location.Hand);
+        //}
     }
 
     public void BeginPlayerTurn()
@@ -125,7 +126,7 @@ public partial class TurnManager : Node
         RebakeNav();
 
         State = GameState.EnemyTurn;
-        _playercore = GetParent().GetNode<Node2D>("Board/Nav/PlayerCore");
+        _playercore = GetParent().GetNode<Node2D>("Board/PlayerCore");
 
         var enemies = GetTree().GetNodesInGroup("Enemies");
         var enemyList = new List<Enemy>();

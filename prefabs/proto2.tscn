@@ -54,23 +54,25 @@ position = Vector2(991, 168.999)
 scale = Vector2(5.05943, 2.27162)
 
 [node name="Board" parent="." instance=ExtResource("8_mb4wi")]
+z_index = -1
 position = Vector2(1016.37, 581)
 
 [node name="Nav" type="NavigationRegion2D" parent="Board"]
+visible = false
 navigation_polygon = SubResource("NavigationPolygon_4rfav")
 
-[node name="Enemy" parent="Board/Nav" instance=ExtResource("9_7diid")]
-position = Vector2(479.703, -26)
+[node name="Enemy" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(483.7, -19)
 scale = Vector2(0.730357, 0.7385)
 
-[node name="Enemy2" parent="Board/Nav" instance=ExtResource("9_7diid")]
-position = Vector2(445.724, -9)
+[node name="Enemy2" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(449.721, -2)
 scale = Vector2(0.730357, 0.7385)
 
-[node name="Enemy3" parent="Board/Nav" instance=ExtResource("9_7diid")]
-position = Vector2(411.745, 6)
+[node name="Enemy3" parent="Board" instance=ExtResource("9_7diid")]
+position = Vector2(415.742, 13)
 scale = Vector2(0.730357, 0.7385)
 
-[node name="PlayerCore" parent="Board/Nav" instance=ExtResource("10_py7uk")]
-position = Vector2(-474.706, -22)
+[node name="PlayerCore" parent="Board" instance=ExtResource("10_py7uk")]
+position = Vector2(-479.703, -17)
 scale = Vector2(1.04922, 1.37884)

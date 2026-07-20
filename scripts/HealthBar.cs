@@ -26,6 +26,7 @@ public partial class HealthBar : TextureProgressBar
 		{
 			GD.PrintErr("HealthBar parent does not implement IHealth");
 		}
+		Visible = false;
 	}
 
 	public override void _Process(double delta)
@@ -35,5 +36,10 @@ public partial class HealthBar : TextureProgressBar
 
 		MaxValue = healthTarget.GetMaxHealth();
 		Value = healthTarget.GetCurrentHealth();
+
+		if (Value < MaxValue && !Visible)
+		{
+			Visible = true;
+		}
 	}
 }
