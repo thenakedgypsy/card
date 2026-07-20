@@ -9,30 +9,22 @@ public partial class Summon : Node2D, IHealth
 
 	[Export] public bool AttacksEnemies = false;
 	[Export] public int AttackDamage = 1;
-	[Export] public float AttackRange = 100f;
+	[Export] public int AttackRange = 2; // tiles
 
 	public int Health;
 	public int CurrentHealth;
 	public int Damage;
 	public Card.Element Element;
 	private Sprite2D _sprite;
-	private NavigationObstacle2D _obstacle;
 	private HealthBar _healthBar;
 	private Line2D _line;
 
 	private int _drawLineRequestId = 0;
 
-	[Export(PropertyHint.Range, "0.0,1.0")]
-	public float NavigationSectionStart = 0.4f;
-
-	[Export(PropertyHint.Range, "0.0,1.0")]
-	public float NavigationSectionEnd = 0.6f;
-
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_sprite = GetNode<Sprite2D>("Sprite2D");
-		_obstacle = GetNode<NavigationObstacle2D>("NavigationObstacle2D");
     	_healthBar = GetNode<HealthBar>("HealthBar");
 		_line = GetNodeOrNull<Line2D>("Line2D");
 		if (_line == null)
@@ -101,14 +93,18 @@ public partial class Summon : Node2D, IHealth
 		}
 
 		Enemy nearestEnemy = null;
-		float minDistance = float.MaxValue;
+		int minDistance = int.MaxValue;
+
+		Vector2I myCell = TurnManager.Instance.WorldToCell(GlobalPosition);
 
 		var enemies = GetTree().GetNodesInGroup("Enemies");
 		foreach (Node node in enemies)
 		{
 			if (node is Enemy enemy && GodotObject.IsInstanceValid(enemy))
 			{
-				float dist = GlobalPosition.DistanceTo(enemy.GlobalPosition);
+				Vector2I enemyCell = TurnManager.Instance.WorldToCell(enemy.GlobalPosition);
+				int dist = TurnManager.Instance.TileDistance(myCell, enemyCell);
+
 				if (dist < minDistance)
 				{
 					minDistance = dist;
@@ -117,7 +113,7 @@ public partial class Summon : Node2D, IHealth
 			}
 		}
 
-		if (nearestEnemy != null && GlobalPosition.DistanceTo(nearestEnemy.GlobalPosition) <= AttackRange)
+		if (nearestEnemy != null && minDistance <= AttackRange)
 		{
 			Attack(nearestEnemy);
 		}
@@ -159,7 +155,7 @@ public partial class Summon : Node2D, IHealth
 		Health = data["health"].ToString().ToInt();
 		CurrentHealth = Health;
 		AttackDamage = data["damage"].ToString().ToInt();
-		AttackRange = data["range"].ToString().ToFloat();
+		AttackRange = data["range"].ToString().ToInt();
 		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
 		Name = summonID;	
 
@@ -221,53 +217,5 @@ public partial class Summon : Node2D, IHealth
     	//
     	const float padding = 4f;
     	_healthBar.Position = new Vector2(-barSize.X * 0.5f, -(height * 0.5f) - padding - barSize.Y);
-
-    	//
-    	// Navigation obstacle
-    	//
-		float radius = Mathf.Max(spriteSize.X, spriteSize.Y) * 0.45f;
-		//_obstacle.Radius = radius;
-		UpdateNavigationObstacle();
-	}
-
-	private void UpdateNavigationObstacle()
-	{
-	    if (_sprite.Texture == null)
-	        return;
-
-	    Image image = _sprite.Texture.GetImage();
-
-	    List<Vector2> points = new();
-
-	    const int step = 2;
-
-	    int startY = (int)(image.GetHeight() * NavigationSectionStart);
-	    int endY = (int)(image.GetHeight() * NavigationSectionEnd);
-
-	    for (int y = startY; y < endY; y += step)
-	    {
-	        for (int x = 0; x < image.GetWidth(); x += step)
-	        {
-	            if (image.GetPixel(x, y).A > 0.1f)
-	                points.Add(new Vector2(x, y));
-	        }
-	    }
-
-	    if (points.Count < 3)
-	        return;
-
-	    Vector2[] hull = Geometry2D.ConvexHull(points.ToArray());
-
-	    Vector2 offset = new Vector2(
-	        image.GetSize().X / 2.0f,
-	        image.GetSize().Y / 2.0f
-	    );
-
-	    for (int i = 0; i < hull.Length; i++)
-	    {
-	        hull[i] = (hull[i] - offset) * _sprite.Scale;
-	    }
-
-	    _obstacle.Vertices = hull;
 	}
 }

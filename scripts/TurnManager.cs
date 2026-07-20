@@ -13,6 +13,8 @@ public partial class TurnManager : Node
         CleanupStep     
     }
 
+    public static TurnManager Instance { get; private set; }
+
     public GameState State { get; private set; }
 
     private int energyPlayedThisTurn;
@@ -22,8 +24,8 @@ public partial class TurnManager : Node
     private Node2D _playercore;
     private Hand _hand;
 
-    [Export] private float enemyTurnDelay = 1f;
-    [Export] private float actionSpacingDelay = 0.3f;
+    [Export] private float enemyTurnDelay = 0.75f;
+    [Export] private float actionSpacingDelay = 0.25f;
 
     private int _enemiesActing = 0;
     private int _summonsActing = 0;
@@ -31,12 +33,19 @@ public partial class TurnManager : Node
     private int _enemiesScheduled = 0;
     private int _summonsStarted = 0;
     private int _summonsScheduled = 0;
-    
+
+    private TileMapLayer _board;
+    private AStarGrid2D _astarGrid;
+
 
     public override void _Ready()
     {
+        Instance = this;
+
         _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
         _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
+
+        BuildGrid();
 
         Setup();
     }
@@ -140,6 +149,8 @@ public partial class TurnManager : Node
             return;
         }
 
+        enemyList.Sort((a, b) => a.GetRouteDistanceTo(_playercore).CompareTo(b.GetRouteDistanceTo(_playercore)));
+
         for (int i = 0; i < enemyList.Count; i++)
         {
             if (i > 0)
@@ -232,12 +243,85 @@ public partial class TurnManager : Node
         return energyPlayLimit;
     }
 
+    private void BuildGrid()
+    {
+        _board = GetTree().CurrentScene.GetNode<TileMapLayer>("Board");
+
+            _astarGrid = new AStarGrid2D();
+
+            // Adjust the starting point to -12, and increase the size to cover the span.
+            // If your range is -12 to 6 (X), the width is 18 (6 - (-12)).
+            // Adjust these numbers until they encompass your entire map.
+            _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
+
+            _astarGrid.CellSize = new Vector2(64, 32);
+            _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
+            _astarGrid.Update();
+    }
     public void RebakeNav()
     {
-        NavigationRegion2D nav = GetTree().CurrentScene.GetNode<NavigationRegion2D>("Board/Nav");
-        if (!nav.IsBaking())
+        if (_astarGrid == null)
         {
-        nav.BakeNavigationPolygon();
+            BuildGrid();
         }
+        else
+        {
+            _astarGrid.Region = _board.GetUsedRect();
+            _astarGrid.Update();
+        }
+
+        var summons = GetTree().GetNodesInGroup("Summons");
+        foreach (Node node in summons)
+        {
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            {
+                Vector2I cell = WorldToCell(summon.GlobalPosition);
+
+                if (_astarGrid.IsInBoundsv(cell))
+                    _astarGrid.SetPointSolid(cell, true);
+            }
+        }
+    }
+
+    public Vector2I WorldToCell(Vector2 worldPosition)
+    {
+        return _board.LocalToMap(_board.ToLocal(worldPosition));
+    }
+
+    public Vector2 CellToWorld(Vector2I cell)
+    {
+        return _board.ToGlobal(_board.MapToLocal(cell));
+    }
+
+    public int TileDistance(Vector2I a, Vector2I b)
+    {
+        return Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
+    }
+
+    public List<Vector2I> FindPath(Vector2I from, Vector2I to)
+    {
+        if (_astarGrid == null)
+            return null;
+
+        if (!_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to))
+        {
+            GD.PrintErr($"Pathfinding failed: Start {from} or End {to} is out of bounds. Grid Region: {_astarGrid.Region}");
+            return null;
+        }
+
+        if (_astarGrid.IsPointSolid(to))
+        {
+            GD.PrintErr($"Pathfinding failed: End {to} is solid. Grid Region: {_astarGrid.Region}");
+            return null;
+        }
+
+        Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
+
+        if (pathArray.Count <= 1)
+            return null;
+
+        var path = new List<Vector2I>(pathArray);
+        path.RemoveAt(0); // drop the starting cell, keep only steps to move through
+        return path;
     }
 }

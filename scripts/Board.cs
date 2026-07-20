@@ -1,7 +1,7 @@
 using Godot;
 using System;
 
-public partial class Board : Sprite2D
+public partial class Board : TileMapLayer
 {
 	private Mouse _mouse;
 	// Called when the node enters the scene tree for the first time.

@@ -11,11 +11,11 @@ script = ExtResource("1_gkhtc")
 Health = 420.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(5.96046e-08, 15.9491)
+position = Vector2(-9.23671, -44.1247)
 texture = ExtResource("2_dr5yr")
 
 [node name="HealthBar" parent="." instance=ExtResource("3_d16v3")]
-offset_left = -67.0
-offset_top = -51.0
-offset_right = -3.0
-offset_bottom = -39.0
+offset_left = -76.2367
+offset_top = -111.074
+offset_right = -12.2367
+offset_bottom = -99.0738
