@@ -206,19 +206,34 @@ public partial class Summon : Node2D, IHealth
 
 	private void UpdateVisualBounds()
 	{
-    	if (_sprite.Texture == null)
-    	    return;
-
-    	// Actual displayed size
-    	Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
-    	Vector2 barSize = _healthBar.Size * _healthBar.Scale;
-
-    	float height = spriteSize.Y;
-
-    	//
-    	// Health bar
-    	//
-    	const float padding = 4f;
-    	_healthBar.Position = new Vector2(-barSize.X * 0.5f, -(height * 0.5f) - padding - barSize.Y);
+	    if (_sprite.Texture == null)
+	        return;
+	
+	    // Actual displayed size
+	    Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
+	
+	    // 1. Calculate correct offset so the bottom 16px sit below origin
+	    if (_sprite.Centered)
+	    {
+	        _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+	    }
+	    else
+	    {
+	        _sprite.Offset = new Vector2(0, 16f - spriteSize.Y);
+	    }
+	
+	    // 2. Position HealthBar dynamically relative to top of the sprite
+	    if (_healthBar != null)
+	    {
+	        Vector2 barSize = _healthBar.Size * _healthBar.Scale;
+	        const float padding = 4f;
+	
+	        // Find the top edge of the sprite relative to Node2D origin
+	        float topOfSprite = _sprite.Centered 
+	            ? _sprite.Offset.Y - (spriteSize.Y * 0.5f) 
+	            : _sprite.Offset.Y;
+	
+	        _healthBar.Position = new Vector2(-barSize.X * 0.5f, topOfSprite - padding - barSize.Y);
+	    }
 	}
 }

@@ -12,7 +12,7 @@ z_index = 1
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_dng6c")
-Speed = 200.0
+Speed = 100.0
 AttackDamage = 5
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
@@ -28,8 +28,6 @@ radius = 73.11
 time_horizon_obstacles = 0.35
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-z_as_relative = false
-y_sort_enabled = true
 position = Vector2(0, -31)
 scale = Vector2(0.661566, 1.32829)
 texture = ExtResource("2_r8a2w")

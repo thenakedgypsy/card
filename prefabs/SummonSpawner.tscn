@@ -4,9 +4,9 @@
 [ext_resource type="Texture2D" uid="uid://bvxnfo184fgej" path="res://assets/summons/blockOfIce.png" id="2_ieys8"]
 
 [node name="SummonSpawner" type="Node2D"]
+y_sort_enabled = true
 script = ExtResource("1_5me1f")
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
 self_modulate = Color(1, 1, 1, 0.415686)
-position = Vector2(0, -16)
 texture = ExtResource("2_ieys8")

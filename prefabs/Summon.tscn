@@ -6,7 +6,6 @@
 
 [node name="Summon" type="Node2D" groups=["Summons"]]
 z_index = 1
-y_sort_enabled = true
 script = ExtResource("1_ajj2b")
 
 [node name="HealthBar" parent="." instance=ExtResource("2_fpra5")]
@@ -18,12 +17,10 @@ offset_bottom = -66.0
 scale = Vector2(1.22229, 0.945615)
 
 [node name="NavigationObstacle2D" type="NavigationObstacle2D" parent="."]
+visible = false
 position = Vector2(0, -16)
 vertices = PackedVector2Array(-32, -31, 33, -31, 32, 31, -34, 32)
 affect_navigation_mesh = true
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-z_as_relative = false
-y_sort_enabled = true
-position = Vector2(0, -16)
 texture = ExtResource("3_hrqf6")
