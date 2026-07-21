@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Godot;
 
 public partial class TurnManager : Node
@@ -25,7 +26,7 @@ public partial class TurnManager : Node
     private Hand _hand;
 
     [Export] private float enemyTurnDelay = 00.001f;
-    [Export] private float actionSpacingDelay = 0.5f;
+    [Export] private float actionSpacingDelay = 0.02f;
 
     private int _enemiesActing = 0;
     private int _summonsActing = 0;
@@ -127,7 +128,6 @@ public partial class TurnManager : Node
 
         RebakeNav();
 
-        // Register initial enemy positions at start of turn
         _occupiedEnemyCells.Clear();
         var enemies = GetTree().GetNodesInGroup("Enemies");
         var enemyList = new List<Enemy>();
@@ -138,38 +138,67 @@ public partial class TurnManager : Node
             {
                 enemyList.Add(enemy);
                 OccupyCell(WorldToCell(enemy.GlobalPosition));
+                enemy.ResetTurnState();
             }
         }
 
         State = GameState.EnemyTurn;
         _playercore = GetParent().GetNode<Node2D>("Board/PlayerCore");
 
-        _enemiesActing = 0;
-        _enemiesStarted = 0;
-        _enemiesScheduled = enemyList.Count;
-
-        if (_enemiesScheduled == 0)
+        if (enemyList.Count == 0)
         {
             BeginPlayerTurn();
             return;
         }
 
-        // Sort by distance so closest enemies move first
+        // Sort closest to target first so front-line enemies calculate move reservations first
         enemyList.Sort((a, b) => a.GetRouteDistanceTo(_playercore).CompareTo(b.GetRouteDistanceTo(_playercore)));
 
+        // =======================================================
+        // PHASE 1: INSTANT MOVE PLANNING -> CONCURRENT ANIMATION
+        // =======================================================
+        var moveTasks = new List<Task>();
         for (int i = 0; i < enemyList.Count; i++)
         {
-            if (i > 0)
-            {
-                await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
-            }
-
             Enemy enemy = enemyList[i];
-            _enemiesActing++;
-            _enemiesStarted++;
-            enemy.TurnFinished += OnEnemyFinishedTurn;
-            enemy.TakeTurn(_playercore);
+            if (GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
+            {
+                enemy.PlanMove(_playercore); // Calculates path & updates grid instantly
+                // Stagger each enemy start by 0.05s (50ms)
+                float staggerDelay = i * 0.25f; 
+                moveTasks.Add(enemy.AnimateMoveAsync(staggerDelay));
+            }
         }
+        await Task.WhenAll(moveTasks);
+
+        // =======================================================
+        // PHASE 2: ATTACK PHASE
+        // =======================================================
+        foreach (Enemy enemy in enemyList)
+        {
+            if (GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
+            {
+                await enemy.ExecuteAttackPhaseAsync(_playercore);
+            }
+        }
+
+        // =======================================================
+        // PHASE 3: FOLLOW-UP MOVE PLANNING -> CONCURRENT ANIMATION
+        // =======================================================
+        RebakeNav();
+        var followUpTasks = new List<Task>();
+        for (int i = 0; i < enemyList.Count; i++)
+        {
+            Enemy enemy = enemyList[i];
+            if (GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0 && enemy.RemainingMovement > 0)
+            {
+                enemy.PlanMove(_playercore);
+                float staggerDelay = i * 0.05f;
+                followUpTasks.Add(enemy.AnimateMoveAsync(staggerDelay));
+            }
+        }
+        await Task.WhenAll(followUpTasks);
+        BeginPlayerTurn();
     }
 
     private void OnEnemyFinishedTurn(Enemy enemy)
@@ -428,10 +457,12 @@ public partial class TurnManager : Node
         if (_astarGrid == null) return;
         
         Vector2I cell = WorldToCell(worldPosition);
-        
+        GD.Print("CELL TO CLEAR IN BOUNDS: ", _astarGrid.IsInBoundsv(cell));
         if (_astarGrid.IsInBoundsv(cell))
         {
+            GD.Print("cleared");
             _astarGrid.SetPointSolid(cell, false);
+            GD.Print("cleared cell solid?", IsSolidCell(cell));             
         }
     }
 

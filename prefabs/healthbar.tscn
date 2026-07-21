@@ -6,7 +6,7 @@
 [ext_resource type="Script" path="res://scripts/HealthBar.cs" id="4_jyxc7"]
 
 [node name="HealthBar" type="TextureProgressBar"]
-scale = Vector2(2.12382, 1.14226)
+scale = Vector2(1.42354, 0.789575)
 texture_under = ExtResource("1_4r3pl")
 texture_over = ExtResource("2_ge3kc")
 texture_progress = ExtResource("3_gjeoe")

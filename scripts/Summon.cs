@@ -180,8 +180,9 @@ public partial class Summon : Node2D, IHealth
 	    if (CurrentHealth <= 0)
 	    {
 	        GD.Print("IS DESTROYED");
-
+			RemoveFromGroup("Summons");
 			_turnManager.ClearCell(GlobalPosition);
+			
 	        // Prevent double-death logic
 	        SetProcess(false);
 	        SetPhysicsProcess(false);

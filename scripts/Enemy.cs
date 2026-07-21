@@ -22,14 +22,17 @@ public partial class Enemy : CharacterBody2D, IHealth
     [Export] public int AttackRange = 1; // tiles
     [Export] public string SummonGroupName = "Summons";
 
-    private Vector2I? _reservedCell = null;
+    public int RemainingMovement { get; private set; }
+    public bool HasAttackedThisTurn { get; private set; }
 
+    private Vector2I? _reservedCell = null;
     private Node2D _target;
-    private bool _isTakingTurn = false;
     private TurnManager _turnManager;
     private bool _playerPathBlocked = false;
     private Sprite2D _sprite;
     private bool _isHovered;
+
+    private List<Vector2I> _plannedPath = new List<Vector2I>();
 
     public override void _Ready()
     {
@@ -39,208 +42,224 @@ public partial class Enemy : CharacterBody2D, IHealth
         CurrentHealth = Health;
     }
 
-    public void TakeTurn(Node2D playerCore)
+    public void ResetTurnState()
     {
-        _isTakingTurn = true;
-        _target = null;
-        _playerPathBlocked = false;
+        RemainingMovement = MoveDistance;
+        HasAttackedThisTurn = false;
+        _plannedPath.Clear();
+    }
 
-        GD.Print($"[{Name}] TakeTurn START");
+    // --- STEP 1: INSTANT CALCULATIONS & GRID RESERVATIONS ---
 
-        // 1. Attack player immediately if already in range
-        if (IsInRange(playerCore))
-        {
-            Attack(playerCore);
-            EndTurn();
+    public void PlanMove(Node2D playerCore)
+    {
+        _plannedPath.Clear();
+
+        if (RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
-        }
 
-        // 2. Check if player is reachable
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
+        // 1. Target Selection
+        Node2D target = null;
         List<Vector2I> pathToPlayer = _turnManager.FindPath(myCell, playerCell);
-        _playerPathBlocked = pathToPlayer == null || pathToPlayer.Count == 0;
+        _playerPathBlocked = (pathToPlayer == null || pathToPlayer.Count == 0);
 
-        // 3. If blocked, move toward the summon blocking the route
         if (_playerPathBlocked || AttacksSummons)
         {
-            Node2D targetSummon = null;
-
             if (_playerPathBlocked)
             {
-                targetSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
-            }
-            
-            if (targetSummon == null)
-            {
-                targetSummon = GetNearestSummon();
+                target = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
             }
 
-            if (targetSummon != null)
+            if (target == null)
             {
-                if (IsInRange(targetSummon))
-                {
-                    Attack(targetSummon);
-                    EndTurn();
-                    return;
-                }
-
-                if (TrySetTarget(targetSummon))
-                    return;
+                target = GetNearestSummon();
             }
         }
 
-        // 4. Otherwise move toward player
-        if (!_playerPathBlocked)
+        if (target == null && !_playerPathBlocked)
         {
-            _target = playerCore;
-            BeginMoveAlong(pathToPlayer);
-            return;
+            target = playerCore;
         }
 
-        EndTurn();
-    }
+        if (target == null)
+            return;
 
-    private bool TrySetTarget(Node2D target)
-    {
-        if (!GodotObject.IsInstanceValid(target))
-            return false;
-
-        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
-
         List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
 
-        if (path != null && path.Count > 0)
-        {
-            _target = target;
-            BeginMoveAlong(path);
-            return true;
-        }
-
-        return false;
-    }
-
-    // --- BOARD GAME PIECE TWEEN MOVEMENT ---
-
-private async void BeginMoveAlong(List<Vector2I> path)
-{
-    Vector2I startCell = _turnManager.WorldToCell(GlobalPosition);
-    int maxSteps = Mathf.Min(path.Count, MoveDistance);
-    int stepsToTake = 0;
-
-    // 1. Check how many steps along the path are clear
-    for (int i = 0; i < maxSteps; i++)
-    {
-        Vector2I checkCell = path[i];
-
-        // Stop if entering attack range
-        if (_target != null && IsInRangeOfCell(checkCell, _target))
-        {
-            stepsToTake = i + 1;
-            break;
-        }
-
-        // Stop if tile is occupied by another enemy
-        if (_turnManager.IsEnemyOccupied(checkCell))
-        {
-            break;
-        }
-
-        stepsToTake = i + 1;
-    }
-
-    // 2. If blocked on turn start, remain in startCell
-    if (stepsToTake == 0)
-    {
-        HandleEndOfMovement();
-        return;
-    }
-
-    Vector2I destinationCell = path[stepsToTake - 1];
-
-    // 3. Immediately free startCell for trailing enemies & claim destinationCell
-    _turnManager.MoveEnemyCell(startCell, destinationCell);
-    _reservedCell = destinationCell;
-
-    // 4. Perform visual hopping
-    for (int i = 0; i < stepsToTake; i++)
-    {
-        if (CurrentHealth <= 0 || !IsInstanceValid(this))
+        if (path == null || path.Count == 0)
             return;
 
-        Vector2 targetWorldPos = _turnManager.CellToWorld(path[i]);
-        await MoveToTileAsync(targetWorldPos);
+        // 2. Step Calculation
+        int maxSteps = Mathf.Min(path.Count, RemainingMovement);
+        int stepsToTake = 0;
+
+        for (int i = 0; i < maxSteps; i++)
+        {
+            Vector2I checkCell = path[i];
+
+            // Stop if tile is occupied by another enemy (or reserved by an enemy planning before us)
+            if (_turnManager.IsEnemyOccupied(checkCell))
+            {
+                break;
+            }
+
+            // STRICT PROTECTION: Never enter the target's cell itself while it exists!
+            if (checkCell == targetCell)
+            {
+                break;
+            }
+
+            // Stop if reaching 1 tile away (adjacent) from target
+            if (_turnManager.TileDistance(checkCell, targetCell) <= 1)
+            {
+                stepsToTake = i + 1;
+                break;
+            }
+
+            stepsToTake = i + 1;
+        }
+
+        if (stepsToTake == 0)
+            return;
+
+        // 3. Grid Reservation (Instantly updates TurnManager grid memory)
+        _target = target;
+        Vector2I startCell = myCell;
+        Vector2I destinationCell = path[stepsToTake - 1];
+
+        _turnManager.MoveEnemyCell(startCell, destinationCell);
+        _reservedCell = destinationCell;
+
+        // Store tiles to hop along during the animation phase
+        for (int i = 0; i < stepsToTake; i++)
+        {
+            _plannedPath.Add(path[i]);
+        }
+
+        RemainingMovement -= stepsToTake;
     }
 
-    _reservedCell = null;
-    HandleEndOfMovement();
-}
+    // --- STEP 2: PARALLEL VISUAL ANIMATION ---
 
-    private bool IsInRangeOfCell(Vector2I cell, Node2D target)
+    public async Task AnimateMoveAsync(float delay = 0f)
     {
-        if (!GodotObject.IsInstanceValid(target))
-            return false;
+        if (_plannedPath.Count == 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
+            return;
 
-        Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
-        return _turnManager.TileDistance(cell, targetCell) <= AttackRange;
+        // Optional delay to stagger start times across enemies
+        if (delay > 0f)
+        {
+            await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
+
+            // Verify enemy is still alive after delay
+            if (CurrentHealth <= 0 || !IsInstanceValid(this))
+                return;
+        }
+
+        for (int i = 0; i < _plannedPath.Count; i++)
+        {
+            if (CurrentHealth <= 0 || !IsInstanceValid(this))
+                return;
+
+            Vector2 targetWorldPos = _turnManager.CellToWorld(_plannedPath[i]);
+            await MoveToTileAsync(targetWorldPos);
+        }
+
+        _reservedCell = null;
+        _plannedPath.Clear();
     }
 
     private async Task MoveToTileAsync(Vector2 targetPos)
     {
-        // Tween 1: Move Root Node to target cell location
+        if (!GodotObject.IsInstanceValid(this) || CurrentHealth <= 0)
+            return;
+    
         Tween moveTween = CreateTween();
+        if (moveTween == null) return;
+    
         moveTween.TweenProperty(this, "global_position", targetPos, StepDuration)
                  .SetTrans(Tween.TransitionType.Quad)
                  .SetEase(Tween.EaseType.InOut);
-
-        // Tween 2: Lift Sprite Up and Put Down (Parallel Visual Effect)
+    
         Tween hopTween = CreateTween();
-        
-        // Lift up (Peak halfway through movement)
-        hopTween.TweenProperty(_sprite, "position:y", -HopHeight, StepDuration * 0.45f)
-                .SetTrans(Tween.TransitionType.Quad)
-                .SetEase(Tween.EaseType.Out);
-        
-        // Put back down
-        hopTween.TweenProperty(_sprite, "position:y", 0f, StepDuration * 0.55f)
-                .SetTrans(Tween.TransitionType.Quad)
-                .SetEase(Tween.EaseType.In);
-
-        // Wait for physical position and hop to finish
+        if (hopTween != null)
+        {
+            hopTween.TweenProperty(_sprite, "position:y", -HopHeight, StepDuration * 0.45f)
+                    .SetTrans(Tween.TransitionType.Quad)
+                    .SetEase(Tween.EaseType.Out);
+            hopTween.Chain().TweenProperty(_sprite, "position:y", 0f, StepDuration * 0.55f)
+                    .SetTrans(Tween.TransitionType.Quad)
+                    .SetEase(Tween.EaseType.In);
+        }
+    
         await ToSignal(moveTween, Tween.SignalName.Finished);
-        await ToSignal(hopTween, Tween.SignalName.Finished);
-
-        // Reset local Y offset to ensure perfect landing alignment
+    
+        if (!GodotObject.IsInstanceValid(this))
+            return;
+    
+        // Reset local Y offset
         Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
         _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
-
-        // Brief pause resting on space before moving to next space
+    
         if (RestDuration > 0)
         {
             await ToSignal(GetTree().CreateTimer(RestDuration), SceneTreeTimer.SignalName.Timeout);
         }
     }
 
-    private void HandleEndOfMovement()
+    // --- PHASE 2: COMBAT ---
+
+    public async Task ExecuteAttackPhaseAsync(Node2D playerCore)
     {
-        if (CurrentHealth <= 0 || !IsInstanceValid(this))
+        if (HasAttackedThisTurn || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
 
-        Velocity = Vector2.Zero;
+        Node2D attackTarget = GetTargetToAttack(playerCore);
 
-        if (_target != null && IsInRange(_target))
+        if (attackTarget != null)
         {
-            Attack(_target);
-            EndTurn();
-            return;
+            await AttackAsync(attackTarget);
+            HasAttackedThisTurn = true;
         }
-
-        EndTurn();
     }
 
-    // --- COMBAT & UTILITY ---
+    private Node2D GetTargetToAttack(Node2D playerCore)
+    {
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
+
+        if (IsInRange(playerCore))
+            return playerCore;
+
+        Node2D blockingSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
+        if (blockingSummon != null && IsInRange(blockingSummon))
+            return blockingSummon;
+
+        Node2D nearestSummon = GetNearestSummon();
+        if (nearestSummon != null && IsInRange(nearestSummon))
+            return nearestSummon;
+
+        return GetSummonInRange();
+    }
+
+    private async Task AttackAsync(Node2D target)
+    {
+        if (!GodotObject.IsInstanceValid(target))
+            return;
+
+        GD.Print($"[{Name}] ATTACK → '{target.Name}'");
+
+        await FlashYellowAsync();
+
+        if (GodotObject.IsInstanceValid(target) && target.HasMethod("TakeDamage"))
+            target.Call("TakeDamage", AttackDamage);
+    }
+
+    // --- UTILITY & COMBAT HELPERS ---
 
     public int GetRouteDistanceTo(Node2D target)
     {
@@ -264,35 +283,18 @@ private async void BeginMoveAlong(List<Vector2I> path)
         return _turnManager.TileDistance(myCell, targetCell) <= AttackRange;
     }
 
-    private void Attack(Node2D target)
+    private Node2D GetSummonInRange()
     {
-        if (!GodotObject.IsInstanceValid(target))
-            return;
-
-        GD.Print($"[{Name}] ATTACK → '{target.Name}'");
-
-        FlashYellow();
-
-        if (target.HasMethod("TakeDamage"))
-            target.Call("TakeDamage", AttackDamage);
-    }
-
-    public async void FlashYellow()
-    {
-        Color original = _sprite.SelfModulate;
-        Tween tween = CreateTween();
-        tween.TweenProperty(_sprite, "self_modulate", Colors.Orange, 0.25f);
-        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
-        await ToSignal(tween, Tween.SignalName.Finished);
-    }
-
-    public async void FlashRed()
-    {
-        Color original = _sprite.SelfModulate;
-        Tween tween = CreateTween();
-        tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.25f);
-        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
-        await ToSignal(tween, Tween.SignalName.Finished);
+        var summons = GetTree().GetNodesInGroup(SummonGroupName);
+        foreach (Node node in summons)
+        {
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            {
+                if (IsInRange(summon))
+                    return summon;
+            }
+        }
+        return null;
     }
 
     private Node2D GetNearestSummon()
@@ -320,13 +322,22 @@ private async void BeginMoveAlong(List<Vector2I> path)
         return nearest;
     }
 
-    private void EndTurn()
+    public async Task FlashYellowAsync()
     {
-        _isTakingTurn = false;
-        Velocity = Vector2.Zero;
-        _target = null;
+        Color original = _sprite.SelfModulate;
+        Tween tween = CreateTween();
+        tween.TweenProperty(_sprite, "self_modulate", Colors.Orange, 0.25f);
+        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+        await ToSignal(tween, Tween.SignalName.Finished);
+    }
 
-        EmitSignal(SignalName.TurnFinished, this);
+    public async void FlashRed()
+    {
+        Color original = _sprite.SelfModulate;
+        Tween tween = CreateTween();
+        tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.25f);
+        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+        await ToSignal(tween, Tween.SignalName.Finished);
     }
 
     public float GetMaxHealth() => Health;
@@ -343,7 +354,6 @@ private async void BeginMoveAlong(List<Vector2I> path)
         {
             GD.Print($"Enemy {Name} IS DESTROYED");
 
-            // Free whichever cell this enemy was holding/heading toward
             Vector2I cellToFree = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
             _turnManager.FreeCell(cellToFree);
 
