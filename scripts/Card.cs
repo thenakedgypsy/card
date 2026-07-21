@@ -152,7 +152,23 @@ public partial class Card : Node2D
 
         cardName = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
         _title.Text = cardName;
-        _text.Text = textData.ContainsKey("text") ? textData["text"].ToString() : "";
+        
+        string formattedText = textData.ContainsKey("text") ? textData["text"].ToString() : "";
+        
+        // 1. Replace dynamic placeholders from effectData (e.g. {damage})
+        if (data.ContainsKey("effectData"))
+        {
+            var effectDict = data["effectData"].AsGodotDictionary();
+            foreach (var key in effectDict.Keys)
+            {
+                string placeholder = $"{{{key}}}"; // Creates "{damage}", "{health}", etc.
+                string valueStr = effectDict[key].ToString();
+                formattedText = formattedText.Replace(placeholder, valueStr);
+            }
+        }
+           
+        // Assign to RichTextLabel
+        _text.Text = formattedText;
 
         //----- Effect Data -----
 

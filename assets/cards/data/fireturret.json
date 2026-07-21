@@ -7,7 +7,7 @@
     "effectType": "Summon",
     "health": 30,
     "damage": 10,
-    "range": 250,
+    "range": 1,
     "attacksEnemies": true
   }
 }

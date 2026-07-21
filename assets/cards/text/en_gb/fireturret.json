@@ -1,4 +1,4 @@
 {
   "name": "Fire Turret",
-  "text": "Summon a fire turret \n Damage 4\n Health 30\n Range 1"
+  "text": "Summon a fire turret \n Damage: {damage}\n Health: {health}\n Range: {range}"
 }

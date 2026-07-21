@@ -1,4 +1,4 @@
 {
   "name": "Fireball",
-  "text": "Deal 6 damage."
+  "text": "Deal {damage} damage."
 }

@@ -1,4 +1,4 @@
 {
   "name": "Wind Turret",
-  "text": "Summon a wind turret \n Damage 3\n Health 30\n Range 1"
+  "text": "Summon a wind turret \n Damage: {damage}\n Health: {health}\n Range: {range}"
 }

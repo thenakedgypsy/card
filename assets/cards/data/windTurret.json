@@ -4,10 +4,10 @@
   "element": "Wind",
   "effectData": 
   {
-	"effectType": "Summon",
-	"health": 30,
-	"damage": 3,
-	"range": 200,
-	"attacksEnemies": true
+	  "effectType": "Summon",
+	  "health": 30,
+	  "damage": 3,
+	  "range": 4,
+	  "attacksEnemies": true
   }
 }
