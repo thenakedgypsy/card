@@ -29,6 +29,11 @@ public partial class SummonSpawner : Node2D
         {
             Vector2I cell = _turnManager.WorldToCell(GetGlobalMousePosition());
             GlobalPosition = _turnManager.CellToWorld(cell);
+            if (_turnManager.IsSolidCell(cell) && _turnManager.IsEnemyOccupied(cell))
+            {
+                FlashRed();
+            }
+            
             CheckInput();
         }
 
@@ -50,7 +55,7 @@ public partial class SummonSpawner : Node2D
     public bool CheckPlacement()
     {
         Vector2I cell = _turnManager.WorldToCell(GetGlobalMousePosition());
-        if (_board.IsCellWalkable(cell) && !_turnManager.IsSolidCell(cell))
+        if (_board.IsCellWalkable(cell) && !_turnManager.IsSolidCell(cell) && !_turnManager.IsEnemyOccupied(cell))
         {
             return true;
         }

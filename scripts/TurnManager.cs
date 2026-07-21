@@ -36,6 +36,7 @@ public partial class TurnManager : Node
 
     private Board _board;
     private AStarGrid2D _astarGrid;
+    private HashSet<Vector2I> _occupiedEnemyCells = new HashSet<Vector2I>();
 
 
     public override void _Ready()
@@ -126,23 +127,25 @@ public partial class TurnManager : Node
 
         RebakeNav();
 
-        State = GameState.EnemyTurn;
-        _playercore = GetParent().GetNode<Node2D>("Board/PlayerCore");
-
+        // Register initial enemy positions at start of turn
+        _occupiedEnemyCells.Clear();
         var enemies = GetTree().GetNodesInGroup("Enemies");
         var enemyList = new List<Enemy>();
-        _enemiesActing = 0;
-        _enemiesStarted = 0;
-        _enemiesScheduled = 0;
 
         foreach (Node node in enemies)
         {
-            Enemy enemy = node as Enemy;
-            if (enemy == null) continue;
-
-            enemyList.Add(enemy);
+            if (node is Enemy enemy && GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
+            {
+                enemyList.Add(enemy);
+                OccupyCell(WorldToCell(enemy.GlobalPosition));
+            }
         }
 
+        State = GameState.EnemyTurn;
+        _playercore = GetParent().GetNode<Node2D>("Board/PlayerCore");
+
+        _enemiesActing = 0;
+        _enemiesStarted = 0;
         _enemiesScheduled = enemyList.Count;
 
         if (_enemiesScheduled == 0)
@@ -151,6 +154,7 @@ public partial class TurnManager : Node
             return;
         }
 
+        // Sort by distance so closest enemies move first
         enemyList.Sort((a, b) => a.GetRouteDistanceTo(_playercore).CompareTo(b.GetRouteDistanceTo(_playercore)));
 
         for (int i = 0; i < enemyList.Count; i++)
@@ -260,44 +264,58 @@ public partial class TurnManager : Node
     }
     
     public void RebakeNav()
+    {
+        if (_astarGrid == null)
         {
-            if (_astarGrid == null)
-            {
-                BuildGrid();
-            }
-            else
-            {
-                _astarGrid.Region = _board.GetUsedRect();
-                _astarGrid.Update();
-            }
+            BuildGrid();
+        }
+        else
+        {
+            _astarGrid.Region = _board.GetUsedRect();
+            _astarGrid.Update();
+        }
 
-            // Iterate through all cells in the grid region to check walkability
-            Rect2I region = _astarGrid.Region;
-            for (int x = region.Position.X; x < region.End.X; x++)
+        // Iterate through all cells in the grid region to check walkability
+        Rect2I region = _astarGrid.Region;
+        for (int x = region.Position.X; x < region.End.X; x++)
+        {
+            for (int y = region.Position.Y; y < region.End.Y; y++)
             {
-                for (int y = region.Position.Y; y < region.End.Y; y++)
+                Vector2I cell = new Vector2I(x, y);
+
+                // If the tile is NOT walkable on the board, mark it solid in the AStarGrid
+                if (!_board.IsCellWalkable(cell))
                 {
-                    Vector2I cell = new Vector2I(x, y);
-
-                    // If the tile is NOT walkable on the board, mark it solid in the AStarGrid
-                    if (!_board.IsCellWalkable(cell))
-                    {
-                        _astarGrid.SetPointSolid(cell, true);
-                    }
+                    _astarGrid.SetPointSolid(cell, true);
                 }
             }
+        }
 
-            var summons = GetTree().GetNodesInGroup("Summons");
-            foreach (Node node in summons)
+        // Mark summons as solid
+        var summons = GetTree().GetNodesInGroup("Summons");
+        foreach (Node node in summons)
+        {
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
             {
-                if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
-                {
-                    Vector2I cell = WorldToCell(summon.GlobalPosition);
+                Vector2I cell = WorldToCell(summon.GlobalPosition);
 
-                    if (_astarGrid.IsInBoundsv(cell))
-                        _astarGrid.SetPointSolid(cell, true);
-                }
+                if (_astarGrid.IsInBoundsv(cell))
+                    _astarGrid.SetPointSolid(cell, true);
             }
+        }
+
+        // --- NEW: Mark enemies as solid ---
+        //var enemies = GetTree().GetNodesInGroup("Enemies");
+        //foreach (Node node in enemies)
+        //{
+        //    if (node is Node2D enemy && GodotObject.IsInstanceValid(enemy))
+        //    {
+        //        Vector2I cell = WorldToCell(enemy.GlobalPosition);
+//
+        //        if (_astarGrid.IsInBoundsv(cell))
+        //            _astarGrid.SetPointSolid(cell, true);
+        //    }
+        //}
     }
 
     public Vector2I WorldToCell(Vector2 worldPosition)
@@ -317,42 +335,92 @@ public partial class TurnManager : Node
 
     public bool IsSolidCell(Vector2I cell)
     {
-        return _astarGrid.IsPointSolid(cell);
+        if (_astarGrid.IsInBoundsv(cell))
+        {
+            return _astarGrid.IsPointSolid(cell);
+        }
+        return true;        
     }
 
     public List<Vector2I> FindPath(Vector2I from, Vector2I to)
     {
-        if (_astarGrid == null)
-            return null;
+        if (_astarGrid == null) return null;
 
         if (!_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to))
         {
-            GD.PrintErr($"Pathfinding failed: Start {from} or End {to} is out of bounds. Grid Region: {_astarGrid.Region}");
+            GD.PrintErr($"Pathfinding failed: Start {from} or End {to} is out of bounds.");
             return null;
         }
 
-        // 1. Remember if the destination is solid and temporarily disable it
-        bool wasTargetSolid = _astarGrid.IsPointSolid(to);
-        if (wasTargetSolid)
+        // Un-solidify start and target points temporarily so AStar can calculate
+        bool wasFromSolid = _astarGrid.IsPointSolid(from);
+        bool wasToSolid = _astarGrid.IsPointSolid(to);
+        if (wasFromSolid) _astarGrid.SetPointSolid(from, false);
+        if (wasToSolid) _astarGrid.SetPointSolid(to, false);
+
+        // --- PASS 1: OPTIMAL PATH (Try routing around stationary enemies) ---
+        var modifiedCells = new List<Vector2I>();
+        foreach (Vector2I enemyCell in _occupiedEnemyCells)
         {
-            _astarGrid.SetPointSolid(to, false);
+            if (enemyCell != from && enemyCell != to && _astarGrid.IsInBoundsv(enemyCell))
+            {
+                if (!_astarGrid.IsPointSolid(enemyCell))
+                {
+                    _astarGrid.SetPointSolid(enemyCell, true);
+                    modifiedCells.Add(enemyCell);
+                }
+            }
         }
 
-        // 2. Calculate the path
         Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
 
-        // 3. Restore the destination's solid state so other calculations aren't messed up
-        if (wasTargetSolid)
+        // Revert only the cells we temporarily marked solid
+        foreach (Vector2I cell in modifiedCells)
         {
-            _astarGrid.SetPointSolid(to, true);
+            _astarGrid.SetPointSolid(cell, false);
         }
+
+        // --- PASS 2: FALLBACK PATH (If route is blocked by enemies in a hallway/choke) ---
+        if (pathArray.Count <= 1)
+        {
+            pathArray = _astarGrid.GetIdPath(from, to);
+        }
+
+        // Restore start and target points
+        if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
+        if (wasToSolid) _astarGrid.SetPointSolid(to, true);
 
         if (pathArray.Count <= 1)
             return null;
 
         var path = new List<Vector2I>(pathArray);
-        path.RemoveAt(0); // drop the starting cell, keep only steps to move through
+        path.RemoveAt(0); // Remove start position
         return path;
+    }
+
+    // --- NEW: Helper method to update grid solids dynamically ---
+    public void SetCellSolid(Vector2I cell, bool isSolid)
+    {
+        if (_astarGrid != null && _astarGrid.IsInBoundsv(cell))
+        {
+            _astarGrid.SetPointSolid(cell, isSolid);
+        }
+    }
+
+    public void MoveEnemyCell(Vector2I oldCell, Vector2I newCell)
+    {
+        FreeCell(oldCell);
+        OccupyCell(newCell);
+    }
+
+    public void FreeCell(Vector2I cell)
+    {
+        _occupiedEnemyCells.Remove(cell);
+    }
+
+    public void OccupyCell(Vector2I cell)
+    {
+        _occupiedEnemyCells.Add(cell);
     }
 
     public void ClearCell(Vector2 worldPosition)
@@ -415,4 +483,78 @@ public partial class TurnManager : Node
 
         return null;
     }
+
+    public bool IsEnemyOccupied(Vector2I cell)
+    {
+        return _occupiedEnemyCells.Contains(cell);
+    }
+
+    public void RegisterEnemyPosition(Vector2I oldCell, Vector2I newCell)
+    {
+        _occupiedEnemyCells.Remove(oldCell);
+        SetCellSolid(oldCell, false);
+        _occupiedEnemyCells.Add(newCell);
+        SetCellSolid(newCell, true);
+    }
+
+    public void UnregisterEnemyPosition(Vector2I cell)
+    {
+        _occupiedEnemyCells.Remove(cell);
+        SetCellSolid(cell, false);
+    }
+
+    public int GetPathLengthToTarget(Vector2I from, Vector2I to)
+{
+    if (_astarGrid == null)
+        return int.MaxValue;
+
+    if (!_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to))
+        return int.MaxValue;
+
+    if (from == to)
+        return 0;
+
+    // Temporarily un-solidify summons and start/end points so we can measure path length along grid terrain
+    var summons = GetTree().GetNodesInGroup("Summons");
+    var modifiedCells = new List<Vector2I>();
+
+    foreach (Node node in summons)
+    {
+        if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+        {
+            Vector2I cell = WorldToCell(summon.GlobalPosition);
+            if (_astarGrid.IsInBoundsv(cell) && _astarGrid.IsPointSolid(cell))
+            {
+                _astarGrid.SetPointSolid(cell, false);
+                modifiedCells.Add(cell);
+            }
+        }
+    }
+
+    bool wasFromSolid = _astarGrid.IsPointSolid(from);
+    bool wasToSolid = _astarGrid.IsPointSolid(to);
+
+    if (wasFromSolid) _astarGrid.SetPointSolid(from, false);
+    if (wasToSolid) _astarGrid.SetPointSolid(to, false);
+
+    Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
+
+    // Restore solid states
+    if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
+    if (wasToSolid) _astarGrid.SetPointSolid(to, true);
+
+    foreach (Vector2I cell in modifiedCells)
+    {
+        _astarGrid.SetPointSolid(cell, true);
+    }
+
+    // pathArray includes start position, so (Count - 1) gives the number of tile steps
+    if (pathArray != null && pathArray.Count > 1)
+    {
+        return pathArray.Count - 1;
+    }
+
+    // Fallback to Manhattan tile distance if terrain completely blocks path
+    return TileDistance(from, to);
+}
 }

@@ -22,6 +22,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     [Export] public int AttackRange = 1; // tiles
     [Export] public string SummonGroupName = "Summons";
 
+    private Vector2I? _reservedCell = null;
+
     private Node2D _target;
     private bool _isTakingTurn = false;
     private TurnManager _turnManager;
@@ -122,29 +124,67 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     // --- BOARD GAME PIECE TWEEN MOVEMENT ---
 
-    private async void BeginMoveAlong(List<Vector2I> path)
+private async void BeginMoveAlong(List<Vector2I> path)
+{
+    Vector2I startCell = _turnManager.WorldToCell(GlobalPosition);
+    int maxSteps = Mathf.Min(path.Count, MoveDistance);
+    int stepsToTake = 0;
+
+    // 1. Check how many steps along the path are clear
+    for (int i = 0; i < maxSteps; i++)
     {
-        int steps = Mathf.Min(path.Count, MoveDistance);
+        Vector2I checkCell = path[i];
 
-        for (int i = 0; i < steps; i++)
+        // Stop if entering attack range
+        if (_target != null && IsInRangeOfCell(checkCell, _target))
         {
-            // Stop executing if enemy died during movement
-            if (CurrentHealth <= 0 || !IsInstanceValid(this))
-                return;
-
-            Vector2 targetWorldPos = _turnManager.CellToWorld(path[i]);
-
-            // Perform single hop step
-            await MoveToTileAsync(targetWorldPos);
-
-            // Check if we entered attack range early
-            if (_target != null && IsInRange(_target))
-            {
-                break;
-            }
+            stepsToTake = i + 1;
+            break;
         }
 
+        // Stop if tile is occupied by another enemy
+        if (_turnManager.IsEnemyOccupied(checkCell))
+        {
+            break;
+        }
+
+        stepsToTake = i + 1;
+    }
+
+    // 2. If blocked on turn start, remain in startCell
+    if (stepsToTake == 0)
+    {
         HandleEndOfMovement();
+        return;
+    }
+
+    Vector2I destinationCell = path[stepsToTake - 1];
+
+    // 3. Immediately free startCell for trailing enemies & claim destinationCell
+    _turnManager.MoveEnemyCell(startCell, destinationCell);
+    _reservedCell = destinationCell;
+
+    // 4. Perform visual hopping
+    for (int i = 0; i < stepsToTake; i++)
+    {
+        if (CurrentHealth <= 0 || !IsInstanceValid(this))
+            return;
+
+        Vector2 targetWorldPos = _turnManager.CellToWorld(path[i]);
+        await MoveToTileAsync(targetWorldPos);
+    }
+
+    _reservedCell = null;
+    HandleEndOfMovement();
+}
+
+    private bool IsInRangeOfCell(Vector2I cell, Node2D target)
+    {
+        if (!GodotObject.IsInstanceValid(target))
+            return false;
+
+        Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
+        return _turnManager.TileDistance(cell, targetCell) <= AttackRange;
     }
 
     private async Task MoveToTileAsync(Vector2 targetPos)
@@ -206,16 +246,11 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         if (!GodotObject.IsInstanceValid(target))
             return int.MaxValue;
-
+    
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
-
-        List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
-
-        if (path == null || path.Count == 0)
-            return int.MaxValue;
-
-        return path.Count;
+    
+        return _turnManager.GetPathLengthToTarget(myCell, targetCell);
     }
 
     private bool IsInRange(Node2D target)
@@ -307,6 +342,11 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (CurrentHealth <= 0)
         {
             GD.Print($"Enemy {Name} IS DESTROYED");
+
+            // Free whichever cell this enemy was holding/heading toward
+            Vector2I cellToFree = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
+            _turnManager.FreeCell(cellToFree);
+
             SetProcess(false);
             SetPhysicsProcess(false);
             SetDeferred("monitoring", false);
