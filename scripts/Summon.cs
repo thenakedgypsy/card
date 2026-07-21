@@ -49,33 +49,39 @@ public partial class Summon : Node2D, IHealth
 
 	public async void DrawLineBetween(Vector2 target, float width = 2f)
 	{
-		if (_line == null)
-			return;
+	    if (_line == null)
+	        return;
 
-		Color color;
-		if (Element == Card.Element.Fire)
-			color = Colors.Red;
-		else if (Element == Card.Element.Water)
-			color = Colors.Blue;
-		else if (Element == Card.Element.Earth)
-			color = Colors.Green;
-		else if (Element == Card.Element.Wind)
-			color = Colors.LightBlue;
-		else
-			color = Colors.Gray;
+	    // Cleaned up color selection using a switch expression
+	    Color color = Element switch
+	    {
+	        Card.Element.Fire => Colors.Red,
+	        Card.Element.Water => Colors.Blue,
+	        Card.Element.Earth => Colors.Green,
+	        Card.Element.Wind => Colors.LightBlue,
+	        _ => Colors.Gray
+	    };
 
-		_line.Points = new Vector2[] { Vector2.Zero, target - (GlobalPosition - new Vector2(0, 50)) };
-		_line.Width = width;
-		_line.DefaultColor = color;
-		_line.ZIndex = 100;
-		_line.Visible = true;
+	    // 1. Calculate top of sprite in global coordinates (including scale)
+	    float spriteHeight = (_sprite.Texture?.GetHeight() ?? 0f) * _sprite.Scale.Y;
+	    Vector2 spriteTop = _sprite.GlobalPosition + new Vector2(0, -(spriteHeight - 32));
 
-		int requestId = ++_drawLineRequestId;
-		await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
-		if (requestId == _drawLineRequestId)
-		{
-			ClearDrawLine();
-		}
+	    // 2. Convert global positions to local positions relative to this node
+	    Vector2 localStart = spriteTop - GlobalPosition;
+	    Vector2 localEnd = target - GlobalPosition;
+
+	    _line.Points = new Vector2[] { localStart, localEnd };
+	    _line.Width = width;
+	    _line.DefaultColor = color;
+	    _line.ZIndex = 100;
+	    _line.Visible = true;
+
+	    int requestId = ++_drawLineRequestId;
+	    await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
+	    if (requestId == _drawLineRequestId)
+	    {
+	        ClearDrawLine();
+	    }
 	}
 
 	public void ClearDrawLine()

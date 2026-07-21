@@ -61,27 +61,29 @@ public partial class Enemy : CharacterBody2D, IHealth
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
-        // 1. Target Selection
+        // Target selection according to the 3 explicit conditions
         Node2D target = null;
-        List<Vector2I> pathToPlayer = _turnManager.FindPath(myCell, playerCell);
-        _playerPathBlocked = (pathToPlayer == null || pathToPlayer.Count == 0);
 
-        if (_playerPathBlocked || AttacksSummons)
+        if (AttacksSummons)
         {
+            // Condition 3: Always target nearest summon
+            target = GetNearestSummon();
+        }
+        else
+        {
+            List<Vector2I> pathToPlayer = _turnManager.FindPath(myCell, playerCell);
+            _playerPathBlocked = (pathToPlayer == null || pathToPlayer.Count == 0);
+
             if (_playerPathBlocked)
             {
+                // Condition 2: Blocked by summon -> target the blocking summon only
                 target = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
             }
-
-            if (target == null)
+            else
             {
-                target = GetNearestSummon();
+                // Condition 1 / Default: Target player core
+                target = playerCore;
             }
-        }
-
-        if (target == null && !_playerPathBlocked)
-        {
-            target = playerCore;
         }
 
         if (target == null)
@@ -101,7 +103,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             Vector2I checkCell = path[i];
 
-            // Stop if tile is occupied by another enemy (or reserved by an enemy planning before us)
+            // Stop if tile is occupied by another enemy
             if (_turnManager.IsEnemyOccupied(checkCell))
             {
                 break;
@@ -126,7 +128,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (stepsToTake == 0)
             return;
 
-        // 3. Grid Reservation (Instantly updates TurnManager grid memory)
+        // 3. Grid Reservation
         _target = target;
         Vector2I startCell = myCell;
         Vector2I destinationCell = path[stepsToTake - 1];
@@ -134,7 +136,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         _turnManager.MoveEnemyCell(startCell, destinationCell);
         _reservedCell = destinationCell;
 
-        // Store tiles to hop along during the animation phase
         for (int i = 0; i < stepsToTake; i++)
         {
             _plannedPath.Add(path[i]);
@@ -150,12 +151,10 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (_plannedPath.Count == 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
 
-        // Optional delay to stagger start times across enemies
         if (delay > 0f)
         {
             await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
 
-            // Verify enemy is still alive after delay
             if (CurrentHealth <= 0 || !IsInstanceValid(this))
                 return;
         }
@@ -201,7 +200,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(this))
             return;
     
-        // Reset local Y offset
         Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
         _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
     
@@ -232,18 +230,31 @@ public partial class Enemy : CharacterBody2D, IHealth
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
-        if (IsInRange(playerCore))
-            return playerCore;
+        // Condition 3: Enemies configured to prioritize summons
+        if (AttacksSummons)
+        {
+            Node2D nearestSummon = GetNearestSummon();
+            if (nearestSummon != null && IsInRange(nearestSummon))
+            {
+                return nearestSummon;
+            }
+            return null; // Will not attack anything else if nearest summon is out of range
+        }
 
+        // Condition 1: Player core in attack range
+        if (IsInRange(playerCore))
+        {
+            return playerCore;
+        }
+
+        // Condition 2: Blocked by summon -> Attack ONLY the blocking summon (if in range)
         Node2D blockingSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
         if (blockingSummon != null && IsInRange(blockingSummon))
+        {
             return blockingSummon;
+        }
 
-        Node2D nearestSummon = GetNearestSummon();
-        if (nearestSummon != null && IsInRange(nearestSummon))
-            return nearestSummon;
-
-        return GetSummonInRange();
+        return null;
     }
 
     private async Task AttackAsync(Node2D target)
@@ -281,20 +292,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
 
         return _turnManager.TileDistance(myCell, targetCell) <= AttackRange;
-    }
-
-    private Node2D GetSummonInRange()
-    {
-        var summons = GetTree().GetNodesInGroup(SummonGroupName);
-        foreach (Node node in summons)
-        {
-            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
-            {
-                if (IsInRange(summon))
-                    return summon;
-            }
-        }
-        return null;
     }
 
     private Node2D GetNearestSummon()
