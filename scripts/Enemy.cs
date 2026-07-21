@@ -1,14 +1,20 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class Enemy : CharacterBody2D, IHealth
 {
     [Signal]
     public delegate void TurnFinishedEventHandler(Enemy enemy);
 
-    [Export] public float Speed = 120f;
+    [ExportGroup("Movement Settings")]
     [Export] public int MoveDistance = 3; // tiles per turn
+    [Export] public float StepDuration = 0.22f; // Time spent hopping to next tile
+    [Export] public float RestDuration = 0.08f; // Delay resting on each space
+    [Export] public float HopHeight = 16f;      // How high the piece lifts up (in pixels)
+
+    [ExportGroup("Combat Settings")]
     [Export] public int Health = 10;
     public int CurrentHealth;
     [Export] public int AttackDamage = 1;
@@ -17,14 +23,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     [Export] public string SummonGroupName = "Summons";
 
     private Node2D _target;
-
-    private List<Vector2> _pathWaypoints = new();
-    private int _waypointIndex = 0;
-
     private bool _isTakingTurn = false;
     private TurnManager _turnManager;
-
-    // Did we fail to reach the player because summons blocked navigation?
     private bool _playerPathBlocked = false;
     private Sprite2D _sprite;
     private bool _isHovered;
@@ -37,14 +37,11 @@ public partial class Enemy : CharacterBody2D, IHealth
         CurrentHealth = Health;
     }
 
-
     public void TakeTurn(Node2D playerCore)
     {
         _isTakingTurn = true;
         _target = null;
         _playerPathBlocked = false;
-        _pathWaypoints.Clear();
-        _waypointIndex = 0;
 
         GD.Print($"[{Name}] TakeTurn START");
 
@@ -61,7 +58,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
         List<Vector2I> pathToPlayer = _turnManager.FindPath(myCell, playerCell);
-
         _playerPathBlocked = pathToPlayer == null || pathToPlayer.Count == 0;
 
         // 3. If blocked, move toward the summon blocking the route
@@ -74,7 +70,6 @@ public partial class Enemy : CharacterBody2D, IHealth
                 targetSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
             }
             
-            // Fallback just in case no route block was found
             if (targetSummon == null)
             {
                 targetSummon = GetNearestSummon();
@@ -105,7 +100,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         EndTurn();
     }
 
-
     private bool TrySetTarget(Node2D target)
     {
         if (!GodotObject.IsInstanceValid(target))
@@ -126,22 +120,87 @@ public partial class Enemy : CharacterBody2D, IHealth
         return false;
     }
 
-    
+    // --- BOARD GAME PIECE TWEEN MOVEMENT ---
 
-
-    private void BeginMoveAlong(List<Vector2I> path)
+    private async void BeginMoveAlong(List<Vector2I> path)
     {
-        _pathWaypoints.Clear();
-        _waypointIndex = 0;
-
         int steps = Mathf.Min(path.Count, MoveDistance);
 
         for (int i = 0; i < steps; i++)
         {
-            _pathWaypoints.Add(_turnManager.CellToWorld(path[i]));
+            // Stop executing if enemy died during movement
+            if (CurrentHealth <= 0 || !IsInstanceValid(this))
+                return;
+
+            Vector2 targetWorldPos = _turnManager.CellToWorld(path[i]);
+
+            // Perform single hop step
+            await MoveToTileAsync(targetWorldPos);
+
+            // Check if we entered attack range early
+            if (_target != null && IsInRange(_target))
+            {
+                break;
+            }
+        }
+
+        HandleEndOfMovement();
+    }
+
+    private async Task MoveToTileAsync(Vector2 targetPos)
+    {
+        // Tween 1: Move Root Node to target cell location
+        Tween moveTween = CreateTween();
+        moveTween.TweenProperty(this, "global_position", targetPos, StepDuration)
+                 .SetTrans(Tween.TransitionType.Quad)
+                 .SetEase(Tween.EaseType.InOut);
+
+        // Tween 2: Lift Sprite Up and Put Down (Parallel Visual Effect)
+        Tween hopTween = CreateTween();
+        
+        // Lift up (Peak halfway through movement)
+        hopTween.TweenProperty(_sprite, "position:y", -HopHeight, StepDuration * 0.45f)
+                .SetTrans(Tween.TransitionType.Quad)
+                .SetEase(Tween.EaseType.Out);
+        
+        // Put back down
+        hopTween.TweenProperty(_sprite, "position:y", 0f, StepDuration * 0.55f)
+                .SetTrans(Tween.TransitionType.Quad)
+                .SetEase(Tween.EaseType.In);
+
+        // Wait for physical position and hop to finish
+        await ToSignal(moveTween, Tween.SignalName.Finished);
+        await ToSignal(hopTween, Tween.SignalName.Finished);
+
+        // Reset local Y offset to ensure perfect landing alignment
+        Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
+        _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+
+        // Brief pause resting on space before moving to next space
+        if (RestDuration > 0)
+        {
+            await ToSignal(GetTree().CreateTimer(RestDuration), SceneTreeTimer.SignalName.Timeout);
         }
     }
 
+    private void HandleEndOfMovement()
+    {
+        if (CurrentHealth <= 0 || !IsInstanceValid(this))
+            return;
+
+        Velocity = Vector2.Zero;
+
+        if (_target != null && IsInRange(_target))
+        {
+            Attack(_target);
+            EndTurn();
+            return;
+        }
+
+        EndTurn();
+    }
+
+    // --- COMBAT & UTILITY ---
 
     public int GetRouteDistanceTo(Node2D target)
     {
@@ -159,67 +218,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         return path.Count;
     }
 
-
-    public override void _PhysicsProcess(double delta)
-    {
-        if (!_isTakingTurn || _target == null)
-            return;
-
-
-        // Target reached
-        if (IsInRange(_target))
-        {
-            Velocity = Vector2.Zero;
-            Attack(_target);
-            EndTurn();
-            return;
-        }
-
-
-        if (_waypointIndex >= _pathWaypoints.Count)
-        {
-            HandleEndOfMovement();
-            return;
-        }
-
-
-        // Movement toward current tile waypoint
-        Vector2 waypoint = _pathWaypoints[_waypointIndex];
-        Vector2 direction = (waypoint - GlobalPosition).Normalized();
-
-        Velocity = direction * Speed;
-        MoveAndSlide();
-
-        if (GlobalPosition.DistanceTo(waypoint) <= 4f)
-        {
-            _waypointIndex++;
-
-            if (_waypointIndex >= _pathWaypoints.Count)
-            {
-                HandleEndOfMovement();
-            }
-        }
-    }
-
-
-    private void HandleEndOfMovement()
-    {
-        Velocity = Vector2.Zero;
-
-        // Since _target is explicitly set to the blocking summon (or player) in TakeTurn,
-        // we can simply check if we are in range of our assigned target.
-        if (_target != null && IsInRange(_target))
-        {
-            Attack(_target);
-            EndTurn();
-            return;
-        }
-
-        EndTurn();
-    }
-
-
-
     private bool IsInRange(Node2D target)
     {
         if (!GodotObject.IsInstanceValid(target))
@@ -231,13 +229,10 @@ public partial class Enemy : CharacterBody2D, IHealth
         return _turnManager.TileDistance(myCell, targetCell) <= AttackRange;
     }
 
-
-
     private void Attack(Node2D target)
     {
         if (!GodotObject.IsInstanceValid(target))
             return;
-
 
         GD.Print($"[{Name}] ATTACK → '{target.Name}'");
 
@@ -249,51 +244,36 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public async void FlashYellow()
     {
-        Color original = SelfModulate;
+        Color original = _sprite.SelfModulate;
         Tween tween = CreateTween();
-        // Flash red
         tween.TweenProperty(_sprite, "self_modulate", Colors.Orange, 0.25f);
-        // Return to original color
         tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
     }
-    
+
     public async void FlashRed()
     {
-        Color original = SelfModulate;
+        Color original = _sprite.SelfModulate;
         Tween tween = CreateTween();
-        // Flash red
         tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.25f);
-        // Return to original color
         tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
     }
-    
-
-
 
     private Node2D GetNearestSummon()
     {
         var summons = GetTree().GetNodesInGroup(SummonGroupName);
-
-
         Node2D nearest = null;
-
         float minDist = float.MaxValue;
-
-
 
         foreach (Node node in summons)
         {
             if (!GodotObject.IsInstanceValid(node))
                 continue;
 
-
             if (node is Node2D summon)
             {
                 float dist = GlobalPosition.DistanceTo(summon.GlobalPosition);
-
-
                 if (dist < minDist)
                 {
                     minDist = dist;
@@ -302,91 +282,58 @@ public partial class Enemy : CharacterBody2D, IHealth
             }
         }
 
-
         return nearest;
     }
-
-
 
     private void EndTurn()
     {
         _isTakingTurn = false;
-
         Velocity = Vector2.Zero;
-
         _target = null;
-
 
         EmitSignal(SignalName.TurnFinished, this);
     }
 
-	public float GetMaxHealth()
-	{
-		return Health;
-	}
+    public float GetMaxHealth() => Health;
+    public float GetCurrentHealth() => CurrentHealth;
 
-	public float GetCurrentHealth()
-	{
-		return CurrentHealth;
-	}
-    
     public void TakeDamage(int value)
-	{
-	    CurrentHealth -= value;
-	    GD.Print($"Enemy {Name} takes {value} damage");
+    {
+        CurrentHealth -= value;
+        GD.Print($"Enemy {Name} takes {value} damage");
 
-		FlashRed();
-	
-	    if (CurrentHealth <= 0)
-	    {
-	        GD.Print($"Enemy {Name} IS DESTROYED");
-	
-	        // Prevent double-death logic
-	        SetProcess(false);
-	        SetPhysicsProcess(false);
-	
-	        // Optional: stop collisions if you have them
-	        SetDeferred("monitoring", false);
-	
-	        // Safely remove from tree at end of frame
-	        CallDeferred(Node.MethodName.QueueFree);
-	    }
-	}
+        FlashRed();
+
+        if (CurrentHealth <= 0)
+        {
+            GD.Print($"Enemy {Name} IS DESTROYED");
+            SetProcess(false);
+            SetPhysicsProcess(false);
+            SetDeferred("monitoring", false);
+            CallDeferred(Node.MethodName.QueueFree);
+        }
+    }
 
     public void MouseOver()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-    
-        if(mouse != null)
+        if (mouse != null)
             mouse.SetHoveredEnemy(this);
-    
+
         _sprite.SelfModulate = Colors.Yellow;
     }
-    
-    
+
     public void MouseOff()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-    
-        if(mouse != null)
+        if (mouse != null)
             mouse.SetHoveredEnemy(null);
-    
+
         _sprite.SelfModulate = Colors.White;
     }
 
-    private void _on_area_2d_mouse_entered()
-    {
-        MouseOver();
-    }
+    private void _on_area_2d_mouse_entered() => MouseOver();
+    private void _on_area_2d_mouse_exited() => MouseOff();
 
-
-    private void _on_area_2d_mouse_exited()
-    {
-        MouseOff();
-    }
-    
-    public bool IsHovered()
-    {
-        return _isHovered;
-    }
+    public bool IsHovered() => _isHovered;
 }

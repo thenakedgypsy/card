@@ -12,7 +12,6 @@ z_index = 1
 collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_dng6c")
-Speed = 100.0
 MoveDistance = 8
 AttackDamage = 5
 
@@ -29,8 +28,8 @@ radius = 73.11
 time_horizon_obstacles = 0.35
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(0, -17)
 texture = ExtResource("2_r8a2w")
+offset = Vector2(0, -16)
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]
 z_index = 1000
