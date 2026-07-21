@@ -24,7 +24,7 @@ public partial class TurnManager : Node
     private Node2D _playercore;
     private Hand _hand;
 
-    [Export] private float enemyTurnDelay = 0.75f;
+    [Export] private float enemyTurnDelay = 00.001f;
     [Export] private float actionSpacingDelay = 0.25f;
 
     private int _enemiesActing = 0;

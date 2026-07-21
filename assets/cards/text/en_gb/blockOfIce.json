@@ -1,4 +1,4 @@
 {
   "name": "Block Of Ice",
-  "text": "Summon a block of ice"
+  "text": "Summon a block of ice \n Health: {health}"
 }
