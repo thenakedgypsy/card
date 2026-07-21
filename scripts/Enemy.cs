@@ -8,13 +8,13 @@ public partial class Enemy : CharacterBody2D, IHealth
     [Signal]
     public delegate void TurnFinishedEventHandler(Enemy enemy);
 
-    [ExportGroup("Movement Settings")]
-    [Export] public int MoveDistance = 3; // tiles per turn
-    [Export] public float StepDuration = 0.22f; // Time spent hopping to next tile
-    [Export] public float RestDuration = 0.08f; // Delay resting on each space
-    [Export] public float HopHeight = 16f;      // How high the piece lifts up (in pixels)
+    [ExportGroup("Hop Settings")]
+    [Export] public float StepDuration = 0.16f; // Time spent hopping to next tile
+    [Export] public float RestDuration = 0.32f; // Delay resting on each space
+    [Export] public float HopHeight = 8f;      // How high the piece lifts up (in pixels)
 
-    [ExportGroup("Combat Settings")]
+    [ExportGroup("Main Settings")]
+    [Export] public int MoveDistance = 4; // tiles per turn
     [Export] public int Health = 10;
     public int CurrentHealth;
     [Export] public int AttackDamage = 1;

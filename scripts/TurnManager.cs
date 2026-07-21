@@ -25,7 +25,7 @@ public partial class TurnManager : Node
     private Hand _hand;
 
     [Export] private float enemyTurnDelay = 00.001f;
-    [Export] private float actionSpacingDelay = 0.25f;
+    [Export] private float actionSpacingDelay = 0.5f;
 
     private int _enemiesActing = 0;
     private int _summonsActing = 0;
@@ -80,6 +80,10 @@ public partial class TurnManager : Node
 		else if (num < 69)
 		{
 			card.Generate("windturret", Card.Location.Hand);
+		}
+        else if (num < 85)
+		{
+			card.Generate("fireturret", Card.Location.Hand);
 		}
         //else if (num < 101)
         //{
