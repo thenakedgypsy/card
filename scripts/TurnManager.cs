@@ -73,19 +73,14 @@ public partial class TurnManager : Node
 		{
 			card.Generate("fireball", Card.Location.Hand);
 		}
-		else
+        else if (num < 46)
 		{
 			card.Generate("blockOfIce", Card.Location.Hand);
+        }    		
+		else if (num < 69)
+		{
+			card.Generate("windturret", Card.Location.Hand);
 		}
-
-        //else if (num < 69) //nice
-		//{
-		//	card.Generate("fireturret", Card.Location.Hand);
-		//}      		
-		//else if (num < 90)
-		//{
-		//	card.Generate("windturret", Card.Location.Hand);
-		//}
         //else if (num < 101)
         //{
         //    card.Generate("energy_neutral", Card.Location.Hand);
@@ -314,6 +309,11 @@ public partial class TurnManager : Node
     public int TileDistance(Vector2I a, Vector2I b)
     {
         return Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
+    }
+
+    public bool IsSolidCell(Vector2I cell)
+    {
+        return _astarGrid.IsPointSolid(cell);
     }
 
     public List<Vector2I> FindPath(Vector2I from, Vector2I to)

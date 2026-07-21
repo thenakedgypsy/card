@@ -12,18 +12,23 @@ public partial class SummonSpawner : Node2D
     private Card.Element _element;
     private bool _readyToPlace;
     private Mouse _mouse;
+    private TurnManager _turnManager;
+    private Board _board;
 
     public override void _Ready()
     {
         _readyToPlace = true;
         _mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+        _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
+        _board = GetTree().CurrentScene.GetNode<Node2D>("Board") as Board;
     }
 
     public override void _Process(Double delta)
     {        
         if (_readyToPlace)
         {
-            GlobalPosition = GetGlobalMousePosition();
+            Vector2I cell = _turnManager.WorldToCell(GetGlobalMousePosition());
+            GlobalPosition = _turnManager.CellToWorld(cell);
             CheckInput();
         }
 
@@ -31,7 +36,7 @@ public partial class SummonSpawner : Node2D
 
     public void CheckInput()
     {
-        if (Input.IsActionJustPressed("lClick") && _mouse.getOverBoard())
+        if (Input.IsActionJustPressed("lClick") && CheckPlacement())
         {
             Place();
         }
@@ -40,6 +45,16 @@ public partial class SummonSpawner : Node2D
             FlashRed();
             GD.Print("RED");
         }
+    }
+
+    public bool CheckPlacement()
+    {
+        Vector2I cell = _turnManager.WorldToCell(GetGlobalMousePosition());
+        if (_board.IsCellWalkable(cell) && !_turnManager.IsSolidCell(cell))
+        {
+            return true;
+        }
+        return false;
     }
 
     public async void FlashRed()
@@ -52,7 +67,7 @@ public partial class SummonSpawner : Node2D
         tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.1f);
 
         // Return to original color
-        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+        tween.TweenProperty(_sprite, "self_modulate", new Color(1f, 1f, 1f, 0.5f), 0.1f);
 
         await ToSignal(tween, Tween.SignalName.Finished);
     }
@@ -62,14 +77,25 @@ public partial class SummonSpawner : Node2D
         _sprite = GetNode<Sprite2D>("Sprite2D");
         string path = $"res://assets/summons/{summonID}.png";
         Texture2D texture = GD.Load<Texture2D>(path);
-
-		_sprite.Texture = texture;
+    
+        _sprite.Texture = texture;
         _sprite.SelfModulate = new Color(1f, 1f, 1f, 0.5f);
-
+    
+        // Match the visual offset logic from Summon.cs
+        Vector2 spriteSize = texture.GetSize() * _sprite.Scale;
+        if (_sprite.Centered)
+        {
+            _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+        }
+        else
+        {
+            _sprite.Offset = new Vector2(0, 16f - spriteSize.Y);
+        }
+    
         _data = data;
         _summonID = summonID;
         _element = ele;
-
+    
         ZIndex = 3;
         _readyToPlace = true;
     }
@@ -77,15 +103,14 @@ public partial class SummonSpawner : Node2D
     public void Place()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/Summon.tscn");
-        Node2D board = GetTree().CurrentScene.GetNode<Node2D>("Board");
         Summon summon = scene.Instantiate() as Summon;
-        board.AddChild(summon);
+        _board.AddChild(summon);
         summon.Generate(_element, _data, _summonID);
 
-        Vector2I cell = TurnManager.Instance.WorldToCell(GlobalPosition);
-        summon.GlobalPosition = TurnManager.Instance.CellToWorld(cell);
+        Vector2I cell = _turnManager.WorldToCell(GlobalPosition);
+        summon.GlobalPosition = _turnManager.CellToWorld(cell);
 
-        TurnManager.Instance.RebakeNav();
+        _turnManager.RebakeNav();
         _readyToPlace = false;
 
         QueueFree();
