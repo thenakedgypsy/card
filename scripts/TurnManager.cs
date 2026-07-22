@@ -34,7 +34,6 @@ public partial class TurnManager : Node
     private int _enemiesScheduled = 0;
     private int _summonsStarted = 0;
     private int _summonsScheduled = 0;
-    private bool _summonPhase2 = false;
 
     private Board _board;
     private AStarGrid2D _astarGrid;
@@ -74,7 +73,6 @@ public partial class TurnManager : Node
     public void BeginPlayerTurn()
     {
         State = GameState.PlayerTurn;
-        _summonPhase2 = false;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
         while (_hand.GetNumCards() < 5) DrawCardTemp();
@@ -83,12 +81,6 @@ public partial class TurnManager : Node
     public bool CanPlayEnergy() => energyPlayedThisTurn + 1 <= energyPlayLimit;
     public void PlayEnergy() => energyPlayedThisTurn++;
     public void EndPlayerTurn() => BeginSummonTurn();
-
-    private void BeginSummonTurnAfterEnemyTurn()
-    {
-        _summonPhase2 = true;
-        BeginSummonTurn();
-    }
 
     public async void BeginEnemyTurn()
     {
@@ -114,27 +106,29 @@ public partial class TurnManager : Node
             enemy.ResetTurnState();
         }
 
-        // Execute movement planning and animation for the initial pass.
+        // Execute Phases
         await ExecuteEnemyTurnPhase(enemies);
-
-        // Attack phase after movement, using the same turn order.
+        
+        // Attack Phase
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
             await enemy.ExecuteAttackPhaseAsync(_playercore);
         }
 
-        // Follow-up movement for enemies that still have movement left and have not attacked.
-        var remainingEnemies = enemies
-            .Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0 && !e.HasAttackedThisTurn)
-            .ToList();
-
+        // Follow Up / Leftover Movement Phase
+        var remainingEnemies = enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0).ToList();
         if (remainingEnemies.Count > 0)
         {
+            foreach (var enemy in remainingEnemies)
+            {
+                enemy.ResetTurnState(false);
+            }
+
             RebakeNav();
             await ExecuteEnemyTurnPhase(remainingEnemies);
         }
 
-        BeginSummonTurnAfterEnemyTurn();
+        BeginPlayerTurn();
     }
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
@@ -182,18 +176,7 @@ public partial class TurnManager : Node
     {
         if (summon != null) summon.TurnFinished -= OnSummonFinishedTurn;
         _summonsActing--;
-        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled) 
-        {
-            if (_summonPhase2)
-            {
-                _summonPhase2 = false;
-                BeginPlayerTurn();
-            }
-            else
-            {
-                BeginEnemyTurn();
-            }
-        }
+        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled) BeginEnemyTurn();
     }
 
     public async void BeginSummonTurn()
@@ -208,14 +191,7 @@ public partial class TurnManager : Node
 
         if (_summonsScheduled == 0)
         {
-            if (_summonPhase2)
-            {
-                BeginPlayerTurn();
-            }
-            else
-            {
-                BeginEnemyTurn();
-            }
+            BeginEnemyTurn();
             return;
         }
 
@@ -245,17 +221,12 @@ public partial class TurnManager : Node
     
     public void RebakeNav()
     {
-        if (_board == null)
+        if (_astarGrid == null) BuildGrid();
+        else
         {
-            BuildGrid();
-            if (_board == null || _astarGrid == null) return;
+            _astarGrid.Region = _board.GetUsedRect();
+            _astarGrid.Update();
         }
-
-        _astarGrid = new AStarGrid2D();
-        _astarGrid.Region = _board.GetUsedRect();
-        _astarGrid.CellSize = new Vector2(64, 32);
-        _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
-        _astarGrid.Update();
 
         Rect2I region = _astarGrid.Region;
         for (int x = region.Position.X; x < region.End.X; x++)
@@ -263,10 +234,12 @@ public partial class TurnManager : Node
             for (int y = region.Position.Y; y < region.End.Y; y++)
             {
                 Vector2I cell = new Vector2I(x, y);
+                _astarGrid.SetPointSolid(cell, false);
                 if (!_board.IsCellWalkable(cell)) _astarGrid.SetPointSolid(cell, true);
             }
         }
 
+        // Summons are solid by default
         var summons = GetTree().GetNodesInGroup("Summons");
         foreach (Node node in summons)
         {
@@ -307,7 +280,7 @@ public partial class TurnManager : Node
     {
         if (_astarGrid == null || !_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to)) return null;
 
-        // Temporarily ignore summons and already-reserved enemy cells so the fallback route can be calculated.
+        // Strip summon solid status
         var summons = GetTree().GetNodesInGroup("Summons");
         var modifiedCells = new List<Vector2I>();
         foreach (Node node in summons)
@@ -323,15 +296,6 @@ public partial class TurnManager : Node
             }
         }
 
-        foreach (Vector2I cell in _occupiedEnemyCells)
-        {
-            if (_astarGrid.IsInBoundsv(cell))
-            {
-                _astarGrid.SetPointSolid(cell, false);
-                modifiedCells.Add(cell);
-            }
-        }
-
         bool wasFromSolid = _astarGrid.IsPointSolid(from);
         bool wasToSolid = _astarGrid.IsPointSolid(to);
         if (wasFromSolid) _astarGrid.SetPointSolid(from, false);
@@ -342,6 +306,7 @@ public partial class TurnManager : Node
         if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
         if (wasToSolid) _astarGrid.SetPointSolid(to, true);
 
+        // Restore summon solid status
         foreach (Vector2I cell in modifiedCells) _astarGrid.SetPointSolid(cell, true);
 
         if (pathArray.Count <= 1) return null;

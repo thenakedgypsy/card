@@ -42,13 +42,18 @@ public partial class Enemy : CharacterBody2D, IHealth
         CurrentHealth = Health;
     }
 
-    public void ResetTurnState()
+    public void ResetTurnState(bool resetMovement = true)
     {
-        RemainingMovement = MoveDistance;
-        HasAttackedThisTurn = false;
+        if (resetMovement)
+        {
+            RemainingMovement = MoveDistance;
+            HasAttackedThisTurn = false;
+        }
+
         WasPathBlocked = false;
         _plannedPath.Clear();
         _reservedCell = null;
+        SetBlockedVisualState(false);
     }
 
     // --- STEP 1: POSITION CALCULATIONS ---
@@ -61,52 +66,63 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
 
-        Vector2I myCell = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
+        // 1. Unmark own tile as blocked so we don't trap ourselves or others doing calculations
         _turnManager.FreeCell(myCell);
 
         Vector2I targetCell = playerCell;
+        Node2D primaryTarget = playerCore;
 
         if (AttacksSummons)
         {
             Node2D nearestSummon = GetNearestSummon();
             if (nearestSummon != null)
             {
+                primaryTarget = nearestSummon;
                 targetCell = _turnManager.WorldToCell(nearestSummon.GlobalPosition);
             }
         }
 
+        // 2. See if a path is possible without being blocked (Summons are solid by default here)
         List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
-        bool useFallback = false;
-
+        
         if (path == null || path.Count == 0)
         {
-            useFallback = true;
+            // Path IS blocked. Find shortest route excluding summons.
+            WasPathBlocked = true;
+            SetBlockedVisualState(true);
             path = _turnManager.FindPathIgnoringSummons(myCell, targetCell);
+        }
+        else
+        {
+            SetBlockedVisualState(false);
         }
 
         if (path == null || path.Count == 0)
         {
-            WasPathBlocked = useFallback;
-            _turnManager.OccupyCell(myCell);
+            // Still no path (completely boxed in by terrain/enemies)
+            _turnManager.OccupyCell(myCell); // Re-occupy current spot
             _reservedCell = myCell;
             return;
         }
 
-        WasPathBlocked = useFallback;
-
+        // 3. Trace it as far as possible
         int stepsToTake = 0;
         for (int i = 0; i < path.Count && stepsToTake < RemainingMovement; i++)
         {
             Vector2I checkCell = path[i];
 
+            // Stop if tile is filled by another enemy
             if (_turnManager.IsEnemyOccupied(checkCell))
                 break;
 
-            if (useFallback && _turnManager.IsCellOccupiedBySummon(checkCell))
+            // If we are on the blocked fallback path, stop once we hit a summon (making us adjacent)
+            if (WasPathBlocked && _turnManager.IsCellOccupiedBySummon(checkCell))
                 break;
 
+            // Never walk directly onto the primary target's cell
             if (checkCell == targetCell)
                 break;
 
@@ -114,7 +130,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
 
         Vector2I destinationCell = myCell;
-
+        
         if (stepsToTake > 0)
         {
             destinationCell = path[stepsToTake - 1];
@@ -125,11 +141,20 @@ public partial class Enemy : CharacterBody2D, IHealth
             RemainingMovement -= stepsToTake;
         }
 
+        // 4. Mark this tile as filled for subsequent enemies
         _turnManager.OccupyCell(destinationCell);
         _reservedCell = destinationCell;
     }
 
     // --- STEP 2: MOVEMENT ANIMATION ---
+
+    private void SetBlockedVisualState(bool blocked)
+    {
+        if (_sprite == null)
+            return;
+
+        _sprite.SelfModulate = blocked ? Colors.Red : Colors.White;
+    }
 
     public async Task AnimateMoveAsync(float delay = 0f)
     {
@@ -220,10 +245,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             return null;
         }
 
-        // Attack if near the player core
-        if (IsInRange(playerCore))
-            return playerCore;
-
         // Attack if path was blocked and we are in range of the blocking summon
         if (WasPathBlocked)
         {
@@ -231,6 +252,10 @@ public partial class Enemy : CharacterBody2D, IHealth
             if (blockingSummon != null && IsInRange(blockingSummon))
                 return blockingSummon;
         }
+
+        // Attack if near the player core
+        if (IsInRange(playerCore))
+            return playerCore;
 
         return null;
     }
@@ -342,14 +367,16 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         if (mouse != null) mouse.SetHoveredEnemy(this);
-        _sprite.SelfModulate = Colors.Yellow;
+
+        _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.Yellow;
     }
 
     public void MouseOff()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         if (mouse != null) mouse.SetHoveredEnemy(null);
-        _sprite.SelfModulate = Colors.White;
+
+        _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.White;
     }
 
     private void _on_area_2d_mouse_entered() => MouseOver();

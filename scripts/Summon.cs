@@ -187,14 +187,13 @@ public partial class Summon : Node2D, IHealth
 	    {
 	        GD.Print("IS DESTROYED");
 
+			RemoveFromGroup("Summons");
+
 			if (TurnManager.Instance != null)
 			{
 				TurnManager.Instance.RebakeNav();
 			}
 
-			RemoveFromGroup("Summons");
-
-			
 	        // Prevent double-death logic
 	        SetProcess(false);
 	        SetPhysicsProcess(false);
