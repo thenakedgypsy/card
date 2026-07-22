@@ -34,6 +34,7 @@ public partial class TurnManager : Node
     private int _enemiesScheduled = 0;
     private int _summonsStarted = 0;
     private int _summonsScheduled = 0;
+    private bool _isPostEnemySummonPhase = false;
 
     private Board _board;
     private AStarGrid2D _astarGrid;
@@ -73,6 +74,7 @@ public partial class TurnManager : Node
     public void BeginPlayerTurn()
     {
         State = GameState.PlayerTurn;
+        _isPostEnemySummonPhase = false;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
         while (_hand.GetNumCards() < 5) DrawCardTemp();
@@ -128,7 +130,7 @@ public partial class TurnManager : Node
             await ExecuteEnemyTurnPhase(remainingEnemies);
         }
 
-        BeginPlayerTurn();
+        BeginPostEnemySummonTurn();
     }
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
@@ -176,29 +178,62 @@ public partial class TurnManager : Node
     {
         if (summon != null) summon.TurnFinished -= OnSummonFinishedTurn;
         _summonsActing--;
-        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled) BeginEnemyTurn();
+
+        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled)
+        {
+            if (_isPostEnemySummonPhase)
+            {
+                _isPostEnemySummonPhase = false;
+                BeginPlayerTurn();
+            }
+            else
+            {
+                BeginEnemyTurn();
+            }
+        }
     }
 
     public async void BeginSummonTurn()
     {
+        _isPostEnemySummonPhase = false;
         State = GameState.SummonTurn;
         RebakeNav();
+        await RunSummonPhase();
+    }
+
+    public async void BeginPostEnemySummonTurn()
+    {
+        _isPostEnemySummonPhase = true;
+        State = GameState.SummonTurn;
+        RebakeNav();
+        await RunSummonPhase();
+    }
+
+    private async Task RunSummonPhase()
+    {
         var summons = GetTree().GetNodesInGroup("Summons").Cast<Summon>().Where(s => s != null).ToList();
-        
+
         _summonsActing = 0;
         _summonsStarted = 0;
         _summonsScheduled = summons.Count;
 
         if (_summonsScheduled == 0)
         {
-            BeginEnemyTurn();
+            if (_isPostEnemySummonPhase)
+            {
+                BeginPlayerTurn();
+            }
+            else
+            {
+                BeginEnemyTurn();               
+            }
             return;
         }
 
         for (int i = 0; i < summons.Count; i++)
         {
             if (i > 0) await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
-            
+
             Summon summon = summons[i];
             _summonsActing++;
             _summonsStarted++;
