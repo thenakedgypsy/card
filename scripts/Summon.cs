@@ -186,8 +186,14 @@ public partial class Summon : Node2D, IHealth
 	    if (CurrentHealth <= 0)
 	    {
 	        GD.Print("IS DESTROYED");
+
+			if (TurnManager.Instance != null)
+			{
+				TurnManager.Instance.RebakeNav();
+			}
+
 			RemoveFromGroup("Summons");
-			_turnManager.ClearCell(GlobalPosition);
+
 			
 	        // Prevent double-death logic
 	        SetProcess(false);

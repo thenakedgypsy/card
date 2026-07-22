@@ -9,26 +9,26 @@ public partial class Enemy : CharacterBody2D, IHealth
     public delegate void TurnFinishedEventHandler(Enemy enemy);
 
     [ExportGroup("Hop Settings")]
-    [Export] public float StepDuration = 0.16f; // Time spent hopping to next tile
-    [Export] public float RestDuration = 0.32f; // Delay resting on each space
-    [Export] public float HopHeight = 8f;      // How high the piece lifts up (in pixels)
+    [Export] public float StepDuration = 0.16f;
+    [Export] public float RestDuration = 0.32f;
+    [Export] public float HopHeight = 8f;
 
     [ExportGroup("Main Settings")]
-    [Export] public int MoveDistance = 4; // tiles per turn
+    [Export] public int MoveDistance = 4;
     [Export] public int Health = 10;
     public int CurrentHealth;
     [Export] public int AttackDamage = 1;
     [Export] public bool AttacksSummons = false;
-    [Export] public int AttackRange = 1; // tiles
+    [Export] public int AttackRange = 1;
     [Export] public string SummonGroupName = "Summons";
 
     public int RemainingMovement { get; private set; }
     public bool HasAttackedThisTurn { get; private set; }
+    public bool WasPathBlocked { get; private set; }
 
     private Vector2I? _reservedCell = null;
     private Node2D _target;
     private TurnManager _turnManager;
-    private bool _playerPathBlocked = false;
     private Sprite2D _sprite;
     private bool _isHovered;
 
@@ -46,105 +46,90 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         RemainingMovement = MoveDistance;
         HasAttackedThisTurn = false;
+        WasPathBlocked = false;
         _plannedPath.Clear();
+        _reservedCell = null;
     }
 
-    // --- STEP 1: INSTANT CALCULATIONS & GRID RESERVATIONS ---
+    // --- STEP 1: POSITION CALCULATIONS ---
 
     public void PlanMove(Node2D playerCore)
     {
         _plannedPath.Clear();
+        WasPathBlocked = false;
 
         if (RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
 
-        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I myCell = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
-        // Target selection according to the 3 explicit conditions
-        Node2D target = null;
+        _turnManager.FreeCell(myCell);
+
+        Vector2I targetCell = playerCell;
 
         if (AttacksSummons)
         {
-            // Condition 3: Always target nearest summon
-            target = GetNearestSummon();
-        }
-        else
-        {
-            List<Vector2I> pathToPlayer = _turnManager.FindPath(myCell, playerCell);
-            _playerPathBlocked = (pathToPlayer == null || pathToPlayer.Count == 0);
-
-            if (_playerPathBlocked)
+            Node2D nearestSummon = GetNearestSummon();
+            if (nearestSummon != null)
             {
-                // Condition 2: Blocked by summon -> target the blocking summon only
-                target = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
-            }
-            else
-            {
-                // Condition 1 / Default: Target player core
-                target = playerCore;
+                targetCell = _turnManager.WorldToCell(nearestSummon.GlobalPosition);
             }
         }
 
-        if (target == null)
-            return;
-
-        Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
         List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
+        bool useFallback = false;
 
         if (path == null || path.Count == 0)
+        {
+            useFallback = true;
+            path = _turnManager.FindPathIgnoringSummons(myCell, targetCell);
+        }
+
+        if (path == null || path.Count == 0)
+        {
+            WasPathBlocked = useFallback;
+            _turnManager.OccupyCell(myCell);
+            _reservedCell = myCell;
             return;
+        }
 
-        // 2. Step Calculation
-        int maxSteps = Mathf.Min(path.Count, RemainingMovement);
+        WasPathBlocked = useFallback;
+
         int stepsToTake = 0;
-
-        for (int i = 0; i < maxSteps; i++)
+        for (int i = 0; i < path.Count && stepsToTake < RemainingMovement; i++)
         {
             Vector2I checkCell = path[i];
 
-            // Stop if tile is occupied by another enemy
             if (_turnManager.IsEnemyOccupied(checkCell))
-            {
                 break;
-            }
 
-            // STRICT PROTECTION: Never enter the target's cell itself while it exists!
+            if (useFallback && _turnManager.IsCellOccupiedBySummon(checkCell))
+                break;
+
             if (checkCell == targetCell)
-            {
                 break;
-            }
 
-            // Stop if reaching 1 tile away (adjacent) from target
-            if (_turnManager.TileDistance(checkCell, targetCell) <= 1)
-            {
-                stepsToTake = i + 1;
-                break;
-            }
-
-            stepsToTake = i + 1;
+            stepsToTake++;
         }
 
-        if (stepsToTake == 0)
-            return;
+        Vector2I destinationCell = myCell;
 
-        // 3. Grid Reservation
-        _target = target;
-        Vector2I startCell = myCell;
-        Vector2I destinationCell = path[stepsToTake - 1];
-
-        _turnManager.MoveEnemyCell(startCell, destinationCell);
-        _reservedCell = destinationCell;
-
-        for (int i = 0; i < stepsToTake; i++)
+        if (stepsToTake > 0)
         {
-            _plannedPath.Add(path[i]);
+            destinationCell = path[stepsToTake - 1];
+            for (int i = 0; i < stepsToTake; i++)
+            {
+                _plannedPath.Add(path[i]);
+            }
+            RemainingMovement -= stepsToTake;
         }
 
-        RemainingMovement -= stepsToTake;
+        _turnManager.OccupyCell(destinationCell);
+        _reservedCell = destinationCell;
     }
 
-    // --- STEP 2: PARALLEL VISUAL ANIMATION ---
+    // --- STEP 2: MOVEMENT ANIMATION ---
 
     public async Task AnimateMoveAsync(float delay = 0f)
     {
@@ -154,21 +139,17 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (delay > 0f)
         {
             await ToSignal(GetTree().CreateTimer(delay), SceneTreeTimer.SignalName.Timeout);
-
-            if (CurrentHealth <= 0 || !IsInstanceValid(this))
-                return;
+            if (CurrentHealth <= 0 || !IsInstanceValid(this)) return;
         }
 
         for (int i = 0; i < _plannedPath.Count; i++)
         {
-            if (CurrentHealth <= 0 || !IsInstanceValid(this))
-                return;
-
+            if (CurrentHealth <= 0 || !IsInstanceValid(this)) return;
             Vector2 targetWorldPos = _turnManager.CellToWorld(_plannedPath[i]);
             await MoveToTileAsync(targetWorldPos);
         }
 
-        _reservedCell = null;
+        // Only clear planned path, leave reserved cell intact for subsequent phases
         _plannedPath.Clear();
     }
 
@@ -209,7 +190,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
     }
 
-    // --- PHASE 2: COMBAT ---
+    // --- PHASE 3: COMBAT ---
 
     public async Task ExecuteAttackPhaseAsync(Node2D playerCore)
     {
@@ -222,6 +203,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             await AttackAsync(attackTarget);
             HasAttackedThisTurn = true;
+            RemainingMovement = 0; // Usually attacking ends movement completely
         }
     }
 
@@ -230,28 +212,24 @@ public partial class Enemy : CharacterBody2D, IHealth
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
-        // Condition 3: Enemies configured to prioritize summons
         if (AttacksSummons)
         {
             Node2D nearestSummon = GetNearestSummon();
             if (nearestSummon != null && IsInRange(nearestSummon))
-            {
                 return nearestSummon;
-            }
-            return null; // Will not attack anything else if nearest summon is out of range
+            return null;
         }
 
-        // Condition 1: Player core in attack range
+        // Attack if near the player core
         if (IsInRange(playerCore))
-        {
             return playerCore;
-        }
 
-        // Condition 2: Blocked by summon -> Attack ONLY the blocking summon (if in range)
-        Node2D blockingSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
-        if (blockingSummon != null && IsInRange(blockingSummon))
+        // Attack if path was blocked and we are in range of the blocking summon
+        if (WasPathBlocked)
         {
-            return blockingSummon;
+            Node2D blockingSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
+            if (blockingSummon != null && IsInRange(blockingSummon))
+                return blockingSummon;
         }
 
         return null;
@@ -263,7 +241,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             return;
 
         GD.Print($"[{Name}] ATTACK → '{target.Name}'");
-
         await FlashYellowAsync();
 
         if (GodotObject.IsInstanceValid(target) && target.HasMethod("TakeDamage"))
@@ -272,15 +249,15 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     // --- UTILITY & COMBAT HELPERS ---
 
-    public int GetRouteDistanceTo(Node2D target)
+    public int GetRouteDistanceTo(Node2D target, bool ignoreSummons)
     {
         if (!GodotObject.IsInstanceValid(target))
             return int.MaxValue;
     
-        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I myCell = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
         Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
     
-        return _turnManager.GetPathLengthToTarget(myCell, targetCell);
+        return _turnManager.GetPathLengthToTarget(myCell, targetCell, ignoreSummons);
     }
 
     private bool IsInRange(Node2D target)
@@ -364,18 +341,14 @@ public partial class Enemy : CharacterBody2D, IHealth
     public void MouseOver()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-        if (mouse != null)
-            mouse.SetHoveredEnemy(this);
-
+        if (mouse != null) mouse.SetHoveredEnemy(this);
         _sprite.SelfModulate = Colors.Yellow;
     }
 
     public void MouseOff()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-        if (mouse != null)
-            mouse.SetHoveredEnemy(null);
-
+        if (mouse != null) mouse.SetHoveredEnemy(null);
         _sprite.SelfModulate = Colors.White;
     }
 

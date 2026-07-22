@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 
@@ -15,7 +16,6 @@ public partial class TurnManager : Node
     }
 
     public static TurnManager Instance { get; private set; }
-
     public GameState State { get; private set; }
 
     private int energyPlayedThisTurn;
@@ -39,218 +39,153 @@ public partial class TurnManager : Node
     private AStarGrid2D _astarGrid;
     private HashSet<Vector2I> _occupiedEnemyCells = new HashSet<Vector2I>();
 
-
     public override void _Ready()
     {
         Instance = this;
-
         _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
         _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
 
         BuildGrid();
-
         Setup();
     }
 
     public void Setup()
     {
-        for (int i = 0; i < 5; i++)
-        {
-            DrawCardTemp();
-        }
-       BeginPlayerTurn(); 
+        for (int i = 0; i < 5; i++) DrawCardTemp();
+        BeginPlayerTurn(); 
     }
 
     public void DrawCardTemp()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/Card.tscn");
 		Card card = scene.Instantiate() as Card;
-
 		AddChild(card);
 
 		Random random = new Random();
 		int num = random.Next(101);
 		
-		if (num < 23)
-		{
-			card.Generate("fireball", Card.Location.Hand);
-		}
-        else if (num < 46)
-		{
-			card.Generate("blockOfIce", Card.Location.Hand);
-        }    		
-		else if (num < 69)
-		{
-			card.Generate("windturret", Card.Location.Hand);
-		}
-        else if (num < 85)
-		{
-			card.Generate("fireturret", Card.Location.Hand);
-		}
-        //else if (num < 101)
-        //{
-        //    card.Generate("energy_neutral", Card.Location.Hand);
-        //}
+		if (num < 23) card.Generate("fireball", Card.Location.Hand);
+        else if (num < 46) card.Generate("blockOfIce", Card.Location.Hand);
+		else if (num < 69) card.Generate("windturret", Card.Location.Hand);
+        else if (num < 85) card.Generate("fireturret", Card.Location.Hand);
     }
-
-
 
     public void BeginPlayerTurn()
     {
         State = GameState.PlayerTurn;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
-        while (_hand.GetNumCards() < 5)
-        {
-            DrawCardTemp();
-        }
-
+        while (_hand.GetNumCards() < 5) DrawCardTemp();
     }
 
-    public bool CanPlayEnergy()
-    {
-        return energyPlayedThisTurn + 1 <= energyPlayLimit;
-    }
-
-    public void PlayEnergy()
-    {
-        energyPlayedThisTurn++;
-    }
-
-    public void EndPlayerTurn()
-    {
-        BeginSummonTurn();
-    }
+    public bool CanPlayEnergy() => energyPlayedThisTurn + 1 <= energyPlayLimit;
+    public void PlayEnergy() => energyPlayedThisTurn++;
+    public void EndPlayerTurn() => BeginSummonTurn();
 
     public async void BeginEnemyTurn()
     {
         await ToSignal(GetTree().CreateTimer(enemyTurnDelay), SceneTreeTimer.SignalName.Timeout);
 
-        RebakeNav();
-
-        _occupiedEnemyCells.Clear();
-        var enemies = GetTree().GetNodesInGroup("Enemies");
-        var enemyList = new List<Enemy>();
-
-        foreach (Node node in enemies)
-        {
-            if (node is Enemy enemy && GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
-            {
-                enemyList.Add(enemy);
-                OccupyCell(WorldToCell(enemy.GlobalPosition));
-                enemy.ResetTurnState();
-            }
-        }
-
         State = GameState.EnemyTurn;
         _playercore = GetParent().GetNode<Node2D>("Board/PlayerCore");
+        RebakeNav();
 
-        if (enemyList.Count == 0)
+        // Register initial positions
+        _occupiedEnemyCells.Clear();
+        var enemies = GetTree().GetNodesInGroup("Enemies").Cast<Enemy>().Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0).ToList();
+        
+        if (enemies.Count == 0)
         {
             BeginPlayerTurn();
             return;
         }
 
-        // Sort closest to target first so front-line enemies calculate move reservations first
-        enemyList.Sort((a, b) => a.GetRouteDistanceTo(_playercore).CompareTo(b.GetRouteDistanceTo(_playercore)));
-
-        // =======================================================
-        // PHASE 1: INSTANT MOVE PLANNING -> CONCURRENT ANIMATION
-        // =======================================================
-        var moveTasks = new List<Task>();
-        for (int i = 0; i < enemyList.Count; i++)
+        foreach (var enemy in enemies)
         {
-            Enemy enemy = enemyList[i];
-            if (GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
-            {
-                enemy.PlanMove(_playercore); // Calculates path & updates grid instantly
-                // Stagger each enemy start by 0.05s (50ms)
-                float staggerDelay = i * 0.25f; 
-                moveTasks.Add(enemy.AnimateMoveAsync(staggerDelay));
-            }
-        }
-        await Task.WhenAll(moveTasks);
-
-        // =======================================================
-        // PHASE 2: ATTACK PHASE
-        // =======================================================
-        foreach (Enemy enemy in enemyList)
-        {
-            if (GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
-            {
-                await enemy.ExecuteAttackPhaseAsync(_playercore);
-            }
+            OccupyCell(WorldToCell(enemy.GlobalPosition));
+            enemy.ResetTurnState();
         }
 
-        // =======================================================
-        // PHASE 3: FOLLOW-UP MOVE PLANNING -> CONCURRENT ANIMATION
-        // =======================================================
-        RebakeNav();
-        var followUpTasks = new List<Task>();
-        for (int i = 0; i < enemyList.Count; i++)
+        // Execute movement planning and animation for the initial pass.
+        await ExecuteEnemyTurnPhase(enemies);
+
+        // Attack phase after movement, using the same turn order.
+        foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
-            Enemy enemy = enemyList[i];
-            if (GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0 && enemy.RemainingMovement > 0)
-            {
-                enemy.PlanMove(_playercore);
-                float staggerDelay = i * 0.05f;
-                followUpTasks.Add(enemy.AnimateMoveAsync(staggerDelay));
-            }
+            await enemy.ExecuteAttackPhaseAsync(_playercore);
         }
-        await Task.WhenAll(followUpTasks);
+
+        // Follow-up movement for enemies that still have movement left and have not attacked.
+        var remainingEnemies = enemies
+            .Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0 && !e.HasAttackedThisTurn)
+            .ToList();
+
+        if (remainingEnemies.Count > 0)
+        {
+            RebakeNav();
+            await ExecuteEnemyTurnPhase(remainingEnemies);
+        }
+
         BeginPlayerTurn();
     }
 
-    private void OnEnemyFinishedTurn(Enemy enemy)
+    private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
     {
-        if (enemy != null)
+        // 1. Evaluate distances considering summons as blockers
+        bool allFullyBlocked = true;
+        var distances = new Dictionary<Enemy, int>();
+
+        foreach (var enemy in enemies)
         {
-            enemy.TurnFinished -= OnEnemyFinishedTurn;
+            int dist = enemy.GetRouteDistanceTo(_playercore, ignoreSummons: false);
+            distances[enemy] = dist;
+            if (dist != int.MaxValue) allFullyBlocked = false;
         }
 
-        _enemiesActing--;
-
-        if (_enemiesActing <= 0 && _enemiesStarted >= _enemiesScheduled)
+        // 2. Re-order: if all are fully blocked, recalculate ignoring summons
+        if (allFullyBlocked)
         {
-            BeginPlayerTurn();
+            foreach (var enemy in enemies)
+            {
+                distances[enemy] = enemy.GetRouteDistanceTo(_playercore, ignoreSummons: true);
+            }
         }
+
+        enemies.Sort((a, b) => distances[a].CompareTo(distances[b]));
+
+        // 3. Begin calculating positions sequentially
+        foreach (var enemy in enemies)
+        {
+            enemy.PlanMove(_playercore);
+        }
+
+        // 4. Async Move to positions concurrently
+        var moveTasks = new List<Task>();
+        for (int i = 0; i < enemies.Count; i++)
+        {
+            float staggerDelay = i * 0.10f;
+            moveTasks.Add(enemies[i].AnimateMoveAsync(staggerDelay));
+        }
+        
+        await Task.WhenAll(moveTasks);
     }
 
     private void OnSummonFinishedTurn(Summon summon)
     {
-        if (summon != null)
-        {
-            summon.TurnFinished -= OnSummonFinishedTurn;
-        }
-
+        if (summon != null) summon.TurnFinished -= OnSummonFinishedTurn;
         _summonsActing--;
-
-        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled)
-        {
-            BeginEnemyTurn();
-        }
+        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled) BeginEnemyTurn();
     }
 
     public async void BeginSummonTurn()
     {
         State = GameState.SummonTurn;
         RebakeNav();
-        var summons = GetTree().GetNodesInGroup("Summons");
-        var summonList = new List<Summon>();
+        var summons = GetTree().GetNodesInGroup("Summons").Cast<Summon>().Where(s => s != null).ToList();
+        
         _summonsActing = 0;
         _summonsStarted = 0;
-        _summonsScheduled = 0;
-
-        foreach (Node node in summons)
-        {
-            Summon summon = node as Summon;
-            if (summon == null)
-                continue;
-
-            summonList.Add(summon);
-        }
-
-        _summonsScheduled = summonList.Count;
+        _summonsScheduled = summons.Count;
 
         if (_summonsScheduled == 0)
         {
@@ -258,14 +193,11 @@ public partial class TurnManager : Node
             return;
         }
 
-        for (int i = 0; i < summonList.Count; i++)
+        for (int i = 0; i < summons.Count; i++)
         {
-            if (i > 0)
-            {
-                await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
-            }
-
-            Summon summon = summonList[i];
+            if (i > 0) await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
+            
+            Summon summon = summons[i];
             _summonsActing++;
             _summonsStarted++;
             summon.TurnFinished += OnSummonFinishedTurn;
@@ -273,19 +205,12 @@ public partial class TurnManager : Node
         }
     }
 
-    public int GetEnergyLimit()
-    {
-        return energyPlayLimit;
-    }
+    public int GetEnergyLimit() => energyPlayLimit;
 
     private void BuildGrid()
     {
         _board = GetTree().CurrentScene.GetNode<Board>("Board") as Board;
-
         _astarGrid = new AStarGrid2D();
-        // Adjust the starting point to -12, and increase the size to cover the span.
-        // If your range is -12 to 6 (X), the width is 18 (6 - (-12)).
-        // Adjust these numbers until they encompass your entire map.
         _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
         _astarGrid.CellSize = new Vector2(64, 32);
         _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
@@ -294,298 +219,156 @@ public partial class TurnManager : Node
     
     public void RebakeNav()
     {
-        if (_astarGrid == null)
+        if (_board == null)
         {
             BuildGrid();
-        }
-        else
-        {
-            _astarGrid.Region = _board.GetUsedRect();
-            _astarGrid.Update();
+            if (_board == null || _astarGrid == null) return;
         }
 
-        // Iterate through all cells in the grid region to check walkability
+        _astarGrid = new AStarGrid2D();
+        _astarGrid.Region = _board.GetUsedRect();
+        _astarGrid.CellSize = new Vector2(64, 32);
+        _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
+        _astarGrid.Update();
+
         Rect2I region = _astarGrid.Region;
         for (int x = region.Position.X; x < region.End.X; x++)
         {
             for (int y = region.Position.Y; y < region.End.Y; y++)
             {
                 Vector2I cell = new Vector2I(x, y);
-
-                // If the tile is NOT walkable on the board, mark it solid in the AStarGrid
-                if (!_board.IsCellWalkable(cell))
-                {
-                    _astarGrid.SetPointSolid(cell, true);
-                }
+                if (!_board.IsCellWalkable(cell)) _astarGrid.SetPointSolid(cell, true);
             }
         }
 
-        // Mark summons as solid
         var summons = GetTree().GetNodesInGroup("Summons");
         foreach (Node node in summons)
         {
             if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
             {
                 Vector2I cell = WorldToCell(summon.GlobalPosition);
-
-                if (_astarGrid.IsInBoundsv(cell))
-                    _astarGrid.SetPointSolid(cell, true);
+                if (_astarGrid.IsInBoundsv(cell)) _astarGrid.SetPointSolid(cell, true);
             }
         }
-
-        // --- NEW: Mark enemies as solid ---
-        //var enemies = GetTree().GetNodesInGroup("Enemies");
-        //foreach (Node node in enemies)
-        //{
-        //    if (node is Node2D enemy && GodotObject.IsInstanceValid(enemy))
-        //    {
-        //        Vector2I cell = WorldToCell(enemy.GlobalPosition);
-//
-        //        if (_astarGrid.IsInBoundsv(cell))
-        //            _astarGrid.SetPointSolid(cell, true);
-        //    }
-        //}
     }
 
-    public Vector2I WorldToCell(Vector2 worldPosition)
-    {
-        return _board.LocalToMap(_board.ToLocal(worldPosition));
-    }
-
-    public Vector2 CellToWorld(Vector2I cell)
-    {
-        return _board.ToGlobal(_board.MapToLocal(cell));
-    }
-
-    public int TileDistance(Vector2I a, Vector2I b)
-    {
-        return Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
-    }
-
-    public bool IsSolidCell(Vector2I cell)
-    {
-        if (_astarGrid.IsInBoundsv(cell))
-        {
-            return _astarGrid.IsPointSolid(cell);
-        }
-        return true;        
-    }
+    public Vector2I WorldToCell(Vector2 worldPosition) => _board.LocalToMap(_board.ToLocal(worldPosition));
+    public Vector2 CellToWorld(Vector2I cell) => _board.ToGlobal(_board.MapToLocal(cell));
+    public int TileDistance(Vector2I a, Vector2I b) => Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
+    public bool IsSolidCell(Vector2I cell) => _astarGrid.IsInBoundsv(cell) && _astarGrid.IsPointSolid(cell);
 
     public List<Vector2I> FindPath(Vector2I from, Vector2I to)
     {
-        if (_astarGrid == null) return null;
+        if (_astarGrid == null || !_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to)) return null;
 
-        if (!_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to))
-        {
-            GD.PrintErr($"Pathfinding failed: Start {from} or End {to} is out of bounds.");
-            return null;
-        }
-
-        // Un-solidify start and target points temporarily so AStar can calculate
         bool wasFromSolid = _astarGrid.IsPointSolid(from);
         bool wasToSolid = _astarGrid.IsPointSolid(to);
         if (wasFromSolid) _astarGrid.SetPointSolid(from, false);
         if (wasToSolid) _astarGrid.SetPointSolid(to, false);
 
-        // --- PASS 1: OPTIMAL PATH (Try routing around stationary enemies) ---
+        Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
+
+        if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
+        if (wasToSolid) _astarGrid.SetPointSolid(to, true);
+
+        if (pathArray.Count <= 1) return null;
+        var path = new List<Vector2I>(pathArray);
+        path.RemoveAt(0); 
+        return path;
+    }
+
+    public List<Vector2I> FindPathIgnoringSummons(Vector2I from, Vector2I to)
+    {
+        if (_astarGrid == null || !_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to)) return null;
+
+        // Temporarily ignore summons and already-reserved enemy cells so the fallback route can be calculated.
+        var summons = GetTree().GetNodesInGroup("Summons");
         var modifiedCells = new List<Vector2I>();
-        foreach (Vector2I enemyCell in _occupiedEnemyCells)
+        foreach (Node node in summons)
         {
-            if (enemyCell != from && enemyCell != to && _astarGrid.IsInBoundsv(enemyCell))
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
             {
-                if (!_astarGrid.IsPointSolid(enemyCell))
+                Vector2I cell = WorldToCell(summon.GlobalPosition);
+                if (_astarGrid.IsInBoundsv(cell) && _astarGrid.IsPointSolid(cell))
                 {
-                    _astarGrid.SetPointSolid(enemyCell, true);
-                    modifiedCells.Add(enemyCell);
+                    _astarGrid.SetPointSolid(cell, false);
+                    modifiedCells.Add(cell);
                 }
             }
         }
 
+        foreach (Vector2I cell in _occupiedEnemyCells)
+        {
+            if (_astarGrid.IsInBoundsv(cell))
+            {
+                _astarGrid.SetPointSolid(cell, false);
+                modifiedCells.Add(cell);
+            }
+        }
+
+        bool wasFromSolid = _astarGrid.IsPointSolid(from);
+        bool wasToSolid = _astarGrid.IsPointSolid(to);
+        if (wasFromSolid) _astarGrid.SetPointSolid(from, false);
+        if (wasToSolid) _astarGrid.SetPointSolid(to, false);
+
         Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
 
-        // Revert only the cells we temporarily marked solid
-        foreach (Vector2I cell in modifiedCells)
-        {
-            _astarGrid.SetPointSolid(cell, false);
-        }
-
-        // --- PASS 2: FALLBACK PATH (If route is blocked by enemies in a hallway/choke) ---
-        if (pathArray.Count <= 1)
-        {
-            pathArray = _astarGrid.GetIdPath(from, to);
-        }
-
-        // Restore start and target points
         if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
         if (wasToSolid) _astarGrid.SetPointSolid(to, true);
 
-        if (pathArray.Count <= 1)
-            return null;
+        foreach (Vector2I cell in modifiedCells) _astarGrid.SetPointSolid(cell, true);
 
+        if (pathArray.Count <= 1) return null;
         var path = new List<Vector2I>(pathArray);
-        path.RemoveAt(0); // Remove start position
+        path.RemoveAt(0);
         return path;
     }
 
-    // --- NEW: Helper method to update grid solids dynamically ---
-    public void SetCellSolid(Vector2I cell, bool isSolid)
+    public bool IsCellOccupiedBySummon(Vector2I targetCell)
     {
-        if (_astarGrid != null && _astarGrid.IsInBoundsv(cell))
+        var summons = GetTree().GetNodesInGroup("Summons");
+        foreach (Node node in summons)
         {
-            _astarGrid.SetPointSolid(cell, isSolid);
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            {
+                if (WorldToCell(summon.GlobalPosition) == targetCell) return true;
+            }
         }
+        return false;
     }
 
-    public void MoveEnemyCell(Vector2I oldCell, Vector2I newCell)
-    {
-        FreeCell(oldCell);
-        OccupyCell(newCell);
-    }
-
-    public void FreeCell(Vector2I cell)
-    {
-        _occupiedEnemyCells.Remove(cell);
-    }
-
-    public void OccupyCell(Vector2I cell)
-    {
-        _occupiedEnemyCells.Add(cell);
-    }
-
-    public void ClearCell(Vector2 worldPosition)
-    {
-        if (_astarGrid == null) return;
-        
-        Vector2I cell = WorldToCell(worldPosition);
-        GD.Print("CELL TO CLEAR IN BOUNDS: ", _astarGrid.IsInBoundsv(cell));
-        if (_astarGrid.IsInBoundsv(cell))
-        {
-            GD.Print("cleared");
-            _astarGrid.SetPointSolid(cell, false);
-            GD.Print("cleared cell solid?", IsSolidCell(cell));             
-        }
-    }
+    public void FreeCell(Vector2I cell) => _occupiedEnemyCells.Remove(cell);
+    public void OccupyCell(Vector2I cell) => _occupiedEnemyCells.Add(cell);
+    public bool IsEnemyOccupied(Vector2I cell) => _occupiedEnemyCells.Contains(cell);
 
     public Node2D GetFirstBlockingSummon(Vector2I from, Vector2I to)
     {
-        if (_astarGrid == null) return null;
+        var idealPath = FindPathIgnoringSummons(from, to);
+        if (idealPath == null) return null;
 
         var summons = GetTree().GetNodesInGroup("Summons");
-        
-        // 1. Temporarily make summons walkable to find the ideal route
-        foreach (Node node in summons)
-        {
-            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
-            {
-                Vector2I cell = WorldToCell(summon.GlobalPosition);
-                if (_astarGrid.IsInBoundsv(cell))
-                    _astarGrid.SetPointSolid(cell, false);
-            }
-        }
-
-        // 2. Get the path ignoring summons
-        Godot.Collections.Array<Vector2I> idealPath = _astarGrid.GetIdPath(from, to);
-
-        // 3. Restore summon collisions
-        foreach (Node node in summons)
-        {
-            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
-            {
-                Vector2I cell = WorldToCell(summon.GlobalPosition);
-                if (_astarGrid.IsInBoundsv(cell))
-                    _astarGrid.SetPointSolid(cell, true);
-            }
-        }
-
-        // 4. Find the first summon that sits on this ideal path
         foreach (Vector2I cell in idealPath)
         {
             foreach (Node node in summons)
             {
                 if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
                 {
-                    if (WorldToCell(summon.GlobalPosition) == cell)
-                    {
-                        return summon;
-                    }
+                    if (WorldToCell(summon.GlobalPosition) == cell) return summon;
                 }
             }
         }
-
         return null;
     }
 
-    public bool IsEnemyOccupied(Vector2I cell)
+    public int GetPathLengthToTarget(Vector2I from, Vector2I to, bool ignoreSummons)
     {
-        return _occupiedEnemyCells.Contains(cell);
-    }
-
-    public void RegisterEnemyPosition(Vector2I oldCell, Vector2I newCell)
-    {
-        _occupiedEnemyCells.Remove(oldCell);
-        SetCellSolid(oldCell, false);
-        _occupiedEnemyCells.Add(newCell);
-        SetCellSolid(newCell, true);
-    }
-
-    public void UnregisterEnemyPosition(Vector2I cell)
-    {
-        _occupiedEnemyCells.Remove(cell);
-        SetCellSolid(cell, false);
-    }
-
-    public int GetPathLengthToTarget(Vector2I from, Vector2I to)
-{
-    if (_astarGrid == null)
-        return int.MaxValue;
-
-    if (!_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to))
-        return int.MaxValue;
-
-    if (from == to)
-        return 0;
-
-    // Temporarily un-solidify summons and start/end points so we can measure path length along grid terrain
-    var summons = GetTree().GetNodesInGroup("Summons");
-    var modifiedCells = new List<Vector2I>();
-
-    foreach (Node node in summons)
-    {
-        if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+        List<Vector2I> path = ignoreSummons ? FindPathIgnoringSummons(from, to) : FindPath(from, to);
+        
+        if (path != null && path.Count > 0)
         {
-            Vector2I cell = WorldToCell(summon.GlobalPosition);
-            if (_astarGrid.IsInBoundsv(cell) && _astarGrid.IsPointSolid(cell))
-            {
-                _astarGrid.SetPointSolid(cell, false);
-                modifiedCells.Add(cell);
-            }
+            return path.Count;
         }
+        
+        return int.MaxValue; 
     }
-
-    bool wasFromSolid = _astarGrid.IsPointSolid(from);
-    bool wasToSolid = _astarGrid.IsPointSolid(to);
-
-    if (wasFromSolid) _astarGrid.SetPointSolid(from, false);
-    if (wasToSolid) _astarGrid.SetPointSolid(to, false);
-
-    Godot.Collections.Array<Vector2I> pathArray = _astarGrid.GetIdPath(from, to);
-
-    // Restore solid states
-    if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
-    if (wasToSolid) _astarGrid.SetPointSolid(to, true);
-
-    foreach (Vector2I cell in modifiedCells)
-    {
-        _astarGrid.SetPointSolid(cell, true);
-    }
-
-    // pathArray includes start position, so (Count - 1) gives the number of tile steps
-    if (pathArray != null && pathArray.Count > 1)
-    {
-        return pathArray.Count - 1;
-    }
-
-    // Fallback to Manhattan tile distance if terrain completely blocks path
-    return TileDistance(from, to);
-}
 }
