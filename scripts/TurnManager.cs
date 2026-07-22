@@ -34,6 +34,7 @@ public partial class TurnManager : Node
     private int _enemiesScheduled = 0;
     private int _summonsStarted = 0;
     private int _summonsScheduled = 0;
+    private bool _summonPhase2 = false;
 
     private Board _board;
     private AStarGrid2D _astarGrid;
@@ -73,6 +74,7 @@ public partial class TurnManager : Node
     public void BeginPlayerTurn()
     {
         State = GameState.PlayerTurn;
+        _summonPhase2 = false;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
         while (_hand.GetNumCards() < 5) DrawCardTemp();
@@ -81,6 +83,12 @@ public partial class TurnManager : Node
     public bool CanPlayEnergy() => energyPlayedThisTurn + 1 <= energyPlayLimit;
     public void PlayEnergy() => energyPlayedThisTurn++;
     public void EndPlayerTurn() => BeginSummonTurn();
+
+    private void BeginSummonTurnAfterEnemyTurn()
+    {
+        _summonPhase2 = true;
+        BeginSummonTurn();
+    }
 
     public async void BeginEnemyTurn()
     {
@@ -126,7 +134,7 @@ public partial class TurnManager : Node
             await ExecuteEnemyTurnPhase(remainingEnemies);
         }
 
-        BeginPlayerTurn();
+        BeginSummonTurnAfterEnemyTurn();
     }
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
@@ -174,7 +182,18 @@ public partial class TurnManager : Node
     {
         if (summon != null) summon.TurnFinished -= OnSummonFinishedTurn;
         _summonsActing--;
-        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled) BeginEnemyTurn();
+        if (_summonsActing <= 0 && _summonsStarted >= _summonsScheduled) 
+        {
+            if (_summonPhase2)
+            {
+                _summonPhase2 = false;
+                BeginPlayerTurn();
+            }
+            else
+            {
+                BeginEnemyTurn();
+            }
+        }
     }
 
     public async void BeginSummonTurn()
@@ -189,7 +208,14 @@ public partial class TurnManager : Node
 
         if (_summonsScheduled == 0)
         {
-            BeginEnemyTurn();
+            if (_summonPhase2)
+            {
+                BeginPlayerTurn();
+            }
+            else
+            {
+                BeginEnemyTurn();
+            }
             return;
         }
 
