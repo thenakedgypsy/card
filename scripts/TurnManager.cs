@@ -66,9 +66,10 @@ public partial class TurnManager : Node
 		int num = random.Next(101);
 		
 		if (num < 23) card.Generate("fireball", Card.Location.Hand);
-        else if (num < 46) card.Generate("blockOfIce", Card.Location.Hand);
-		else if (num < 69) card.Generate("windturret", Card.Location.Hand);
-        else if (num < 85) card.Generate("fireturret", Card.Location.Hand);
+        else if (num < 39) card.Generate("blockOfIce", Card.Location.Hand);
+		else if (num < 55) card.Generate("windturret", Card.Location.Hand);
+        else if (num < 75) card.Generate("fireturret", Card.Location.Hand);
+        else if (num < 85) card.Generate("earthshatter", Card.Location.Hand);
     }
 
     public void BeginPlayerTurn()

@@ -1,0 +1,10 @@
+{
+  "type": "Spell",
+  "cost": 4,
+  "element": "Earth",
+  "effectData": 
+  {
+    "effectType": "EnemyDamage",
+    "damage": 99
+  }
+}
