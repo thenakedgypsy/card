@@ -2,6 +2,7 @@
   "type": "Summon",
   "cost": 2,
   "element": "Wind",
+  "rarity": "Common",
   "effectData": 
   {
 	  "effectType": "Summon",

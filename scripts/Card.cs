@@ -65,6 +65,7 @@ public partial class Card : Node2D
     private TurnManager _turnManager;
     private EnergyManager _energyManager;
     private CardEffect _effect;
+    private Rarity _rarity;
 
     public override void _Ready()
     {
@@ -141,12 +142,17 @@ public partial class Card : Node2D
             Enum.TryParse(data["element"].ToString(), out Element parsedElement))
             element = parsedElement;
 
+        if (data.ContainsKey("rarity") &&
+            Enum.TryParse(data["rarity"].ToString(), out Rarity parsedRarity))
+            _rarity = parsedRarity;
+
         cost = data.ContainsKey("cost") ? (int)data["cost"] : 0;
         _costDisplay.Text = cost.ToString();
         if (type == CardType.Energy)
         {
             _costDisplay.Visible = false;
         }
+
 
         // ===== Text data =====
 
@@ -402,7 +408,7 @@ public partial class Card : Node2D
     // =========================
     // HELPERS
     // =========================
-    private Godot.Collections.Dictionary LoadJson(string path)
+    public Godot.Collections.Dictionary LoadJson(string path)
     {
         if (!FileAccess.FileExists(path))
             return null;

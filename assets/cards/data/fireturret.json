@@ -2,6 +2,7 @@
   "type": "Summon",
   "cost": 3,
   "element": "Fire",
+  "rarity": "Common",
   "effectData": 
   {
     "effectType": "Summon",

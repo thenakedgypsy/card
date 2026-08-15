@@ -2,6 +2,7 @@
   "type": "Summon",
   "cost": 1,
   "element": "Water",
+  "rarity": "Uncommon",
   "effectData": 
   {
     "effectType": "Summon",

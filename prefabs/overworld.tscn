@@ -1,12 +1,16 @@
-[gd_scene load_steps=5 format=3 uid="uid://ct6wgkudn7xcc"]
+[gd_scene load_steps=6 format=3 uid="uid://ct6wgkudn7xcc"]
 
 [ext_resource type="Script" path="res://scripts/Overworld.cs" id="1_c53fq"]
 [ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="2_bcbot"]
+[ext_resource type="PackedScene" uid="uid://38ynssqcnbnp" path="res://prefabs/CardPool.tscn" id="2_d22b5"]
 [ext_resource type="Script" path="res://scripts/SeedTracker.cs" id="2_dessn"]
 [ext_resource type="PackedScene" uid="uid://cou7ht08pc4e3" path="res://prefabs/overworld_node.tscn" id="4_fe4tw"]
 
 [node name="Overworld" type="Node2D" groups=["Overworld"]]
 script = ExtResource("1_c53fq")
+
+[node name="CardPool" parent="." instance=ExtResource("2_d22b5")]
+scale = Vector2(0.617476, 1.05255)
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]
 z_index = -1
@@ -17,25 +21,25 @@ offset_bottom = 1037.0
 text = "Use the 6 Energy Gain Nodes at the bottom to setup your energy profile. THen try and beat all three defence nodes. Good luck."
 
 [node name="OverworldNode" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(984, 303)
+position = Vector2(1060, 603)
 isDefence = true
 
 [node name="OverworldNode8" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(1103, 254)
+position = Vector2(1160, 575)
 isDefence = true
 
 [node name="OverworldNode9" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(879, 241)
+position = Vector2(936, 562)
 isDefence = true
 
 [node name="OverworldNode2" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(1130, 476)
+position = Vector2(372, 558)
 
 [node name="OverworldNode3" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(852, 471)
+position = Vector2(94, 553)
 
 [node name="OverworldNode4" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(987, 478)
+position = Vector2(229, 560)
 
 [node name="SeedTracker" type="RichTextLabel" parent="."]
 top_level = true
@@ -50,13 +54,13 @@ script = ExtResource("2_dessn")
 position = Vector2(961, 541)
 
 [node name="OverworldNode5" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(1134, 606)
+position = Vector2(788, 561)
 
 [node name="OverworldNode6" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(856, 601)
+position = Vector2(510, 556)
 
 [node name="OverworldNode7" parent="." instance=ExtResource("4_fe4tw")]
-position = Vector2(991, 608)
+position = Vector2(645, 563)
 
 [node name="Camera2D2" type="Camera2D" parent="."]
 position = Vector2(965, 671)
