@@ -10,6 +10,8 @@ public partial class Board : TileMapLayer
 	[Export] public int DistanceBetweenPoints = 30;
 	[Export] public int Paths = 3;
 	[Export] public int MaxPathWidth = 2;
+	[Export] public Vector2 ScreenOffset = Vector2.Zero;
+	public int Seed;
 
 	public override void _Ready()
 	{
@@ -64,6 +66,7 @@ public partial class Board : TileMapLayer
 
 	public void GenerateBoard(int seed)
 	{
+		Seed = seed;
 		Random rng = new Random(seed);
 		var usedCells = GetUsedCells();
 
@@ -134,6 +137,12 @@ public partial class Board : TileMapLayer
 			minY = centerY - halfDist;
 			maxY = centerY + halfDist;
 		}
+
+		// Find the center point of the rectangle and position the layer in the middle of the screen
+		Vector2I rectCenterCell = new Vector2I((minX + maxX) / 2, (minY + maxY) / 2);
+		Vector2 localCenter = MapToLocal(rectCenterCell);
+		Vector2 screenSize = GetViewportRect().Size;
+		GlobalPosition = (screenSize / 2.0f) + ScreenOffset - localCenter;
 
 		foreach (Vector2I cell in usedCells)
 		{
