@@ -6,6 +6,9 @@ public partial class Overworld : Node2D
 {
 	[Export]
 	public int Seed = 0;
+	public bool InScene = false;
+	[Export]
+	public int roundNum = 0;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -16,8 +19,8 @@ public partial class Overworld : Node2D
 
 
 			// temp call here to boot things
-			CoreDef coreDef = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
-			coreDef.Setup();
+			//CoreDef coreDef = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
+			//coreDef.Setup();
 		}
 	}
 

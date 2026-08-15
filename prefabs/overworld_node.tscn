@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://cou7ht08pc4e3"]
+
+[ext_resource type="Script" path="res://scripts/OverworldNode.cs" id="1_khx1e"]
+[ext_resource type="Texture2D" uid="uid://q142xx7vyicl" path="res://assets/nodes/shield_up.png" id="2_es76i"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_wrl17"]
+radius = 50.1597
+
+[node name="OverworldNode" type="Node2D"]
+z_index = -1
+script = ExtResource("1_khx1e")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_es76i")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_wrl17")
+
+[connection signal="mouse_entered" from="Area2D" to="." method="MouseOver"]
+[connection signal="mouse_exited" from="Area2D" to="." method="MouseOff"]

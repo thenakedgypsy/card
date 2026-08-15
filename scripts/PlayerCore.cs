@@ -41,6 +41,11 @@ public partial class PlayerCore : Node2D, IHealth
 	    {
 	        GD.Print("IS DESTROYED");
 	
+			CoreDef def = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
+			Overworld _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
+			_overworld.InScene = false;
+			def.QueueFree();
+			
 	        // Prevent double-death logic
 	        SetProcess(false);
 	        SetPhysicsProcess(false);
@@ -50,6 +55,7 @@ public partial class PlayerCore : Node2D, IHealth
 	
 	        // Safely remove from tree at end of frame
 	        CallDeferred(Node.MethodName.QueueFree);
+
 	    }
 	}
 

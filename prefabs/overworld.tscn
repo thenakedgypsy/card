@@ -1,11 +1,41 @@
-[gd_scene load_steps=4 format=3 uid="uid://ct6wgkudn7xcc"]
+[gd_scene load_steps=5 format=3 uid="uid://ct6wgkudn7xcc"]
 
 [ext_resource type="Script" path="res://scripts/Overworld.cs" id="1_c53fq"]
 [ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="2_bcbot"]
 [ext_resource type="Script" path="res://scripts/SeedTracker.cs" id="2_dessn"]
+[ext_resource type="PackedScene" uid="uid://cou7ht08pc4e3" path="res://prefabs/overworld_node.tscn" id="4_fe4tw"]
 
 [node name="Overworld" type="Node2D" groups=["Overworld"]]
 script = ExtResource("1_c53fq")
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+z_index = -1
+offset_left = 673.0
+offset_top = 689.0
+offset_right = 1276.0
+offset_bottom = 1037.0
+text = "Use the 6 Energy Gain Nodes at the bottom to setup your energy profile. THen try and beat all three defence nodes. Good luck."
+
+[node name="OverworldNode" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(984, 303)
+isDefence = true
+
+[node name="OverworldNode8" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(1103, 254)
+isDefence = true
+
+[node name="OverworldNode9" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(879, 241)
+isDefence = true
+
+[node name="OverworldNode2" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(1130, 476)
+
+[node name="OverworldNode3" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(852, 471)
+
+[node name="OverworldNode4" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(987, 478)
 
 [node name="SeedTracker" type="RichTextLabel" parent="."]
 top_level = true
@@ -18,6 +48,18 @@ script = ExtResource("2_dessn")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 541)
+
+[node name="OverworldNode5" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(1134, 606)
+
+[node name="OverworldNode6" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(856, 601)
+
+[node name="OverworldNode7" parent="." instance=ExtResource("4_fe4tw")]
+position = Vector2(991, 608)
+
+[node name="Camera2D2" type="Camera2D" parent="."]
+position = Vector2(965, 671)
 
 [node name="EnergyManager" parent="." instance=ExtResource("2_bcbot")]
 position = Vector2(1018, 84)

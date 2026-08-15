@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Threading;
 
 
 public partial class OverworldNode : Node2D // will be a node in the overworld tree, 
@@ -12,7 +13,9 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		CardGain,
 		EnergyGain
 	}
-	private bool _visitable;
+	[Export]
+	public bool isDefence;
+	private bool _visitable = true;
 	private bool _visisted;
 	private Type _type;
 	private string _title;
@@ -21,30 +24,70 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	private PackedScene _scene;
 	private Dictionary<string, Variant> _sceneData;
 	private Overworld _overworld;
+	public bool _mouseOver;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_sprite = GetNode<Sprite2D>("Sprite2D");
 		_overworld = GetParent<Overworld>();
+
+		if (isDefence)
+		{
+			buildNode(Type.CoreDefence);
+		}
+		else
+		{
+			buildNode(Type.EnergyGain);
+		}
+	}
+
+	public void MouseOver()
+	{
+		_mouseOver = true;
+		GD.Print("Mouse Over Node");
+	}
+
+	public void MouseOff()
+	{
+		_mouseOver = false;
+		GD.Print("Mouse Off Node");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
+		if(_visitable && !_overworld.InScene)
+		{
+			if (_mouseOver && Input.IsActionJustPressed("lClick"))
+			{
+				InstantiateSceneFromNode();
+			}
+		}
 	}
 
 	public void buildNode(Type type, Dictionary<string, Variant> data = null)
-	{		//switch for types here pass the nested data on. 
+	{	
+		_type = type;	//switch for types here pass the nested data on. 
 		switch (type)
 		{
 			case Type.CoreDefence:
 				LoadCoreDefence();
+				GD.Print("Defence Node Built");
+				break;
+			case Type.EnergyGain:
+				LoadEnergyGain();
+				GD.Print("EG Node Built");
 				break;
 		}
 	}
 
 	public Dictionary<string, Variant> ExtractSceneData(Dictionary<string, Variant> data)
 	{
+		if (data == null)
+		{
+			GD.PushWarning("Expected Scene Data but received Null");
+			return data;
+		}
 		var sceneVariant = data["sceneData"];
 		var godotDict = sceneVariant.AsGodotDictionary();
 		Dictionary<string, Variant> SceneData = new Dictionary<string, Variant>();
@@ -62,21 +105,39 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	{
 		_title = "Core Defence"; //needs lang lookup
 		_tooltip = "Defend your core from enemies on a random map";
+
 		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/shield_up.png");
 		_scene = GD.Load<PackedScene>("res://prefabs/CoreDef.tscn");
-
 	}
 
-	public void InstantiateSceneFromNode(Type type)
+	public void LoadEnergyGain()
 	{
-		switch (type)
+		_title = "Energy Gain"; //needs lang lookup
+		_tooltip = "Permantly gain 1 Energy Regen of your choice";
+
+		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/multi.png");
+		_scene = GD.Load<PackedScene>("res://prefabs/energyGain.tscn");
+	}
+
+	public void InstantiateSceneFromNode()
+	{
+		GD.Print("Attempting to instantiate");
+		_overworld.InScene = true;
+		_visisted = true;
+		_visitable = false;
+		_sprite.SelfModulate = new Color(0.8f, 0.8f, 1f, 0.2f);
+		_overworld.roundNum += 1;
+		switch (_type)
 		{
 			case Type.CoreDefence:
 				CoreDef defNode = _scene.Instantiate() as CoreDef;
 				_overworld.AddChild(defNode);
 				defNode.Setup();
-				_visisted = true;
-				_visitable = false;
+				break;
+			case Type.EnergyGain:
+				GD.Print("Energy Node Instantiating");
+				EnergyGain gainNode = _scene.Instantiate() as EnergyGain;
+				_overworld.AddChild(gainNode);
 				break;
 		}
 		

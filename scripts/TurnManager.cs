@@ -58,8 +58,8 @@ public partial class TurnManager : Node
     public void Setup(int numEnemies)
     {
         GD.Print("SETUP CALLED");
-        Seed = _overworld.Seed;
-        Random rng = new Random(_overworld.Seed);
+        Seed = _overworld.Seed * _overworld.roundNum;
+        Random rng = new Random(Seed);
         _board.GenerateBoard(rng.Next());    
         BuildGrid();
         for(int i = 0; i < numEnemies; i++)
@@ -115,6 +115,10 @@ public partial class TurnManager : Node
         
         if (enemies.Count == 0)
         {
+            CoreDef def = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
+            Overworld _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
+			_overworld.InScene = false;
+			def.QueueFree();
             BeginPlayerTurn();
             return;
         }

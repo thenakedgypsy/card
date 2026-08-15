@@ -275,7 +275,7 @@ public partial class Card : Node2D
             }
             else
             {
-                _energyManager.TryGainRegen(1, element, false);
+                _energyManager.TryGainRegen(1, element);
             }
         }
         else
