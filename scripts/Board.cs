@@ -9,7 +9,6 @@ public partial class Board : TileMapLayer
 	public override void _Ready()
 	{
 		_mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-		GenerateBoard(1234567);
 	}
 
 

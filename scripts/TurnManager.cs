@@ -40,18 +40,27 @@ public partial class TurnManager : Node
     private AStarGrid2D _astarGrid;
     private HashSet<Vector2I> _occupiedEnemyCells = new HashSet<Vector2I>();
 
+    private PackedScene enemyScene;
+
     public override void _Ready()
     {
         Instance = this;
         _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
+        enemyScene = GD.Load<PackedScene>("res://prefabs/Enemy.tscn");
+        _board = GetTree().GetFirstNodeInGroup("Board") as Board;
         _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
 
         BuildGrid();
-        Setup();
     }
 
-    public void Setup()
+    public void Setup(int numEnemies)
     {
+        for(int i = 0; i < numEnemies; i++)
+        {
+            Enemy enemy = enemyScene.Instantiate<Enemy>();
+            _board.AddChild(enemy);
+        }
+        PlaceEntities();
         for (int i = 0; i < 5; i++) DrawCardTemp();
         BeginPlayerTurn(); 
     }
@@ -248,6 +257,8 @@ public partial class TurnManager : Node
     private void BuildGrid()
     {
         _board = GetTree().GetFirstNodeInGroup("Board") as Board;
+        Random random = new Random();
+        _board.GenerateBoard(random.Next());
         _astarGrid = new AStarGrid2D();
         _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
         _astarGrid.CellSize = new Vector2(64, 32);
@@ -398,4 +409,85 @@ public partial class TurnManager : Node
         
         return int.MaxValue; 
     }
+
+    public void PlaceEntities()
+{
+    // 1. Get the PlayerCore and all Enemies
+    _playercore = GetParent().GetNodeOrNull<Node2D>("Board/PlayerCore");
+    var enemies = GetTree().GetNodesInGroup("Enemies");
+
+    if (_playercore == null || enemies.Count == 0) return;
+
+    // 2. Gather all walkable cells from the Board
+    var usedCells = _board.GetUsedCells();
+    List<Vector2I> walkableCells = new List<Vector2I>();
+    
+    foreach (Vector2I cell in usedCells)
+    {
+        if (_board.IsCellWalkable(cell))
+        {
+            walkableCells.Add(cell);
+        }
+    }
+
+    if (walkableCells.Count < enemies.Count + 1)
+    {
+        GD.PrintErr("Not enough walkable cells to place the core and all enemies!");
+        return;
+    }
+
+    // 3. Find the two farthest walkable cells (O(N^2) comparison)
+    float maxDistance = -1f;
+    Vector2I farthestA = Vector2I.Zero;
+    Vector2I farthestB = Vector2I.Zero;
+
+    for (int i = 0; i < walkableCells.Count; i++)
+    {
+        for (int j = i + 1; j < walkableCells.Count; j++)
+        {
+            // Using straight-line distance squared to find the absolute farthest visual points
+            float dist = ((Vector2)walkableCells[i]).DistanceSquaredTo((Vector2)walkableCells[j]);
+            if (dist > maxDistance)
+            {
+                maxDistance = dist;
+                farthestA = walkableCells[i];
+                farthestB = walkableCells[j];
+            }
+        }
+    }
+
+    // 4. Assign Leftmost to Core, Rightmost to First Enemy
+    Vector2I coreCell = farthestA.X < farthestB.X ? farthestA : farthestB;
+    Vector2I firstEnemyCell = farthestA.X < farthestB.X ? farthestB : farthestA;
+
+    // Remove placed cells from the available pool so they don't overlap
+    walkableCells.Remove(coreCell);
+    walkableCells.Remove(firstEnemyCell);
+
+    // Move the Core and the First Enemy to their starting positions
+    _playercore.GlobalPosition = CellToWorld(coreCell);
+    
+    Node2D firstEnemy = enemies[0] as Node2D;
+    firstEnemy.GlobalPosition = CellToWorld(firstEnemyCell);
+
+    // 5. Place the remaining enemies progressively closer
+    // Sort the remaining cells by descending distance to the Core (farthest first)
+    walkableCells.Sort((a, b) => 
+    {
+        float distA = ((Vector2)a).DistanceSquaredTo((Vector2)coreCell);
+        float distB = ((Vector2)b).DistanceSquaredTo((Vector2)coreCell);
+        return distB.CompareTo(distA);
+    });
+
+    // Place the rest of the enemies
+    for (int i = 1; i < enemies.Count; i++)
+    {
+        Node2D enemy = enemies[i] as Node2D;
+        Vector2I nextCell = walkableCells[i - 1]; // Skip first enemy, so index is i-1
+        enemy.GlobalPosition = CellToWorld(nextCell);
+    }
+
+    // Finalize: Update Nav Grid now that entities are occupying their final spots
+    RebakeNav();
+}
 }
