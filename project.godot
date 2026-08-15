@@ -35,6 +35,8 @@ Enemies=""
 Core=""
 Summons=""
 Board=""
+Overworld=""
+ActiveDef=""
 
 [input]
 

@@ -41,6 +41,8 @@ public partial class TurnManager : Node
     private HashSet<Vector2I> _occupiedEnemyCells = new HashSet<Vector2I>();
 
     private PackedScene enemyScene;
+    private Overworld _overworld;
+    public int Seed;
 
     public override void _Ready()
     {
@@ -49,12 +51,17 @@ public partial class TurnManager : Node
         enemyScene = GD.Load<PackedScene>("res://prefabs/Enemy.tscn");
         _board = GetTree().GetFirstNodeInGroup("Board") as Board;
         _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
-
-        BuildGrid();
+        _board = GetTree().GetFirstNodeInGroup("Board") as Board;
+        _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
     }
 
     public void Setup(int numEnemies)
     {
+        GD.Print("SETUP CALLED");
+        Seed = _overworld.Seed;
+        Random rng = new Random(_overworld.Seed);
+        _board.GenerateBoard(rng.Next());    
+        BuildGrid();
         for(int i = 0; i < numEnemies; i++)
         {
             Enemy enemy = enemyScene.Instantiate<Enemy>();
@@ -256,9 +263,6 @@ public partial class TurnManager : Node
 
     private void BuildGrid()
     {
-        _board = GetTree().GetFirstNodeInGroup("Board") as Board;
-        Random random = new Random();
-        _board.GenerateBoard(random.Next());
         _astarGrid = new AStarGrid2D();
         _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
         _astarGrid.CellSize = new Vector2(64, 32);

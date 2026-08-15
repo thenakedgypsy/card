@@ -11,7 +11,6 @@ public partial class Board : TileMapLayer
 	[Export] public int Paths = 3;
 	[Export] public int MaxPathWidth = 2;
 	[Export] public Vector2 ScreenOffset = Vector2.Zero;
-	public int Seed;
 
 	public override void _Ready()
 	{
@@ -66,7 +65,6 @@ public partial class Board : TileMapLayer
 
 	public void GenerateBoard(int seed)
 	{
-		Seed = seed;
 		Random rng = new Random(seed);
 		var usedCells = GetUsedCells();
 

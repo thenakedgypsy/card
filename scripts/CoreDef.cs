@@ -9,7 +9,6 @@ public partial class CoreDef : Node2D
 	public override void _Ready()
 	{
 		_turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;		
-		Setup(new Dictionary<string, Variant>());
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -17,11 +16,12 @@ public partial class CoreDef : Node2D
 	{
 	}
 
-	public void Setup(Dictionary<string, Variant> coreDefData)
+	public void Setup(Dictionary<string, Variant> coreDefData = null)
 	{
 		//int numEnemies = (int)coreDefData["numEnemies"];
-		Random random = new Random();	
-		_turnManager.Setup(random.Next(61));
+		int Seed = _turnManager.Seed;
+		Random random = new Random(Seed);	
+		_turnManager.Setup(random.Next(41));
 	}
 
 

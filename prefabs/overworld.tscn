@@ -1,11 +1,23 @@
-[gd_scene load_steps=2 format=3 uid="uid://ct6wgkudn7xcc"]
+[gd_scene load_steps=4 format=3 uid="uid://ct6wgkudn7xcc"]
 
+[ext_resource type="Script" path="res://scripts/Overworld.cs" id="1_c53fq"]
 [ext_resource type="PackedScene" uid="uid://iua0l5tdn75t" path="res://prefabs/CoreDef.tscn" id="1_hi42i"]
+[ext_resource type="Script" path="res://scripts/SeedTracker.cs" id="2_dessn"]
 
-[node name="Overworld" type="Node2D"]
+[node name="Overworld" type="Node2D" groups=["Overworld"]]
+script = ExtResource("1_c53fq")
+
+[node name="SeedTracker" type="RichTextLabel" parent="."]
+top_level = true
+offset_left = 1742.0
+offset_top = 14.0
+offset_right = 1911.0
+offset_bottom = 38.0
+text = "SEED: 15616516516"
+script = ExtResource("2_dessn")
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 541)
 
-[node name="CoreDef" parent="." instance=ExtResource("1_hi42i")]
+[node name="CoreDef" parent="." groups=["ActiveDef"] instance=ExtResource("1_hi42i")]
 position = Vector2(-4, 6)
