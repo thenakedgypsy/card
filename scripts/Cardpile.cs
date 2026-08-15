@@ -30,5 +30,18 @@ public partial class Cardpile : Node2D
         return cardsInPile.Count;
     }
 
+    public bool tryRemoveCard(Card card)
+    {
+        if (cardsInPile.Contains(card))
+        {
+            RemoveCard(card);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
 
 }

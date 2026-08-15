@@ -42,4 +42,9 @@ public partial class Board : TileMapLayer
 	{
 		_mouse.setOverBoard(false);
 	}
+
+	public void GenerateBoard(int seed)
+	{
+		
+	}
 }

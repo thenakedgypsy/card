@@ -247,7 +247,7 @@ public partial class TurnManager : Node
 
     private void BuildGrid()
     {
-        _board = GetTree().CurrentScene.GetNode<Board>("Board") as Board;
+        _board = GetTree().GetFirstNodeInGroup("Board") as Board;
         _astarGrid = new AStarGrid2D();
         _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
         _astarGrid.CellSize = new Vector2(64, 32);

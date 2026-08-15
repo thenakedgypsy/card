@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://cou7ht08pc4e3"]
+
+[ext_resource type="Script" path="res://scripts/OverworldNode.cs" id="1_khx1e"]
+[ext_resource type="Texture2D" uid="uid://q142xx7vyicl" path="res://assets/nodes/shield_up.png" id="2_es76i"]
+
+[node name="OverworldNode" type="Node2D"]
+script = ExtResource("1_khx1e")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_es76i")
