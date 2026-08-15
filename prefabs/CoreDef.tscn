@@ -1,11 +1,10 @@
-[gd_scene load_steps=13 format=4 uid="uid://iua0l5tdn75t"]
+[gd_scene load_steps=12 format=4 uid="uid://iua0l5tdn75t"]
 
 [ext_resource type="Texture2D" uid="uid://b6koki6d4iaw3" path="res://icon.svg" id="1_geqo8"]
 [ext_resource type="Script" path="res://scripts/CoreDef.cs" id="1_pbm1q"]
 [ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="2_hgopt"]
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="3_171fx"]
 [ext_resource type="PackedScene" uid="uid://dr4qbspcnyn6p" path="res://prefabs/Discard.tscn" id="4_mi0qo"]
-[ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="5_cjydr"]
 [ext_resource type="PackedScene" uid="uid://budqpbjl0ncgm" path="res://prefabs/TurnManager.tscn" id="6_0nfh7"]
 [ext_resource type="PackedScene" uid="uid://cp810nuhfua1l" path="res://prefabs/EndTurnButton.tscn" id="7_lde5s"]
 [ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="8_7svoi"]
@@ -13,7 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://dules16lpku10" path="res://prefabs/Enemy.tscn" id="10_5tjbw"]
 [ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="11_sr32x"]
 
-[node name="CoreDef" type="Node2D"]
+[node name="CoreDef" type="Node2D" groups=["ActiveDef"]]
 scale = Vector2(1.00062, 1)
 script = ExtResource("1_pbm1q")
 
@@ -33,10 +32,6 @@ position = Vector2(4, 5)
 
 [node name="Discard" parent="." instance=ExtResource("4_mi0qo")]
 position = Vector2(46, 980)
-
-[node name="EnergyManager" parent="." instance=ExtResource("5_cjydr")]
-position = Vector2(993, 73)
-scale = Vector2(2, 2)
 
 [node name="TurnManager" parent="." instance=ExtResource("6_0nfh7")]
 position = Vector2(965, 1204)

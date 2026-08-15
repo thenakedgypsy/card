@@ -20,11 +20,12 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	private Sprite2D _sprite;
 	private PackedScene _scene;
 	private Dictionary<string, Variant> _sceneData;
-	private Node2D InstantiatedScene;
+	private Overworld _overworld;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 		_sprite = GetNode<Sprite2D>("Sprite2D");
+		_overworld = GetParent<Overworld>();
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
@@ -32,18 +33,12 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	{
 	}
 
-	public void buildNode(Dictionary<string, Variant> data, Type type)
-	{
-		_type = type;
-		_title = data["title"].ToString();
-		_tooltip = data["tooltip"].ToString();
-		_sceneData = ExtractSceneData(data);
-
-		//switch for types here pass the nested data on. 
+	public void buildNode(Type type, Dictionary<string, Variant> data = null)
+	{		//switch for types here pass the nested data on. 
 		switch (type)
 		{
 			case Type.CoreDefence:
-				LoadCoreDefence(_sceneData);
+				LoadCoreDefence();
 				break;
 		}
 	}
@@ -63,13 +58,13 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		return SceneData;
 	}
 	
-	public void LoadCoreDefence(Dictionary<string, Variant> data)
+	public void LoadCoreDefence()
 	{
+		_title = "Core Defence"; //needs lang lookup
+		_tooltip = "Defend your core from enemies on a random map";
 		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/shield_up.png");
 		_scene = GD.Load<PackedScene>("res://prefabs/CoreDef.tscn");
-		// can we call core defence randomisation stuffs here?
-		// we will instantiate when the node is selected. 
-		// if not then we need to do something lie  
+
 	}
 
 	public void InstantiateSceneFromNode(Type type)
@@ -77,7 +72,11 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		switch (type)
 		{
 			case Type.CoreDefence:
-				InstantiatedScene = _scene.Instantiate() as CoreDef;
+				CoreDef defNode = _scene.Instantiate() as CoreDef;
+				_overworld.AddChild(defNode);
+				defNode.Setup();
+				_visisted = true;
+				_visitable = false;
 				break;
 		}
 		

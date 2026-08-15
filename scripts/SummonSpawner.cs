@@ -20,7 +20,7 @@ public partial class SummonSpawner : Node2D
         _readyToPlace = true;
         _mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
-        _board = GetTree().CurrentScene.GetNode<Node2D>("Board") as Board;
+        _board = GetTree().GetFirstNodeInGroup("Board") as Board;
     }
 
     public override void _Process(Double delta)

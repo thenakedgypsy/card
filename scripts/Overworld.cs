@@ -13,11 +13,14 @@ public partial class Overworld : Node2D
 		{
 			Random random = new Random();
 			Seed = random.Next();
+
+
 			// temp call here to boot things
 			CoreDef coreDef = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
 			coreDef.Setup();
 		}
 	}
+
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
