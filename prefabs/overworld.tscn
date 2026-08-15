@@ -1,6 +1,11 @@
-[gd_scene format=3 uid="uid://ct6wgkudn7xcc"]
+[gd_scene load_steps=2 format=3 uid="uid://ct6wgkudn7xcc"]
+
+[ext_resource type="PackedScene" uid="uid://iua0l5tdn75t" path="res://prefabs/CoreDef.tscn" id="1_hi42i"]
 
 [node name="Overworld" type="Node2D"]
 
 [node name="Camera2D" type="Camera2D" parent="."]
 position = Vector2(961, 541)
+
+[node name="CoreDef" parent="." instance=ExtResource("1_hi42i")]
+position = Vector2(-4, 6)

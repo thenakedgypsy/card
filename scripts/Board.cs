@@ -1,16 +1,20 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 public partial class Board : TileMapLayer
 {
 	private Mouse _mouse;
 
+	[Export] public int DistanceBetweenPoints = 30;
+	[Export] public int Paths = 3;
+	[Export] public int MaxPathWidth = 2;
+
 	public override void _Ready()
 	{
 		_mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
 	}
-
 
 	// ============================================================
 	// WALKABILITY
@@ -19,16 +23,26 @@ public partial class Board : TileMapLayer
 	public bool IsCellWalkable(Vector2I cellCoords)
 	{
 		TileData tileData = GetCellTileData(cellCoords);
-
 		if (tileData == null)
 		{
 			return false;
 		}
 
-		Variant customData = tileData.GetCustomData("walkable");
-		return customData.AsBool();
-	}
+		try
+		{
+			Variant customData = tileData.GetCustomData("walkable");
+			if (customData.VariantType == Variant.Type.Bool)
+			{
+				return customData.AsBool();
+			}
+		}
+		catch
+		{
+			// Fallback if custom data is not configured
+		}
 
+		return true;
+	}
 
 	// ============================================================
 	// MOUSE
@@ -38,345 +52,280 @@ public partial class Board : TileMapLayer
 	{
 	}
 
-
 	public void MouseEnter()
 	{
 		_mouse?.setOverBoard(true);
 	}
-
 
 	public void MouseExit()
 	{
 		_mouse?.setOverBoard(false);
 	}
 
-
-	// ============================================================
-	// BOARD GENERATION
-	// ============================================================
-
 	public void GenerateBoard(int seed)
 	{
-		if (TileSet == null)
+		Random rng = new Random(seed);
+		var usedCells = GetUsedCells();
+
+		// 1. Scan tiles and cache their properties and walkability
+		var tileInfoDict = new Dictionary<Vector2I, (int sourceId, Vector2I atlasCoords, int alternativeTile)>();
+		var walkableCells = new List<Vector2I>();
+
+		foreach (Vector2I cell in usedCells)
 		{
-			GD.PrintErr("Board: No TileSet assigned.");
-			return;
-		}
+			int sourceId = GetCellSourceId(cell);
+			Vector2I atlasCoords = GetCellAtlasCoords(cell);
+			int altTile = GetCellAlternativeTile(cell);
+			tileInfoDict[cell] = (sourceId, atlasCoords, altTile);
 
-		if (TileSet.GetSourceCount() == 0)
-		{
-			GD.PrintErr("Board: TileSet contains no sources.");
-			return;
-		}
-
-		Vector2 viewportSize = GetViewportRect().Size;
-		Vector2I tileSize = TileSet.TileSize;
-
-		if (tileSize.X <= 0 || tileSize.Y <= 0)
-		{
-			GD.PrintErr("Board: Invalid TileSet tile size.");
-			return;
-		}
-
-		// --------------------------------------------------------
-		// GRID SIZE
-		// --------------------------------------------------------
-
-		// 50% extra width wise, but reduced by 5 tiles as requested
-		int width = Mathf.Max(
-			12,
-			Mathf.FloorToInt((viewportSize.X / tileSize.X) * 1.5f) - 5
-		);
-
-		int totalRows = Mathf.Max(
-			10,
-			Mathf.FloorToInt(viewportSize.Y / tileSize.Y)
-		);
-
-
-		// --------------------------------------------------------
-		// ISOMETRIC PLAYABLE BAND
-		// --------------------------------------------------------
-
-		int playableRows = Mathf.Max(
-			7,
-			Mathf.FloorToInt(totalRows * 0.35f)
-		);
-
-		int topRow = (totalRows - playableRows) / 2;
-		int bottomRow = topRow + playableRows - 1;
-
-
-		// --------------------------------------------------------
-		// HORIZONTAL EXTENT
-		// --------------------------------------------------------
-
-		int startX = 1;
-		int endX = width - 2;
-
-
-		// --------------------------------------------------------
-		// COMMON ENDPOINT
-		// --------------------------------------------------------
-
-		int middleY = topRow + playableRows / 2;
-
-		Vector2I startPoint = new Vector2I(startX, middleY);
-		Vector2I endPoint = new Vector2I(endX, middleY);
-
-
-		// --------------------------------------------------------
-		// TILE SOURCE
-		// --------------------------------------------------------
-
-		int sourceId = TileSet.GetSourceId(0);
-		Vector2I atlasCoords = new Vector2I(0, 0);
-
-
-		// --------------------------------------------------------
-		// CLEAR OLD BOARD
-		// --------------------------------------------------------
-
-		Clear();
-
-
-		// --------------------------------------------------------
-		// SEEDED RANDOM
-		// --------------------------------------------------------
-
-		RandomNumberGenerator rng = new RandomNumberGenerator();
-		rng.Seed = (ulong)(uint)seed;
-
-
-		// --------------------------------------------------------
-		// GENERATE MAIN ROUTES
-		// --------------------------------------------------------
-
-		List<Vector2I> route1 = GenerateRoute(startPoint, endPoint, topRow, bottomRow, -1, rng);
-		List<Vector2I> route2 = GenerateRoute(startPoint, endPoint, topRow, bottomRow,  0, rng);
-		List<Vector2I> route3 = GenerateRoute(startPoint, endPoint, topRow, bottomRow,  1, rng);
-
-
-		// --------------------------------------------------------
-		// DRAW MAIN ROUTES
-		// 65% chance to be thick.
-		// --------------------------------------------------------
-
-		DrawThickRoute(route1, sourceId, atlasCoords, rng.Randf() < 0.65f ? 2 : 1);
-		DrawThickRoute(route2, sourceId, atlasCoords, rng.Randf() < 0.65f ? 2 : 1);
-		DrawThickRoute(route3, sourceId, atlasCoords, rng.Randf() < 0.65f ? 2 : 1);
-
-
-		// --------------------------------------------------------
-		// GENERATE & DRAW SPINDLY ROUTES
-		// Strictly 1 tile wide, meandering randomly.
-		// --------------------------------------------------------
-
-		int spindlyCount = rng.RandiRange(1, 3);
-		for (int i = 0; i < spindlyCount; i++)
-		{
-			List<Vector2I> spindlyRoute = GenerateRoute(startPoint, endPoint, topRow, bottomRow, 0, rng, true);
-			DrawThickRoute(spindlyRoute, sourceId, atlasCoords, 1);
-		}
-
-
-		// --------------------------------------------------------
-		// OPTIONAL JUNCTIONS / CROSS-CONNECTORS
-		// --------------------------------------------------------
-
-		AddConnections(route1, route2, sourceId, atlasCoords, rng, topRow, bottomRow);
-		AddConnections(route2, route3, sourceId, atlasCoords, rng, topRow, bottomRow);
-	}
-
-
-	// ============================================================
-	// ROUTE GENERATION
-	// ============================================================
-
-	private List<Vector2I> GenerateRoute(
-		Vector2I start,
-		Vector2I end,
-		int topRow,
-		int bottomRow,
-		int routeBias, 
-		RandomNumberGenerator rng,
-		bool isSpindly = false)
-	{
-		List<Vector2I> route = new List<Vector2I>();
-		List<Vector2I> waypoints = new List<Vector2I> { start };
-
-		int numWaypoints = isSpindly ? rng.RandiRange(8, 14) : rng.RandiRange(4, 7);
-		float xStep = (end.X - start.X) / (float)(numWaypoints + 1);
-
-		int laneHeight = Mathf.Max(1, (bottomRow - topRow) / 3);
-
-		for (int i = 1; i <= numWaypoints; i++)
-		{
-			int driftX = isSpindly ? rng.RandiRange(-3, 3) : rng.RandiRange(-1, 1);
-			int wayX = Mathf.Clamp(Mathf.RoundToInt(start.X + xStep * i) + driftX, start.X + 1, end.X - 1);
-			
-			int wayY;
-
-			if (isSpindly)
+			if (IsCellWalkable(cell))
 			{
-				wayY = rng.RandiRange(topRow, bottomRow);
+				walkableCells.Add(cell);
 			}
-			else if (routeBias < 0)
+		}
+
+		if (walkableCells.Count == 0)
+		{
+			walkableCells = new List<Vector2I>(usedCells);
+		}
+
+		// 2. Pick two points that are >= DistanceBetweenPoints apart from each other
+		Vector2I p1 = walkableCells.Count > 0 ? walkableCells[0] : new Vector2I(0, 0);
+		Vector2I p2 = walkableCells.Count > 1 ? walkableCells[walkableCells.Count - 1] : new Vector2I(DistanceBetweenPoints, 0);
+
+		bool foundPair = false;
+		for (int i = 0; i < walkableCells.Count; i += 3)
+		{
+			for (int j = i + 1; j < walkableCells.Count; j += 3)
 			{
-				// Upper lane
-				wayY = rng.RandiRange(topRow, topRow + laneHeight - 1);
+				Vector2I a = walkableCells[i];
+				Vector2I b = walkableCells[j];
+				int dist = Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
+				if (dist >= DistanceBetweenPoints)
+				{
+					p1 = a;
+					p2 = b;
+					foundPair = true;
+					break;
+				}
 			}
-			else if (routeBias > 0)
+			if (foundPair) break;
+		}
+
+		// 3. Define Base Rectangle and ensure it has full 2D area (preventing 1D line collapse)
+		int minX = Mathf.Min(p1.X, p2.X);
+		int maxX = Mathf.Max(p1.X, p2.X);
+		int minY = Mathf.Min(p1.Y, p2.Y);
+		int maxY = Mathf.Max(p1.Y, p2.Y);
+
+		int width = maxX - minX;
+		int height = maxY - minY;
+		int halfDist = DistanceBetweenPoints / 2;
+
+		if (width < DistanceBetweenPoints)
+		{
+			int centerX = (minX + maxX) / 2;
+			minX = centerX - halfDist;
+			maxX = centerX + halfDist;
+		}
+		if (height < DistanceBetweenPoints)
+		{
+			int centerY = (minY + maxY) / 2;
+			minY = centerY - halfDist;
+			maxY = centerY + halfDist;
+		}
+
+		foreach (Vector2I cell in usedCells)
+		{
+			if (cell.X < minX || cell.X > maxX || cell.Y < minY || cell.Y > maxY)
 			{
-				// Lower lane
-				wayY = rng.RandiRange(bottomRow - laneHeight + 1, bottomRow);
+				EraseCell(cell);
+			}
+		}
+
+		// 4. Devise multiple distinct non-diagonal paths between p1 and p2 using penalty-based A* routing
+		HashSet<Vector2I> allPathCells = new HashSet<Vector2I>();
+		List<List<Vector2I>> generatedPaths = new List<List<Vector2I>>();
+		Dictionary<Vector2I, float> cellPenalties = new Dictionary<Vector2I, float>();
+
+		int numPathsToGenerate = Mathf.Max(1, Paths);
+
+		for (int pathIdx = 0; pathIdx < numPathsToGenerate; pathIdx++)
+		{
+			var path = FindAStarPath(p1, p2, minX, maxX, minY, maxY, cellPenalties, rng);
+			if (path != null && path.Count > 0)
+			{
+				generatedPaths.Add(path);
+				foreach (var cell in path)
+				{
+					allPathCells.Add(cell);
+					// Heavily penalize used cells for subsequent paths to force distinct non-overlapping routes
+					if (cell != p1 && cell != p2)
+					{
+						if (!cellPenalties.ContainsKey(cell)) cellPenalties[cell] = 0f;
+						cellPenalties[cell] += 30.0f;
+					}
+				}
 			}
 			else
 			{
-				// Middle lane
-				int middleY = topRow + (bottomRow - topRow) / 2;
-				wayY = rng.RandiRange(middleY - 1, middleY + 1);
-			}
-
-			wayY = Mathf.Clamp(wayY, topRow, bottomRow);
-			waypoints.Add(new Vector2I(wayX, wayY));
-		}
-
-		waypoints.Add(end);
-
-		Vector2I current = start;
-		route.Add(current);
-
-		for (int i = 1; i < waypoints.Count; i++)
-		{
-			Vector2I target = waypoints[i];
-
-			while (current != target)
-			{
-				bool moveHorizontal = false;
-
-				if (current.X != target.X && current.Y != target.Y)
-				{
-					float horizBias = isSpindly ? 0.45f : 0.65f;
-					moveHorizontal = rng.Randf() < horizBias;
-				}
-				else if (current.X != target.X)
-				{
-					moveHorizontal = true;
-				}
-
-				if (moveHorizontal)
-				{
-					int stepX = target.X > current.X ? 1 : -1;
-					current = new Vector2I(current.X + stepX, current.Y);
-				}
-				else
-				{
-					int stepY = target.Y > current.Y ? 1 : -1;
-					current = new Vector2I(current.X, current.Y + stepY);
-				}
-
-				if (!route.Contains(current))
-				{
-					route.Add(current);
-				}
+				// Fallback direct line if A* fails
+				var directPath = GetDirectLine(p1, p2);
+				generatedPaths.Add(directPath);
+				foreach (var cell in directPath) allPathCells.Add(cell);
 			}
 		}
 
-		return route;
-	}
-
-
-	// ============================================================
-	// DRAW ROUTE
-	// ============================================================
-
-	private void DrawThickRoute(
-		List<Vector2I> route,
-		int sourceId,
-		Vector2I atlasCoords,
-		int thickness)
-	{
-		foreach (Vector2I cell in route)
+		// 5. Delete all tiles not in these paths
+		var remainingCells = GetUsedCells();
+		foreach (Vector2I cell in remainingCells)
 		{
-			SetCell(cell, sourceId, atlasCoords, 0);
-
-			if (thickness >= 2)
+			if (!allPathCells.Contains(cell))
 			{
-				SetCell(new Vector2I(cell.X, cell.Y + 1), sourceId, atlasCoords, 0);
+				EraseCell(cell);
+			}
+		}
+
+		// 6. Thicken paths at random points along the path up to MaxPathWidth by re-adding tiles
+		int maxThickness = Mathf.Max(1, MaxPathWidth);
+		int defaultSource = 0;
+		Vector2I defaultAtlas = new Vector2I(0, 0);
+		int defaultAlt = 0;
+
+		if (tileInfoDict.Count > 0)
+		{
+			var first = tileInfoDict.First();
+			defaultSource = first.Value.sourceId;
+			defaultAtlas = first.Value.atlasCoords;
+			defaultAlt = first.Value.alternativeTile;
+		}
+
+		HashSet<Vector2I> thickenedCells = new HashSet<Vector2I>(allPathCells);
+
+		foreach (var path in generatedPaths)
+		{
+			foreach (var cell in path)
+			{
+				if (rng.NextDouble() < 0.4)
+				{
+					int thickness = rng.Next(1, maxThickness + 1);
+					for (int tx = -thickness; tx <= thickness; tx++)
+					{
+						for (int ty = -thickness; ty <= thickness; ty++)
+						{
+							if (Math.Abs(tx) + Math.Abs(ty) <= thickness)
+							{
+								Vector2I neighbor = new Vector2I(cell.X + tx, cell.Y + ty);
+								if (neighbor.X >= minX && neighbor.X <= maxX && neighbor.Y >= minY && neighbor.Y <= maxY)
+								{
+									thickenedCells.Add(neighbor);
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		foreach (var cell in thickenedCells)
+		{
+			if (tileInfoDict.TryGetValue(cell, out var info))
+			{
+				SetCell(cell, info.sourceId, info.atlasCoords, info.alternativeTile);
+			}
+			else
+			{
+				SetCell(cell, defaultSource, defaultAtlas, defaultAlt);
 			}
 		}
 	}
 
-
-	// ============================================================
-	// ADD OPTIONAL CONNECTIONS
-	// ============================================================
-
-	private void AddConnections(
-		List<Vector2I> routeA,
-		List<Vector2I> routeB,
-		int sourceId,
-		Vector2I atlasCoords,
-		RandomNumberGenerator rng,
-		int topRow,
-		int bottomRow)
+	private List<Vector2I> FindAStarPath(Vector2I start, Vector2I goal, int minX, int maxX, int minY, int maxY, Dictionary<Vector2I, float> penalties, Random rng)
 	{
-		if (routeA.Count == 0 || routeB.Count == 0)
-			return;
+		var openSet = new List<Vector2I> { start };
+		var cameFrom = new Dictionary<Vector2I, Vector2I>();
+		var gScore = new Dictionary<Vector2I, float> { [start] = 0f };
+		var fScore = new Dictionary<Vector2I, float> { [start] = Heuristic(start, goal) };
 
-		int connectionCount = rng.RandiRange(0, 2);
+		Vector2I[] directions = { new Vector2I(1, 0), new Vector2I(-1, 0), new Vector2I(0, 1), new Vector2I(0, -1) };
 
-		for (int i = 0; i < connectionCount; i++)
+		while (openSet.Count > 0)
 		{
-			int minIndex = routeA.Count / 5;
-			int maxIndex = routeA.Count * 4 / 5;
-
-			if (maxIndex <= minIndex)
-				continue;
-
-			int index = rng.RandiRange(minIndex, maxIndex);
-			Vector2I a = routeA[index];
-
-			Vector2I b = FindNearestX(routeB, a.X);
-
-			int verticalDistance = Mathf.Abs(a.Y - b.Y);
-			if (verticalDistance > 8)
-				continue;
-
-			int minY = Mathf.Min(a.Y, b.Y);
-			int maxY = Mathf.Max(a.Y, b.Y);
-
-			for (int y = minY; y <= maxY; y++)
+			Vector2I current = openSet[0];
+			float lowestF = fScore.ContainsKey(current) ? fScore[current] : float.MaxValue;
+			for (int i = 1; i < openSet.Count; i++)
 			{
-				if (y < topRow || y > bottomRow)
+				Vector2I candidate = openSet[i];
+				float f = fScore.ContainsKey(candidate) ? fScore[candidate] : float.MaxValue;
+				if (f < lowestF)
+				{
+					lowestF = f;
+					current = candidate;
+				}
+			}
+
+			if (current == goal)
+			{
+				List<Vector2I> path = new List<Vector2I>();
+				Vector2I curr = goal;
+				while (cameFrom.ContainsKey(curr))
+				{
+					path.Add(curr);
+					curr = cameFrom[curr];
+				}
+				path.Add(start);
+				path.Reverse();
+				return path;
+			}
+
+			openSet.Remove(current);
+
+			foreach (var dir in directions)
+			{
+				Vector2I neighbor = current + dir;
+				if (neighbor.X < minX || neighbor.X > maxX || neighbor.Y < minY || neighbor.Y > maxY)
 					continue;
 
-				SetCell(new Vector2I(a.X, y), sourceId, atlasCoords, 0);
+				float penalty = penalties.ContainsKey(neighbor) ? penalties[neighbor] : 0f;
+				float tentativeG = (gScore.ContainsKey(current) ? gScore[current] : float.MaxValue) + 1.0f + penalty + (float)(rng.NextDouble() * 0.5);
+
+				if (tentativeG < (gScore.ContainsKey(neighbor) ? gScore[neighbor] : float.MaxValue))
+				{
+					cameFrom[neighbor] = current;
+					gScore[neighbor] = tentativeG;
+					fScore[neighbor] = tentativeG + Heuristic(neighbor, goal);
+
+					if (!openSet.Contains(neighbor))
+					{
+						openSet.Add(neighbor);
+					}
+				}
 			}
 		}
+
+		return null;
 	}
 
-
-	// ============================================================
-	// FIND ROUTE CELL CLOSEST TO AN X POSITION
-	// ============================================================
-
-	private Vector2I FindNearestX(List<Vector2I> route, int targetX)
+	private float Heuristic(Vector2I a, Vector2I b)
 	{
-		Vector2I closest = route[0];
-		int bestDistance = Mathf.Abs(closest.X - targetX);
+		return Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
+	}
 
-		foreach (Vector2I cell in route)
+	private List<Vector2I> GetDirectLine(Vector2I a, Vector2I b)
+	{
+		List<Vector2I> path = new List<Vector2I>();
+		Vector2I curr = a;
+		path.Add(curr);
+		int safety = 0;
+		while (curr != b && safety < 2000)
 		{
-			int distance = Mathf.Abs(cell.X - targetX);
-			if (distance < bestDistance)
-			{
-				bestDistance = distance;
-				closest = cell;
-			}
+			safety++;
+			int dx = b.X - curr.X;
+			int dy = b.Y - curr.Y;
+			if (dx != 0) curr += new Vector2I(Math.Sign(dx), 0);
+			else if (dy != 0) curr += new Vector2I(0, Math.Sign(dy));
+			path.Add(curr);
 		}
-
-		return closest;
+		return path;
 	}
 }
