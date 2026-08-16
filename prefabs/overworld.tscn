@@ -22,14 +22,6 @@ TreeDepth = 12
 [node name="CardPool" parent="." instance=ExtResource("2_d22b5")]
 scale = Vector2(0.617476, 1.05255)
 
-[node name="RichTextLabel" type="RichTextLabel" parent="."]
-z_index = -1
-offset_left = 673.0
-offset_top = 689.0
-offset_right = 1276.0
-offset_bottom = 1037.0
-text = "Use the 6 Energy Gain Nodes at the bottom to setup your energy profile. THen try and beat all three defence nodes. Good luck."
-
 [node name="SeedTracker" type="RichTextLabel" parent="."]
 top_level = true
 offset_left = 1742.0

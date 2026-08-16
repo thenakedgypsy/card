@@ -55,13 +55,11 @@ public partial class NodeGenerator : Node2D
                 // Set initial properties before AddChild triggers _Ready
                 if (col < InitialSafeNodes)
                 {
-                    // First exported # of choices are Card or Energy Gain
                     if (_rng.RandiRange(0, 1) == 0) node.isEnergy = true;
                     else node.isCardGain = true;
                 }
                 else
                 {
-                    // The rest are completely random
                     int rand = _rng.RandiRange(0, 2);
                     if (rand == 0) node.isEnergy = true;
                     else if (rand == 1) node.isCardGain = true;
@@ -71,7 +69,6 @@ public partial class NodeGenerator : Node2D
                 AddChild(node);
                 
                 // Force nodes after the first column to be unvisitable by default
-                // Using Set() bypasses the private access modifier of _visitable
                 if (col > 0)
                 {
                     node.Set("_visitable", false);
@@ -94,20 +91,42 @@ public partial class NodeGenerator : Node2D
             foreach (var node in currentColNodes) node.nextNodes = new OverworldNode[0];
             foreach (var node in nextColNodes) node.previousNodes = new OverworldNode[0];
 
-            // Ensure every node in the current column connects to at least one in the next
-            foreach (var node in currentColNodes)
+            // 1. Map nodes sequentially and locally to prevent chaotic line crossing
+            for (int i = 0; i < currentColNodes.Count; i++)
             {
-                var target = nextColNodes[_rng.RandiRange(0, nextColNodes.Count - 1)];
-                AddLink(node, target);
+                var source = currentColNodes[i];
+                int targetIndex = Mathf.Clamp(i, 0, nextColNodes.Count - 1);
+                AddLink(source, nextColNodes[targetIndex]);
+
+                // Add a controlled adjacent branch link with a 50% chance
+                if (_rng.Randf() < 0.5f)
+                {
+                    int offset = _rng.RandiRange(0, 1) == 0 ? -1 : 1;
+                    int secondaryIndex = targetIndex + offset;
+                    if (secondaryIndex >= 0 && secondaryIndex < nextColNodes.Count)
+                    {
+                        AddLink(source, nextColNodes[secondaryIndex]);
+                    }
+                }
             }
 
-            // Ensure every node in the next column has at least one incoming connection
+            // 2. Ensure every node in the next column has at least one incoming connection from the closest vertical node
             foreach (var target in nextColNodes)
             {
                 if (target.previousNodes.Length == 0)
                 {
-                    var source = currentColNodes[_rng.RandiRange(0, currentColNodes.Count - 1)];
-                    AddLink(source, target);
+                    int closestIndex = 0;
+                    float minDistance = float.MaxValue;
+                    for (int i = 0; i < currentColNodes.Count; i++)
+                    {
+                        float dist = Mathf.Abs(currentColNodes[i].Position.Y - target.Position.Y);
+                        if (dist < minDistance)
+                        {
+                            minDistance = dist;
+                            closestIndex = i;
+                        }
+                    }
+                    AddLink(currentColNodes[closestIndex], target);
                 }
             }
         }
@@ -115,12 +134,10 @@ public partial class NodeGenerator : Node2D
 
     private void AddLink(OverworldNode source, OverworldNode target)
     {
-        // Resize and append to nextNodes
         var nextList = new List<OverworldNode>(source.nextNodes);
         if (!nextList.Contains(target)) nextList.Add(target);
         source.nextNodes = nextList.ToArray();
 
-        // Resize and append to previousNodes
         var prevList = new List<OverworldNode>(target.previousNodes);
         if (!prevList.Contains(source)) prevList.Add(source);
         target.previousNodes = prevList.ToArray();
@@ -128,26 +145,79 @@ public partial class NodeGenerator : Node2D
 
     public override void _Process(double delta)
     {
-        // Continously check if a node has been visited to unlock its linked nextNodes
+        // Check if any node in column 0 is visited to lock parallel column 0 nodes
+        bool col0Visited = false;
+        foreach (var node in _columns[0])
+        {
+            if ((bool)node.Get("_visisted")) col0Visited = true;
+        }
+
         for (int col = 0; col < TreeDepth; col++)
         {
             foreach (var node in _columns[col])
             {
-                // Using Get() bypasses the private access modifier of _visisted
                 bool isVisited = (bool)node.Get("_visisted"); 
                 
-                if (isVisited && node.nextNodes != null)
+                // If already visited, it should never be visitable again
+                if (isVisited)
                 {
-                    foreach (var nextNode in node.nextNodes)
+                    node.Set("_visitable", false);
+                    continue;
+                }
+
+                bool shouldBeVisitable = false;
+
+                if (col == 0)
+                {
+                    // Column 0 nodes are visitable only if no node in column 0 has been visited yet
+                    shouldBeVisitable = !col0Visited;
+                }
+                else
+                {
+                    // Check if any node in this current column has already been visited (locks parallel nodes)
+                    bool hasVisitedThisCol = false;
+                    foreach (var peer in _columns[col])
                     {
-                        nextNode.Set("_visitable", true);
+                        if ((bool)peer.Get("_visisted")) hasVisitedThisCol = true;
+                    }
+
+                    // Check if any node in a future column has been visited (locks past columns / further back)
+                    bool hasVisitedFutureCol = false;
+                    for (int futureCol = col + 1; futureCol < TreeDepth; futureCol++)
+                    {
+                        foreach (var fNode in _columns[futureCol])
+                        {
+                            if ((bool)fNode.Get("_visisted")) hasVisitedFutureCol = true;
+                        }
+                    }
+
+                    // Check if at least one previous node has been visited
+                    bool hasVisitedPreviousCol = false;
+                    if (node.previousNodes != null)
+                    {
+                        foreach (var prevNode in node.previousNodes)
+                        {
+                            if ((bool)prevNode.Get("_visisted"))
+                            {
+                                hasVisitedPreviousCol = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // A node is visitable only if a connecting previous node was visited, 
+                    // and no node in this column or future columns has been chosen yet.
+                    if (hasVisitedPreviousCol && !hasVisitedThisCol && !hasVisitedFutureCol)
+                    {
+                        shouldBeVisitable = true;
                     }
                 }
+
+                node.Set("_visitable", shouldBeVisitable);
             }
         }
     }
 
-    // Optional: Draw the path lines between linked nodes for visualization
     public override void _Draw()
     {
         if (_columns == null || _columns.Count == 0) return;

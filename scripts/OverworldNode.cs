@@ -66,12 +66,25 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
-		if(_visitable && !_overworld.InScene)
+		if (_visisted)
 		{
+			// Visited nodes are faded out[cite: 2]
+			_sprite.SelfModulate = new Color(0.8f, 0.8f, 1f, 0.2f);
+		}
+		else if (_visitable)
+		{
+			// Visitable nodes are fully visible and interactive[cite: 2]
+			_sprite.SelfModulate = Colors.White;
 			if (_mouseOver && Input.IsActionJustPressed("lClick"))
 			{
 				InstantiateSceneFromNode();
 			}
+
+		}
+		else
+		{
+			// Unvisitable nodes (past, parallel, or future locked paths) are greyed out[cite: 2]
+			_sprite.SelfModulate = new Color(0.4f, 0.4f, 0.4f, 0.6f);
 		}
 	}
 
@@ -138,7 +151,7 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		_title = "Card Gain"; //needs lang lookup
 		_tooltip = "Choose one of 3 cards";
 
-		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/multi.png");
+		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/card.png");
 		_scene = GD.Load<PackedScene>("res://prefabs/cardchoice.tscn");
 	}
 
