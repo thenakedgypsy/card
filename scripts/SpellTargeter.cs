@@ -97,31 +97,38 @@ public partial class SpellTargeter : Node2D
         //
         if(effectType == CardEffect.EffectType.StatusEffect)
         {
-           
-            //will change this to the enums
-            //somehow...
-            switch (statusType)
-            {
-                case StatusEffect.Type.Burn:
-                //target add child status effect
-                    break;
-                case StatusEffect.Type.Slow:
+            StatusEffect effect = new StatusEffect();
+            effect.AddStatus(_element, _data);
+  
+            target.AddChild(effect);
+            //dont think we need this in here:
+            //probs best in the enemy
+            //all info is in the status
 
-                    break;
-                case StatusEffect.Type.Confuse:
+            //to copy into enemy
+            // switch (statusType)
+            // {
+            //     case StatusEffect.Type.Burn:
+            //     //target add child status effect
+              
+            //         break;
+            //     case StatusEffect.Type.Slow:
 
-                    break;
-                case StatusEffect.Type.Haste:
+            //         break;
+            //     case StatusEffect.Type.Confuse:
 
-                    break;
-                case StatusEffect.Type.Stun:
+            //         break;
+            //     case StatusEffect.Type.Haste:
 
-                    break;
+            //         break;
+            //     case StatusEffect.Type.Stun:
 
-                case StatusEffect.Type.Disarm:
+            //         break;
 
-                    break;
-            }
+            //     case StatusEffect.Type.Disarm:
+
+            //         break;
+            // }
         }
         else
         {
