@@ -15,6 +15,10 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	}
 	[Export]
 	public bool isDefence;
+	[Export]
+	public bool isEnergy;
+	[Export]
+	public bool isCardGain;
 	private bool _visitable = true;
 	private bool _visisted;
 	private Type _type;
@@ -25,6 +29,8 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	private Dictionary<string, Variant> _sceneData;
 	private Overworld _overworld;
 	public bool _mouseOver;
+	public OverworldNode[] previousNodes;
+	public OverworldNode[] nextNodes;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -35,9 +41,13 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		{
 			buildNode(Type.CoreDefence);
 		}
-		else
+		else if (isEnergy)
 		{
 			buildNode(Type.EnergyGain);
+		}
+		else if (isCardGain)
+		{
+			buildNode(Type.CardGain);
 		}
 	}
 
@@ -77,6 +87,10 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 			case Type.EnergyGain:
 				LoadEnergyGain();
 				GD.Print("EG Node Built");
+				break;
+			case Type.CardGain:
+				LoadCardChoice();
+				GD.Print("CC Node Built");
 				break;
 		}
 	}
@@ -119,6 +133,15 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		_scene = GD.Load<PackedScene>("res://prefabs/energyGain.tscn");
 	}
 
+	public void LoadCardChoice()
+	{
+		_title = "Card Gain"; //needs lang lookup
+		_tooltip = "Choose one of 3 cards";
+
+		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/multi.png");
+		_scene = GD.Load<PackedScene>("res://prefabs/cardchoice.tscn");
+	}
+
 	public void InstantiateSceneFromNode()
 	{
 		GD.Print("Attempting to instantiate");
@@ -138,6 +161,11 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 				GD.Print("Energy Node Instantiating");
 				EnergyGain gainNode = _scene.Instantiate() as EnergyGain;
 				_overworld.AddChild(gainNode);
+				break;
+			case Type.CardGain:
+				GD.Print("Card Choice Node Instantiating");
+				Cardchoice cardNode = _scene.Instantiate() as Cardchoice;
+				_overworld.AddChild(cardNode);
 				break;
 		}
 		

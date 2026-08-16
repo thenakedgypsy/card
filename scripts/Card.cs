@@ -7,6 +7,7 @@ public partial class Card : Node2D
     // --- Added Signals ---
     [Signal] public delegate void CardPlayedEventHandler(Card card);
     [Signal] public delegate void CardDiscardedEventHandler(Card card);
+    [Signal] public delegate void CardClickedEventHandler(Card card);
 
     public enum CardType { Energy, Summon, Spell, Enchant }
     public enum Location { Deck, Hand, Discard, Exile, Unpurchased }
@@ -41,6 +42,7 @@ public partial class Card : Node2D
     private EnergyManager _energyManager;
     private CardEffect _effect;
     private Rarity _rarity;
+    
 
     public override void _Ready()
     {
@@ -329,5 +331,17 @@ public partial class Card : Node2D
             return null;
         }
         return json.Data.AsGodotDictionary();
+    }
+
+    public void _on_area_2d_input_event(Node viewport, InputEvent @event, int shapeIdx)
+    {
+        // Only allow clicking if the card is a choice menu option
+        if (location == Location.Unpurchased && @event is InputEventMouseButton mouseEvent)
+        {
+            if (mouseEvent.ButtonIndex == MouseButton.Left && mouseEvent.Pressed)
+            {
+                EmitSignal(SignalName.CardClicked, this);
+            }
+        }
     }
 }

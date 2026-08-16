@@ -128,4 +128,60 @@ public void ScanForCardData()
 				break;
 		}
 	}
+
+	public string PullRandomCard(int seed)
+	{
+		// Collect all cards with their rarities
+		var allCards = new List<(string cardID, Card.Rarity rarity)>();
+		
+		foreach (var elementCards in fullCardDatabase.Values)
+		{
+			foreach (var card in elementCards)
+			{
+				allCards.Add((card.Key, card.Value));
+			}
+		}
+		
+		if (allCards.Count == 0)
+			return string.Empty;
+		
+		// Define rarity weights (higher = more common to pull)
+		var rarityWeights = new Dictionary<Card.Rarity, float>
+		{
+			{ Card.Rarity.Common, 100f },
+			{ Card.Rarity.Uncommon, 50f },
+			{ Card.Rarity.Rare, 25f },
+			{ Card.Rarity.Epic, 10f },
+			{ Card.Rarity.Legendary, 5f }
+		};
+		
+		// Calculate weighted probabilities
+		float totalWeight = 0f;
+		var weights = new List<float>();
+		
+		foreach (var (cardID, rarity) in allCards)
+		{
+			float weight = rarityWeights.ContainsKey(rarity) ? rarityWeights[rarity] : 1f;
+			weights.Add(weight);
+			totalWeight += weight;
+		}
+		
+		// Use seed to create deterministic Random
+		var random = new Random(seed);
+		float randomValue = (float)random.NextDouble() * totalWeight;
+		
+		// Select card based on weighted probability
+		float cumulativeWeight = 0f;
+		for (int i = 0; i < allCards.Count; i++)
+		{
+			cumulativeWeight += weights[i];
+			if (randomValue <= cumulativeWeight)
+			{
+				return allCards[i].cardID;
+			}
+		}
+		
+		// Fallback to last card
+		return allCards[allCards.Count - 1].cardID;
+	}
 }

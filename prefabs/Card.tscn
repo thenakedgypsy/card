@@ -71,5 +71,6 @@ scroll_active = false
 position = Vector2(0, 5)
 shape = SubResource("RectangleShape2D_m5nyi")
 
+[connection signal="input_event" from="Area2D" to="." method="_on_area_2d_input_event"]
 [connection signal="mouse_entered" from="Area2D" to="." method="MouseOver"]
 [connection signal="mouse_exited" from="Area2D" to="." method="MouseOff"]

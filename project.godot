@@ -38,6 +38,7 @@ Board=""
 Overworld=""
 ActiveDef=""
 Deck=""
+CardPool=""
 
 [input]
 

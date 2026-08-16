@@ -48,12 +48,16 @@ isDefence = true
 
 [node name="OverworldNode4" parent="." instance=ExtResource("6_p7lo6")]
 position = Vector2(364, 439)
+isEnergy = true
 
 [node name="OverworldNode5" parent="." instance=ExtResource("6_p7lo6")]
 position = Vector2(318, 562)
+isEnergy = true
 
 [node name="OverworldNode3" parent="." instance=ExtResource("6_p7lo6")]
 position = Vector2(485, 580)
+isCardGain = true
 
 [node name="OverworldNode2" parent="." instance=ExtResource("6_p7lo6")]
 position = Vector2(539, 406)
+isCardGain = true

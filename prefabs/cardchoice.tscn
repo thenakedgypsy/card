@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://ksv50sgx22ic"]
+
+[ext_resource type="Script" path="res://scripts/Cardchoice.cs" id="1_4pkia"]
+[ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="2_ahm44"]
+
+[node name="CardChoice" type="Node2D"]
+script = ExtResource("1_4pkia")
+CardPrefab = ExtResource("2_ahm44")
