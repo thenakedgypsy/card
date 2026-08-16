@@ -74,20 +74,51 @@ public partial class SpellTargeter : Node2D
         return _mouse.GetHoveredEnemy();
     }
 
-
+//add statuseffect in here?
     private void Cast(Enemy target)
     {
         int damage = int.Parse(_data["damage"].ToString());
+        string effectType = _data["effectType"].ToString();
+        string statusType = _data["statusType"].ToString();
 
         GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
 
+        if(effectType == "StatusEffect")
+        {
+            switch (statusType)
+            {
+                case "Burn":
 
-        target.TakeDamage(damage);
+                    break;
+                case "Slow":
 
+                    break;
+                case "Confuse":
 
-        _readyToTarget = false;
+                    break;
+                case "Haste":
 
-        QueueFree();
+                    break;
+                case "Stun":
+
+                    break;
+
+                case "Disarm":
+
+                    break;
+            }
+        }
+        else
+        {
+            
+            target.TakeDamage(damage);
+
+            _readyToTarget = false;
+
+            QueueFree();
+        }
+      
+
     }
 
 

@@ -1,0 +1,12 @@
+{
+  "type": "Spell",
+  "cost": 1,
+  "element": "Fire",
+  "effectData": 
+  {
+    "effectType": "StatusEffect",
+    "statusType": "Burn",
+    "damage" : 2
+   
+  }
+}

@@ -1,12 +1,14 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 public partial class CardEffect : Node2D
 {
     public enum EffectType
     {
         EnemyDamage,
+        StatusEffect,
         Summon,
         SummonModify,
         CoreModify,
@@ -45,6 +47,16 @@ public partial class CardEffect : Node2D
             _EnemyDamage();
             QueueFree();
         }
+        if (type == EffectType.EnemyDamage)
+        {
+            _EnemyDamage();
+            QueueFree();
+        }
+        if (type == EffectType.StatusEffect)
+        {
+            _EnemyDamage();
+            QueueFree();
+        }
     }
 
     private void _Summon()
@@ -60,39 +72,60 @@ public partial class CardEffect : Node2D
            
     }
 
-private void _EnemyDamage()
-{
-    PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
-
-    if (scene == null)
+    private void _EnemyDamage()
     {
-        GD.Print("ERROR: SpellTargeter scene not found");
-        return;
+        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+
+        if (scene == null)
+        {
+            GD.Print("ERROR: SpellTargeter scene not found");
+            return;
+        }
+
+
+        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
+
+        if (targeter == null)
+        {
+            GD.Print("ERROR: Could not create SpellTargeter");
+            return;
+        }
+
+
+        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+
+        if (mouse == null)
+        {
+            GD.Print("ERROR: Mouse not found");
+            return;
+        }
+
+        mouse.AddChild(targeter);
+
+        //pass down 
+        targeter.Setup(element, effectData, cardID);
+
+        GD.Print("SpellTargeter created");
     }
-
-
-    SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
-
-    if (targeter == null)
+    private void _EnemyStatusEffect()
     {
-        GD.Print("ERROR: Could not create SpellTargeter");
-        return;
+        //make a new status effect instance and pass in everything it needs?
+
+        //load scene
+        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+        
+        //
+        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
+        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+
+        //do i need this as its all in _EnemyDamage already?
+        targeter.Setup(element, effectData, cardID);
+
+        //grabbing mouse + adding a child (the targeter) to the omuse
+        mouse.AddChild(targeter);
+        //create targeter
+
+
+
     }
-
-
-    Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-
-    if (mouse == null)
-    {
-        GD.Print("ERROR: Mouse not found");
-        return;
-    }
-
-
-    mouse.AddChild(targeter);
-
-    targeter.Setup(element, effectData, cardID);
-
-    GD.Print("SpellTargeter created");
-}
 }
