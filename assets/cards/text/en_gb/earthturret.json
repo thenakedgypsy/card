@@ -1,0 +1,4 @@
+{
+  "name": "Earth Turret",
+  "text": "Summon an earth turret \n Damage: {damage}\n Health: {health}\n Range: {range}"
+}

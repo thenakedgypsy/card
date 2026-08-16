@@ -1,14 +1,14 @@
 {
   "type": "Summon",
-  "cost": 2,
-  "element": "Fire",
+  "cost": 1,
+  "element": "Earth",
   "rarity": "Common",
   "effectData": 
   {
     "effectType": "Summon",
-    "health": 30,
-    "damage": 10,
-    "range": 1,
+    "health": 10,
+    "damage": 5,
+    "range": 35,
     "attacksEnemies": true
   }
 }

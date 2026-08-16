@@ -10,9 +10,9 @@ public partial class Deck : Cardpile
 	{
         base._Ready();
 		AddCard("blockOfIce");
-		AddCard("blockOfIce");
-		AddCard("blockOfIce");
-		AddCard("blockOfIce");
+		AddCard("earthturret");
+		AddCard("fireball");
+		AddCard("windturret");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

@@ -1,11 +1,11 @@
 {
   "type": "Spell",
-  "cost": 2,
+  "cost": 1,
   "element": "Fire",
   "rarity": "Rare",
   "effectData": 
   {
     "effectType": "EnemyDamage",
-    "damage": 6
+    "damage": 2
   }
 }

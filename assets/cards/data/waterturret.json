@@ -1,14 +1,14 @@
 {
   "type": "Summon",
   "cost": 2,
-  "element": "Fire",
+  "element": "Water",
   "rarity": "Common",
   "effectData": 
   {
     "effectType": "Summon",
     "health": 30,
-    "damage": 10,
-    "range": 1,
+    "damage": 20,
+    "range": 2,
     "attacksEnemies": true
   }
 }
