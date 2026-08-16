@@ -13,6 +13,7 @@ public partial class CardPileDisplay : ScrollContainer
 
     private Control _contentContainer;
     private List<Card> _spawnedCards = new List<Card>();
+    private bool IsDisplaying;
 
     public override void _Ready()
     {
@@ -37,7 +38,12 @@ public partial class CardPileDisplay : ScrollContainer
     /// </summary>
     public void DisplayCards(List<string> cardIds)
     {
-        ClearDisplay();
+        if (IsDisplaying)
+        {
+            ClearDisplay();
+            return;
+        }
+
 
         // Ensure _contentContainer exists even if called before _Ready()
         if (_contentContainer == null)
@@ -94,6 +100,8 @@ public partial class CardPileDisplay : ScrollContainer
         float totalWidth = (padding * 2) + (columns * xSpacing);
 
         _contentContainer.CustomMinimumSize = new Vector2(totalWidth, totalHeight);
+
+        IsDisplaying = true;
     }
 
     /// <summary>
@@ -114,5 +122,6 @@ public partial class CardPileDisplay : ScrollContainer
         {
             _contentContainer.CustomMinimumSize = Vector2.Zero;
         }
+        IsDisplaying = false;
     }
 }
