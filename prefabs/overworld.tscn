@@ -40,21 +40,24 @@ position = Vector2(961, 541)
 position = Vector2(1018, 84)
 scale = Vector2(2, 2)
 
-[node name="CardPileDisplayButotn" parent="." instance=ExtResource("9_c7xy2")]
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="CardPileDisplayButotn" parent="CanvasLayer" instance=ExtResource("9_c7xy2")]
+z_index = 5
 offset_left = 1787.0
 offset_top = 1002.0
 offset_right = 1875.0
 offset_bottom = 1048.0
 
-[node name="CardPileDisplay" parent="." instance=ExtResource("2_egrbe")]
+[node name="CardPileDisplay" parent="CanvasLayer" instance=ExtResource("2_egrbe")]
 clip_contents = false
 anchors_preset = -1
-anchor_right = 0.570833
-anchor_bottom = 0.648148
-offset_left = 967.0
-offset_top = 538.0
-offset_right = 967.0
-offset_bottom = 538.0
+anchor_right = 0.995833
+anchor_bottom = 0.99537
+offset_left = 7.0
+offset_top = 4.0
+offset_right = 7.0
+offset_bottom = 4.00006
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -62,5 +65,3 @@ follow_focus = true
 xSpacing = 800.0
 padding = 209.0
 metadata/_edit_use_anchors_ = true
-
-[node name="CanvasLayer" type="CanvasLayer" parent="."]

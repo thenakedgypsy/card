@@ -103,6 +103,7 @@ public partial class TurnManager : Node
         {
             CoreDef def = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
             Overworld _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
+            _cardManager.Reset();
 			_overworld.InScene = false;
 			def.QueueFree();
             BeginPlayerTurn();
