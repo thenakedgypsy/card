@@ -17,14 +17,15 @@ public partial class NodeGenerator : Node2D
 
     private List<List<OverworldNode>> _columns = new List<List<OverworldNode>>();
     private RandomNumberGenerator _rng = new RandomNumberGenerator();
+    private Overworld _overworld; // Class-level reference to Overworld[cite: 1]
 
     public override void _Ready()
     {
-        // Fetch the seed created by the parent Overworld
-        var overworld = GetParent<Overworld>();
-        if (overworld != null)
+        // Fetch and store the Overworld reference[cite: 1]
+        _overworld = GetParent<Overworld>();
+        if (_overworld != null)
         {
-            _rng.Seed = (ulong)overworld.Seed;
+            _rng.Seed = (ulong)_overworld.Seed;
         }
         else
         {
@@ -42,17 +43,13 @@ public partial class NodeGenerator : Node2D
             int numNodes = _rng.RandiRange(MinNodesPerColumn, MaxNodesPerColumn);
             List<OverworldNode> currentColumn = new List<OverworldNode>();
 
-            // Calculate starting Y to center the column vertically
             float startY = -(numNodes - 1) * YSpacing / 2f;
 
             for (int row = 0; row < numNodes; row++)
             {
                 OverworldNode node = NodePrefab.Instantiate<OverworldNode>();
-                
-                // Position nodes from left to right across the screen
                 node.Position = new Vector2(col * XSpacing, startY + row * YSpacing);
 
-                // Set initial properties before AddChild triggers _Ready
                 if (col < InitialSafeNodes)
                 {
                     if (_rng.RandiRange(0, 1) == 0) node.isEnergy = true;
@@ -68,7 +65,6 @@ public partial class NodeGenerator : Node2D
 
                 AddChild(node);
                 
-                // Force nodes after the first column to be unvisitable by default
                 if (col > 0)
                 {
                     node.Set("_visitable", false);
@@ -87,18 +83,15 @@ public partial class NodeGenerator : Node2D
             var currentColNodes = _columns[col];
             var nextColNodes = _columns[col + 1];
 
-            // Initialize connection arrays
             foreach (var node in currentColNodes) node.nextNodes = new OverworldNode[0];
             foreach (var node in nextColNodes) node.previousNodes = new OverworldNode[0];
 
-            // 1. Map nodes sequentially and locally to prevent chaotic line crossing
             for (int i = 0; i < currentColNodes.Count; i++)
             {
                 var source = currentColNodes[i];
                 int targetIndex = Mathf.Clamp(i, 0, nextColNodes.Count - 1);
                 AddLink(source, nextColNodes[targetIndex]);
 
-                // Add a controlled adjacent branch link with a 50% chance
                 if (_rng.Randf() < 0.5f)
                 {
                     int offset = _rng.RandiRange(0, 1) == 0 ? -1 : 1;
@@ -110,7 +103,6 @@ public partial class NodeGenerator : Node2D
                 }
             }
 
-            // 2. Ensure every node in the next column has at least one incoming connection from the closest vertical node
             foreach (var target in nextColNodes)
             {
                 if (target.previousNodes.Length == 0)
@@ -145,7 +137,9 @@ public partial class NodeGenerator : Node2D
 
     public override void _Process(double delta)
     {
-        // Check if any node in column 0 is visited to lock parallel column 0 nodes
+        // Request a redraw every frame so line visibility updates dynamically with InScene changes[cite: 1]
+        QueueRedraw();
+
         bool col0Visited = false;
         foreach (var node in _columns[0])
         {
@@ -158,7 +152,6 @@ public partial class NodeGenerator : Node2D
             {
                 bool isVisited = (bool)node.Get("_visisted"); 
                 
-                // If already visited, it should never be visitable again
                 if (isVisited)
                 {
                     node.Set("_visitable", false);
@@ -169,19 +162,16 @@ public partial class NodeGenerator : Node2D
 
                 if (col == 0)
                 {
-                    // Column 0 nodes are visitable only if no node in column 0 has been visited yet
                     shouldBeVisitable = !col0Visited;
                 }
                 else
                 {
-                    // Check if any node in this current column has already been visited (locks parallel nodes)
                     bool hasVisitedThisCol = false;
                     foreach (var peer in _columns[col])
                     {
                         if ((bool)peer.Get("_visisted")) hasVisitedThisCol = true;
                     }
 
-                    // Check if any node in a future column has been visited (locks past columns / further back)
                     bool hasVisitedFutureCol = false;
                     for (int futureCol = col + 1; futureCol < TreeDepth; futureCol++)
                     {
@@ -191,7 +181,6 @@ public partial class NodeGenerator : Node2D
                         }
                     }
 
-                    // Check if at least one previous node has been visited
                     bool hasVisitedPreviousCol = false;
                     if (node.previousNodes != null)
                     {
@@ -205,8 +194,6 @@ public partial class NodeGenerator : Node2D
                         }
                     }
 
-                    // A node is visitable only if a connecting previous node was visited, 
-                    // and no node in this column or future columns has been chosen yet.
                     if (hasVisitedPreviousCol && !hasVisitedThisCol && !hasVisitedFutureCol)
                     {
                         shouldBeVisitable = true;
@@ -220,6 +207,9 @@ public partial class NodeGenerator : Node2D
 
     public override void _Draw()
     {
+        // Hide lines if Overworld is in a scene[cite: 1]
+        if (_overworld != null && _overworld.InScene) return;
+
         if (_columns == null || _columns.Count == 0) return;
 
         foreach (var col in _columns)
