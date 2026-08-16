@@ -78,21 +78,18 @@ public partial class SpellTargeter : Node2D
     private void Cast(Enemy target)
     {
         int damage = int.Parse(_data["damage"].ToString());
-        StatusEffect.Type statusType;
 
-          if (_data.ContainsKey("effectType") &&
-        Enum.TryParse(_data["statusTypet"].ToString(), out StatusEffect.Type parsedStatusType))
-        effectType = parsedStatusType;
+        CardEffect.EffectType effectType = CardEffect.EffectType.EnemyDamage;
 
-        StatusEffect.Type statusType;
+        if (_data.ContainsKey("effectType") &&
+        Enum.TryParse(_data["effectType"].ToString(), out CardEffect.EffectType parsedEffectType))
+        effectType = parsedEffectType;
+
+        StatusEffect.Type statusType = StatusEffect.Type.Burn;
 
         if (_data.ContainsKey("statusType") &&
         Enum.TryParse(_data["statusTypet"].ToString(), out StatusEffect.Type parsedStatusType))
         statusType = parsedStatusType;
-
-
-
-
 
         GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
 
@@ -108,20 +105,20 @@ public partial class SpellTargeter : Node2D
                 case StatusEffect.Type.Burn:
                 //target add child status effect
                     break;
-                case "Slow":
+                case StatusEffect.Type.Slow:
 
                     break;
-                case "Confuse":
+                case StatusEffect.Type.Confuse:
 
                     break;
-                case "Haste":
+                case StatusEffect.Type.Haste:
 
                     break;
-                case "Stun":
+                case StatusEffect.Type.Stun:
 
                     break;
 
-                case "Disarm":
+                case StatusEffect.Type.Disarm:
 
                     break;
             }
