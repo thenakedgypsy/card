@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 public partial class Enemy : CharacterBody2D, IHealth
@@ -395,10 +396,37 @@ public partial class Enemy : CharacterBody2D, IHealth
     //just add damage to self for now 
     public void StatusEffectCheck()
     {
-        //get children of this node
-        // if (_target.HasNode("StatusEffect"))
-        // {
-        //     _target.TakeDamage
-        // }
+        Node[] enemyChildren = GetChildren().ToArray();
+
+        foreach (Node child in enemyChildren)
+        {
+            if(child is StatusEffect statusEffect)
+            {
+                switch (statusEffect.TypeName)
+                {
+                    case StatusEffect.Type.Burn:
+                        TakeDamage(statusEffect.Damage);
+                        //will need a check to if turns are up - and to remove child if so
+                    
+                        break;
+                    case StatusEffect.Type.Slow:
+
+                        break;
+                    case StatusEffect.Type.Confuse:
+
+                        break;
+                    case StatusEffect.Type.Haste:
+
+                        break;
+                    case StatusEffect.Type.Stun:
+
+                        break;
+
+                    case StatusEffect.Type.Disarm:
+
+                        break;
+                }
+            }
+        }
     }
 }

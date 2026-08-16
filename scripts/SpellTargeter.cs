@@ -88,7 +88,7 @@ public partial class SpellTargeter : Node2D
         StatusEffect.Type statusType = StatusEffect.Type.Burn;
 
         if (_data.ContainsKey("statusType") &&
-        Enum.TryParse(_data["statusTypet"].ToString(), out StatusEffect.Type parsedStatusType))
+        Enum.TryParse(_data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         statusType = parsedStatusType;
 
         GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
@@ -100,35 +100,6 @@ public partial class SpellTargeter : Node2D
             PackedScene scene = GD.Load<PackedScene>("res://prefabs/statusEffect.tscn");  
             StatusEffect statusEffect = scene.Instantiate() as StatusEffect;
             target.AddChild(statusEffect);
-
-            //dont think we need this in here:
-            //probs best in the enemy
-            //all info is in the status
-
-            //to copy into enemy
-            // switch (statusType)
-            // {
-            //     case StatusEffect.Type.Burn:
-            //     //target add child status effect
-              
-            //         break;
-            //     case StatusEffect.Type.Slow:
-
-            //         break;
-            //     case StatusEffect.Type.Confuse:
-
-            //         break;
-            //     case StatusEffect.Type.Haste:
-
-            //         break;
-            //     case StatusEffect.Type.Stun:
-
-            //         break;
-
-            //     case StatusEffect.Type.Disarm:
-
-            //         break;
-            // }
         }
         else
         {
@@ -139,7 +110,6 @@ public partial class SpellTargeter : Node2D
         }
 
         QueueFree();
-
     }
 
 

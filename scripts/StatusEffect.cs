@@ -32,8 +32,6 @@ public partial class StatusEffect : Node2D
         StatusEffect.Type TypeName;
         if (data.ContainsKey("statusType") && Enum.TryParse(data["element"].ToString(), out StatusEffect.Type parsedElement))
         TypeName = parsedElement;
-        
-
     }
 
     //generic apply status 
