@@ -13,11 +13,6 @@ public partial class Deck : Cardpile
 		AddCard("blockOfIce");
 		AddCard("blockOfIce");
 		AddCard("blockOfIce");
-		AddCard("windturret");
-		AddCard("windturret");
-		AddCard("windturret");
-		AddCard("fireturret");
-		AddCard("fireturret");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
