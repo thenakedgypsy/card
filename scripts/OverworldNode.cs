@@ -35,7 +35,7 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	public override void _Ready()
 	{
 		_sprite = GetNode<Sprite2D>("Sprite2D");
-		_overworld = GetParent<Overworld>();
+		_overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
 
 		if (isDefence)
 		{
