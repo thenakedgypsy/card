@@ -71,7 +71,7 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 			// Visited nodes are faded out[cite: 2]
 			_sprite.SelfModulate = new Color(0.8f, 0.8f, 1f, 0.2f);
 		}
-		else if (_visitable)
+		else if (_visitable  && !_overworld.InScene)
 		{
 			// Visitable nodes are fully visible and interactive[cite: 2]
 			_sprite.SelfModulate = Colors.White;
