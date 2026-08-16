@@ -390,5 +390,15 @@ public partial class Enemy : CharacterBody2D, IHealth
     public bool IsHovered() => _isHovered;
 
     //function check self for statuseffect child it is
-    //then apply damage 
+    //then apply damage
+
+    //just add damage to self for now 
+    public void StatusEffectCheck()
+    {
+        //get children of this node
+        // if (_target.HasNode("StatusEffect"))
+        // {
+        //     _target.TakeDamage
+        // }
+    }
 }

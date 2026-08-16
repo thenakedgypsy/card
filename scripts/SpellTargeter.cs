@@ -97,10 +97,10 @@ public partial class SpellTargeter : Node2D
         //
         if(effectType == CardEffect.EffectType.StatusEffect)
         {
-            StatusEffect effect = new StatusEffect();
-            effect.AddStatus(_element, _data);
-  
-            target.AddChild(effect);
+            PackedScene scene = GD.Load<PackedScene>("res://prefabs/statusEffect.tscn");  
+            StatusEffect statusEffect = scene.Instantiate() as StatusEffect;
+            target.AddChild(statusEffect);
+
             //dont think we need this in here:
             //probs best in the enemy
             //all info is in the status
