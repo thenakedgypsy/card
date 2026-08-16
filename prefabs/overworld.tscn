@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3 uid="uid://ct6wgkudn7xcc"]
+[gd_scene load_steps=10 format=3 uid="uid://ct6wgkudn7xcc"]
 
 [ext_resource type="Script" path="res://scripts/Overworld.cs" id="1_c53fq"]
 [ext_resource type="PackedScene" uid="uid://bip30mlmq0a8n" path="res://prefabs/overworld_generator.tscn" id="2_7jqe3"]
@@ -7,6 +7,8 @@
 [ext_resource type="PackedScene" uid="uid://38ynssqcnbnp" path="res://prefabs/CardPool.tscn" id="2_d22b5"]
 [ext_resource type="Script" path="res://scripts/SeedTracker.cs" id="2_dessn"]
 [ext_resource type="PackedScene" uid="uid://bk0gyewh610yl" path="res://prefabs/deck.tscn" id="2_dx411"]
+[ext_resource type="PackedScene" uid="uid://bpccxuobqmat4" path="res://prefabs/card_pile_display.tscn" id="2_egrbe"]
+[ext_resource type="PackedScene" uid="uid://cewtx1wpr1mdy" path="res://prefabs/card_pile_display_butotn.tscn" id="9_c7xy2"]
 
 [node name="Overworld" type="Node2D" groups=["Overworld"]]
 script = ExtResource("1_c53fq")
@@ -37,3 +39,28 @@ position = Vector2(961, 541)
 [node name="EnergyManager" parent="." instance=ExtResource("2_bcbot")]
 position = Vector2(1018, 84)
 scale = Vector2(2, 2)
+
+[node name="CardPileDisplayButotn" parent="." instance=ExtResource("9_c7xy2")]
+offset_left = 1787.0
+offset_top = 1002.0
+offset_right = 1875.0
+offset_bottom = 1048.0
+
+[node name="CardPileDisplay" parent="." instance=ExtResource("2_egrbe")]
+clip_contents = false
+anchors_preset = -1
+anchor_right = 0.570833
+anchor_bottom = 0.648148
+offset_left = 967.0
+offset_top = 538.0
+offset_right = 967.0
+offset_bottom = 538.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+follow_focus = true
+xSpacing = 800.0
+padding = 209.0
+metadata/_edit_use_anchors_ = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]

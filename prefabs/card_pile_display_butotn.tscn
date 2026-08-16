@@ -1,0 +1,11 @@
+[gd_scene load_steps=2 format=3 uid="uid://cewtx1wpr1mdy"]
+
+[ext_resource type="Script" path="res://scripts/CardPileDisplayButotn.cs" id="1_ardot"]
+
+[node name="CardPileDisplayButotn" type="Button"]
+offset_right = 88.0
+offset_bottom = 46.0
+text = "DECK"
+script = ExtResource("1_ardot")
+
+[connection signal="pressed" from="." to="." method="buttonPressed"]

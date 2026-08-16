@@ -39,6 +39,7 @@ Overworld=""
 ActiveDef=""
 Deck=""
 CardPool=""
+CardPileDisplay=""
 
 [input]
 

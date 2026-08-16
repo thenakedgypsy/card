@@ -1,0 +1,13 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpccxuobqmat4"]
+
+[ext_resource type="Script" path="res://scripts/CardPileDisplay.cs" id="1_7kipn"]
+[ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="2_e6rum"]
+
+[node name="CardPileDisplay" type="ScrollContainer" groups=["CardPileDisplay"]]
+offset_right = 1920.0
+offset_bottom = 1080.0
+script = ExtResource("1_7kipn")
+cardScene = ExtResource("2_e6rum")
+
+[node name="ContentContainer" type="Control" parent="."]
+layout_mode = 2
