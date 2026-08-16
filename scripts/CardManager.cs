@@ -40,42 +40,12 @@ public partial class CardManager : Node
 
     }
 
-    /// <summary>
-    /// Resets the card piles and clears cached references for a new game.
-    /// Call this before cleanup.
-    /// </summary>
-    public void Reset()
-    {
-        // Ensure deck reference is valid
-        if (_deck == null)
-        {
-            _deck = GetTree().GetFirstNodeInGroup("Deck") as Deck;
-        }
-
-        // Use ActiveDiscard to safely grab discard if it's currently null
-        if (ActiveDiscard != null && ActiveDiscard.GetNumCards() > 0)
-        {
-            GD.Print("Resetting game: moving all cards from discard back to deck...");
-            _deck.AddCards(ActiveDiscard.GetCards());
-            ActiveDiscard.Clear();
-        }
-
-        if (_deck != null)
-        {
-            _deck.Shuffle();
-        }
-
-        // Reset our cached references to hand and discard
-        _hand = null;
-        _discard = null;
-    }
-
     public void DrawCard()
     {
         // 1. Check if deck is empty and needs a reshuffle
         if (_deck.GetNumCards() == 0)
         {
-            if (ActiveDiscard.GetNumCards() == 0)
+            if (_discard.GetNumCards() == 0)
             {
                 GD.Print("Both Deck and Discard are empty! Cannot draw.");
                 return;
@@ -84,8 +54,8 @@ public partial class CardManager : Node
             GD.Print("Deck is empty! Shuffling discard pile into deck...");
             
             // Move all cards from discard to deck
-            _deck.AddCards(ActiveDiscard.GetCards());
-            ActiveDiscard.Clear();
+            _deck.AddCards(_discard.GetCards());
+            _discard.Clear();
             
             // Shuffle the replenished deck
             _deck.Shuffle();

@@ -78,17 +78,35 @@ public partial class SpellTargeter : Node2D
     private void Cast(Enemy target)
     {
         int damage = int.Parse(_data["damage"].ToString());
-        string effectType = _data["effectType"].ToString();
-        string statusType = _data["statusType"].ToString();
+        StatusEffect.Type statusType;
+
+          if (_data.ContainsKey("effectType") &&
+        Enum.TryParse(_data["statusTypet"].ToString(), out StatusEffect.Type parsedStatusType))
+        effectType = parsedStatusType;
+
+        StatusEffect.Type statusType;
+
+        if (_data.ContainsKey("statusType") &&
+        Enum.TryParse(_data["statusTypet"].ToString(), out StatusEffect.Type parsedStatusType))
+        statusType = parsedStatusType;
+
+
+
+
 
         GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
 
-        if(effectType == "StatusEffect")
+        //how do i get the status effect?
+        //
+        if(effectType == CardEffect.EffectType.StatusEffect)
         {
+           
+            //will change this to the enums
+            //somehow...
             switch (statusType)
             {
-                case "Burn":
-
+                case StatusEffect.Type.Burn:
+                //target add child status effect
                     break;
                 case "Slow":
 
@@ -110,14 +128,13 @@ public partial class SpellTargeter : Node2D
         }
         else
         {
-            
             target.TakeDamage(damage);
 
             _readyToTarget = false;
 
-            QueueFree();
         }
-      
+
+        QueueFree();
 
     }
 

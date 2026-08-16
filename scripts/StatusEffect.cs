@@ -13,24 +13,29 @@ public partial class StatusEffect : Node2D
         Stun,
         Disarm
     }
-    Card.Element element;
+
+	public Card.Element Element;
+	public int Damage;
+
+    public int TurnsActive;
+
+    public StatusEffect.Type TypeName;
 
     //Variant = any
     //dictionary = Record - so each line of the card json is a Dictionary?
-
-    public void AddStatus(Dictionary<string, Variant> data)
+    public void AddStatus(Card.Element ele, Dictionary<string, Variant> data)
     {
-        //filter the type here?
+        //is there a way to deconstruct data?
+        Element = ele;
+        Damage = data["damage"].ToString().ToInt();
+        TurnsActive = data["turnsActive"].ToString().ToInt();
+        StatusEffect.Type TypeName;
+        if (data.ContainsKey("statusType") && Enum.TryParse(data["element"].ToString(), out StatusEffect.Type parsedElement))
+        TypeName = parsedElement;
         
-        
-
     }
 
-    //create a function for each type?
-    //so a burn function which i can call and pass in the damage to?
-
-    //contruct effect?
-    //already in Card Effect 
+    //generic apply status 
     private void _ApplyBurn(int damage, int numberOfTurns,Enemy enemy)
     {
         //safety first!
