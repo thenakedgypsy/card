@@ -37,6 +37,7 @@ Summons=""
 Board=""
 Overworld=""
 ActiveDef=""
+Deck=""
 
 [input]
 

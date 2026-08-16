@@ -4,48 +4,23 @@ using System.Collections.Generic;
 
 public partial class Card : Node2D
 {
-     public enum CardType
-    {
-        Energy,
-        Summon,
-        Spell,
-        Enchant
-    }
-    public enum Location
-    {
-        Deck,
-        Hand,
-        Discard,
-        Exile,
-        Unpurchased
-    }
+    // --- Added Signals ---
+    [Signal] public delegate void CardPlayedEventHandler(Card card);
+    [Signal] public delegate void CardDiscardedEventHandler(Card card);
 
-    public enum Element
-    {
-        Fire,
-        Water,
-        Wind,
-        Earth,
-        Neutral
-    }
-
-    public enum Rarity
-    {
-        Common,
-        Uncommon,
-        Rare,
-        Epic,
-        Legendary
-    }
-
-
+    public enum CardType { Energy, Summon, Spell, Enchant }
+    public enum Location { Deck, Hand, Discard, Exile, Unpurchased }
+    public enum Element { Fire, Water, Wind, Earth, Neutral }
+    public enum Rarity { Common, Uncommon, Rare, Epic, Legendary }
+    
+    public string CardID; // NEW: Storing the ID for string-based piles
+    
     public bool isDragging;
     public int cost;
     public Element element;
     public Location location;
     public CardType type;
-    public string  cardName;
-
+    public string cardName;
 
     private bool _mouseIsOver;
     private bool _isScaledUp;
@@ -54,8 +29,8 @@ public partial class Card : Node2D
     private bool _isInPlayzone;
     private Vector2 _dragOffset;
     private bool _isBeingRemoved;
-    private Hand _hand;
-	private Discard _discard;
+    
+    // Removed Hand and Discard node references here
     private Sprite2D _art;
     private Sprite2D _frame;
     private RichTextLabel _title;
@@ -70,48 +45,37 @@ public partial class Card : Node2D
     public override void _Ready()
     {
         ZIndex = 4;
-		_discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
-		_hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
+        
+        // Removed _discard and _hand fetches. The card doesn't need to know about them anymore.
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
         _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
        
         _art = GetNode<Sprite2D>("Art");
         _text = GetNode<RichTextLabel>("Text");
-         _title = GetNode<RichTextLabel>("CardName");
+        _title = GetNode<RichTextLabel>("CardName");
         _costDisplay = GetNode<RichTextLabel>("Cost");
         _typeDisplay = GetNode<RichTextLabel>("Type");
         _frame = GetNode<Sprite2D>("Frame");
         
-
         _title.Text = cardName = "Uninstantiated Card";
     }
-
     
     // =========================
     // CARD GENERATION
     // =========================
 
-    public void Generate(string cardID, Location destination = Location.Unpurchased)
+    public void Generate(string cardID)
     {
-        
+        CardID = cardID; // Save the string ID
         InstantiateData(cardID);
         InstantiateArt(cardID);
-        switch (destination)
-        {
-            case Location.Hand:          
-                _shouldReturnToHand = true; //temp
-                location = Location.Hand; //temp
-                _hand.AddCard(this);
-                break;
-
-            case Location.Discard:
-                _discard.AddCard(this);
-                break;
-        }     
+        // Destination routing logic removed. The new CardManager handles adding to Hand.
     }
 
     private void InstantiateData(string cardID)
     {
+        // ... (Keep EXACTLY as it was in your original code) ...
+        // Everything inside your existing InstantiateData remains the same.
         string textPath = $"res://assets/cards/text/en_gb/{cardID}.json";       //lang stuffs
         string dataPath = $"res://assets/cards/data/{cardID}.json";
 
@@ -153,7 +117,6 @@ public partial class Card : Node2D
             _costDisplay.Visible = false;
         }
 
-
         // ===== Text data =====
 
         cardName = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
@@ -181,29 +144,25 @@ public partial class Card : Node2D
         if (data.ContainsKey("effectData"))
         {
             var effectDict = data["effectData"].AsGodotDictionary();
-
             Dictionary<string, Variant> effectData = new Dictionary<string, Variant>();
             
             foreach (var key in effectDict.Keys)
             {
                 string name = key.ToString();
                 var valueVar = effectDict[key];
-
                 effectData.Add(name, valueVar);
             }
 
             PackedScene scene = GD.Load<PackedScene>("res://prefabs/CardEffect.tscn");
             _effect = scene.Instantiate() as CardEffect;
-
             AddChild(_effect);
             _effect.ConstructEffect(element, effectData, cardID);
-
-
         }
     }
 
     private void InstantiateArt(string cardID)
     {
+        // ... (Keep EXACTLY as it was in your original code) ...
         string path = $"res://assets/cards/art/{cardID}.png";
 
         Texture2D texture = GD.Load<Texture2D>(path);
@@ -215,7 +174,8 @@ public partial class Card : Node2D
     // =========================
     // DRAG SYSTEM
     // =========================
-
+    
+    // ... (Keep StartDrag, UpdateDrag, EndDrag, FlashRed EXACTLY as they were) ...
     public void StartDrag()
     {
         isDragging = true;
@@ -257,9 +217,7 @@ public partial class Card : Node2D
     {
         Color original = SelfModulate;
         Tween tween = CreateTween();
-        // Flash red
         tween.TweenProperty(_frame, "self_modulate", Colors.Red, 0.25f);
-        // Return to original color
         tween.TweenProperty(_frame, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
     }
@@ -276,42 +234,32 @@ public partial class Card : Node2D
         {
             _turnManager.PlayEnergy();
             if (element == Element.Neutral)
-            {
                 _energyManager.GainEnergy(1, element);
-            }
             else
-            {
                 _energyManager.TryGainRegen(1, element);
-            }
         }
         else
         {
             _effect.Trigger(); 
-        }  //maybe we should add to some kind of stack or sequencer here
+        }
 
-
-        _shouldReturnToHand = false;
-        _hand.QueueRemoveCard(this);
-
-		Discard();
+        // Fire signal up to CardManager to handle the ID move and memory cleanup
+        EmitSignal(SignalName.CardPlayed, this);
     }
 
     public bool CanPlay()
     {
-        if (_turnManager.State == TurnManager.GameState.PlayerTurn) //only play cards on your turn
+        // ... (Keep EXACTLY as it was) ...
+        if (_turnManager.State == TurnManager.GameState.PlayerTurn)
         {
-            if (type == CardType.Energy) //for energy cards
+            if (type == CardType.Energy)
             {
                 if (_turnManager.CanPlayEnergy())
-                {
                     return true;              
-                }
                 else
-                {
                     GD.Print("WARN: Cant play energy, already played one this turn");
-                }
             }
-            else if (_energyManager.TrySpendEnergy(cost, element))  //for cards with a cost we spend in the check
+            else if (_energyManager.TrySpendEnergy(cost, element)) 
             {
                 return true;
             }
@@ -320,109 +268,66 @@ public partial class Card : Node2D
                 GD.Print("WARN: Cant play card, not enough energy");
             }
         }
-
         return false;
     }
 
-	public void Discard()
-	{
-		GD.Print($"{cardName} moved to _discard");
-		_discard.AddCard(this);
-        location = Location.Discard;
-	}
-
-	public void AddToHand()
-	{
-		GD.Print($"{cardName} moved to _hand");
-		_shouldReturnToHand = true;
-		_hand.AddCard(this);
-        location = Location.Hand;
-	}
-
-    public void Exile()
+    public void Discard()
     {
-        location = Location.Exile;
+        GD.Print($"{cardName} moved to discard");
+        EmitSignal(SignalName.CardDiscarded, this);
     }
+    
+    // oh the glory of removing AddToHand(), Exile(), Remove() etc. Hand/Board dragging handles hand retention natively <-- 
 
-    public void Remove()
-    {
-        if (_isBeingRemoved) return;
-        _isBeingRemoved = true;
-
-		GD.Print($"{Name} removed from existance");
-        QueueFree();
-    }
-
-    public void EnterPlayZone()
-    {
-        _isInPlayzone = true;
-    }
-
-    public void ExitPlayZone()
-    {
-        _isInPlayzone = false;
-    }
+    public void EnterPlayZone() { _isInPlayzone = true; }
+    public void ExitPlayZone() { _isInPlayzone = false; }
 
     // =========================
-    // MOUSE VISUALS
+    // MOUSE VISUALS & HELPERS
     // =========================
-
+    // ... (Keep MouseOver, MouseOff, ScaleUp, ScaleDown, LoadJson EXACTLY as they were) ...
+    
     public void MouseOver()
     {
         _mouseIsOver = true;
-
-        if (!_isScaledUp && !isDragging)
-            ScaleUp();
+        if (!_isScaledUp && !isDragging) ScaleUp();
     }
 
     public void MouseOff()
     {
         _mouseIsOver = false;
-
-        if (!isDragging && _isScaledUp)
-            ScaleDown();
+        if (!isDragging && _isScaledUp) ScaleDown();
     }
 
     public void ScaleUp()
     {
         if (_isScaledUp) return;
-
         Scale *= 1.2f;
         Position -= new Vector2(0f, 50f);
         ZIndex = 1000;
-
         _isScaledUp = true;
     }
 
     public void ScaleDown()
     {
         if (!_isScaledUp) return;
-
         Scale /= 1.2f;
         Position += new Vector2(0f, 50f);
         ZIndex = 4;
-
         _isScaledUp = false;
     }
 
-    // =========================
-    // HELPERS
-    // =========================
     public Godot.Collections.Dictionary LoadJson(string path)
     {
-        if (!FileAccess.FileExists(path))
-            return null;
-
+        if (!FileAccess.FileExists(path)) return null;
         using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
         string jsonText = file.GetAsText();
-
-        var json = new Json();
+        var json = new Godot.Json();
         if (json.Parse(jsonText) != Error.Ok)
         {
             GD.PrintErr($"JSON parse error in {path}: {json.GetErrorMessage()}");
             return null;
         }
-
         return json.Data.AsGodotDictionary();
     }
 }

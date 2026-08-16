@@ -25,19 +25,19 @@ public partial class DrawButton : Button
 		
 		if (num == 5)
 		{
-			card.Generate("fireball", Card.Location.Hand);
+			card.Generate("fireball");
 		}
 		else if (num == 5)
 		{
-			card.Generate("energy_red", Card.Location.Hand);
+			card.Generate("energy_red");
 		}
 		else if (num == 1)
 		{
-			card.Generate("energy_blue", Card.Location.Hand);
+			card.Generate("energy_blue");
 		}
 		else
 		{
-			card.Generate("blockOfIce", Card.Location.Hand);
+			card.Generate("blockOfIce");
 		}
 		
 	}

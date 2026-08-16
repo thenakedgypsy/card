@@ -43,6 +43,7 @@ public partial class TurnManager : Node
     private PackedScene enemyScene;
     private Overworld _overworld;
     public int Seed;
+    private CardManager _cardManager;
 
     public override void _Ready()
     {
@@ -53,6 +54,7 @@ public partial class TurnManager : Node
         _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
         _board = GetTree().GetFirstNodeInGroup("Board") as Board;
         _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
+        _cardManager = GetTree().GetFirstNodeInGroup("CardManager") as CardManager;
     }
 
     public void Setup(int numEnemies)
@@ -68,25 +70,9 @@ public partial class TurnManager : Node
             _board.AddChild(enemy);
         }
         PlaceEntities();
-        for (int i = 0; i < 5; i++) DrawCardTemp();
         BeginPlayerTurn(); 
     }
 
-    public void DrawCardTemp()
-    {
-        PackedScene scene = GD.Load<PackedScene>("res://prefabs/Card.tscn");
-		Card card = scene.Instantiate() as Card;
-		AddChild(card);
-
-		Random random = new Random();
-		int num = random.Next(101);
-		
-		if (num < 23) card.Generate("fireball", Card.Location.Hand);
-        else if (num < 39) card.Generate("blockOfIce", Card.Location.Hand);
-		else if (num < 55) card.Generate("windturret", Card.Location.Hand);
-        else if (num < 75) card.Generate("fireturret", Card.Location.Hand);
-        else if (num < 85) card.Generate("earthshatter", Card.Location.Hand);
-    }
 
     public void BeginPlayerTurn()
     {
@@ -94,7 +80,7 @@ public partial class TurnManager : Node
         _isPostEnemySummonPhase = false;
         _energyManager.RegenerateEnergy();
         energyPlayedThisTurn = 0;
-        while (_hand.GetNumCards() < 5) DrawCardTemp();
+        while (_hand.GetNumCards() < 5) _cardManager.DrawCard();
     }
 
     public bool CanPlayEnergy() => energyPlayedThisTurn + 1 <= energyPlayLimit;

@@ -2,6 +2,5 @@
 
 [ext_resource type="Script" path="res://scripts/Hand.cs" id="1_6yxyx"]
 
-[node name="Hand" type="Node2D" node_paths=PackedStringArray("cards") groups=["Hand"]]
+[node name="Hand" type="Node2D" groups=["Hand"]]
 script = ExtResource("1_6yxyx")
-cards = [null, null, null, null, null]

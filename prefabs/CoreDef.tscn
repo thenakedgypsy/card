@@ -23,10 +23,6 @@ offset_right = 1921.0
 offset_bottom = 1080.0
 texture = ExtResource("1_geqo8")
 
-[node name="Hand" parent="." node_paths=PackedStringArray("cards") instance=ExtResource("2_hgopt")]
-position = Vector2(1037, 854)
-cards = []
-
 [node name="Mouse" parent="." instance=ExtResource("3_171fx")]
 position = Vector2(4, 5)
 
@@ -36,6 +32,9 @@ position = Vector2(46, 980)
 [node name="TurnManager" parent="." instance=ExtResource("6_0nfh7")]
 position = Vector2(965, 1204)
 energyPlayLimit = 1
+
+[node name="Hand" parent="." instance=ExtResource("2_hgopt")]
+position = Vector2(1037, 854)
 
 [node name="EndTurnButton" parent="." instance=ExtResource("7_lde5s")]
 offset_left = 1283.2

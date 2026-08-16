@@ -1,19 +1,14 @@
 using Godot;
-using System;
 using System.Collections.Generic;
 
-public partial class Hand : Cardpile
+public partial class Hand : Node2D // No longer inherits from Cardpile
 {
     [Export] public float CardSpacing = 150f;
     [Export] public float FanHeight = 40f;
-	[Export]
-	public Card[] cards;
 
+    // Manages its own active node list
+    private List<Card> cardsInHand = new List<Card>();
     private List<Card> _pendingRemoval = new List<Card>();
-
-    public override void _Ready()
-    {
-    }
 
     public override void _Process(double delta)
     {
@@ -25,18 +20,17 @@ public partial class Hand : Cardpile
     // CARD MANAGEMENT
     // =========================
 
-    public override void AddCard(Card card)
+    public void AddCard(Card card)
     {
-        base.AddCard(card);
+        cardsInHand.Add(card);
+        card.CallDeferred("reparent", this);
         UpdateHand();
     }
 
-    public override void RemoveCard(Card card)
+    public void RemoveCard(Card card)
     {
-        if (!cardsInPile.Contains(card)) return;
-
-        base.RemoveCard(card);
-
+        if (!cardsInHand.Contains(card)) return;
+        cardsInHand.Remove(card);
         UpdateHand();
     }
 
@@ -52,11 +46,11 @@ public partial class Hand : Cardpile
 
         foreach (Card card in _pendingRemoval)
         {
-			if (cardsInPile.Contains(card))
-			{
-            	RemoveCard(card);
-				GD.Print(card.cardName, " removed from hand");
-			}
+            if (cardsInHand.Contains(card))
+            {
+                RemoveCard(card);
+                GD.Print(card.cardName, " removed from hand visual");
+            }
         }
 
         _pendingRemoval.Clear();
@@ -73,19 +67,19 @@ public partial class Hand : Cardpile
 
     private void PositionHand()
     {
-        if (cardsInPile.Count == 0) return;
+        if (cardsInHand.Count == 0) return;
 
-        float totalWidth = (cardsInPile.Count - 1) * CardSpacing;
+        float totalWidth = (cardsInHand.Count - 1) * CardSpacing;
 
-        for (int i = 0; i < cardsInPile.Count; i++)
+        for (int i = 0; i < cardsInHand.Count; i++)
         {
-            Card card = cardsInPile[i];
+            Card card = cardsInHand[i];
 
             // Don't fight the mouse
             if (card.isDragging) continue;
 
             float x = i * CardSpacing - totalWidth / 2f;
-            float y = Mathf.Abs(i - cardsInPile.Count / 2f) * FanHeight;
+            float y = Mathf.Abs(i - cardsInHand.Count / 2f) * FanHeight;
 
             Vector2 targetPos = new Vector2(x, y);
 
@@ -93,8 +87,13 @@ public partial class Hand : Cardpile
             card.Position = card.Position.Lerp(targetPos, 0.2f);
 
             // Optional fan rotation
-            float angle = (i - (cardsInPile.Count - 1) / 2f) * 0.05f;
+            float angle = (i - (cardsInHand.Count - 1) / 2f) * 0.05f;
             card.Rotation = angle;
         }
+    }
+
+    public int GetNumCards()
+    {
+        return cardsInHand.Count;
     }
 }

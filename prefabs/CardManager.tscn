@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://dsc5ywltcmx6t"]
+
+[ext_resource type="Script" path="res://scripts/CardManager.cs" id="1_mvqb6"]
+[ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="2_60up7"]
+
+[node name="CardManager" type="Node2D" groups=["CardManager"]]
+script = ExtResource("1_mvqb6")
+CardPrefab = ExtResource("2_60up7")
