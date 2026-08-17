@@ -407,14 +407,15 @@ public partial class Enemy : CharacterBody2D, IHealth
                     case StatusEffect.Type.Burn:
                         if (statusEffect.TurnsLeftActive > 0)
                         {
+                            //could seperate this out into a seperate Apply StatusEffect function
+                            //as I've named this function Check - and it also applies the effect mechanic 
                             statusEffect.TurnsLeftActive--;
                             TakeDamage(statusEffect.Damage);
                             GD.Print($"{statusEffect.Damage} damage. {statusEffect.TurnsLeftActive} turns left.");
-
                         }
                         else
                         {
-                           
+                           statusEffect.QueueFree();
                         }
                     
                         break;
@@ -437,4 +438,5 @@ public partial class Enemy : CharacterBody2D, IHealth
             }
         }
     }
+
 }
