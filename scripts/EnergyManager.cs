@@ -14,6 +14,9 @@ public partial class EnergyManager : Node2D
 	private RichTextLabel WaterRegenLabel;
 	private RichTextLabel WindRegenLabel;
 	private RichTextLabel EarthRegenLabel;
+
+	[Export]
+	public int globalEnergyBump = 0;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{		
@@ -41,10 +44,10 @@ public partial class EnergyManager : Node2D
 		CurrentEnergy.Add(Card.Element.Wind, 0);
 		CurrentEnergy.Add(Card.Element.Earth, 0);
 
-		EnergyRegen.Add(Card.Element.Fire, 1);
-		EnergyRegen.Add(Card.Element.Water, 1);
-		EnergyRegen.Add(Card.Element.Wind, 1);
-		EnergyRegen.Add(Card.Element.Earth, 1);
+		EnergyRegen.Add(Card.Element.Fire, 1 + globalEnergyBump);
+		EnergyRegen.Add(Card.Element.Water, 1 + globalEnergyBump);
+		EnergyRegen.Add(Card.Element.Wind, 1 + globalEnergyBump);
+		EnergyRegen.Add(Card.Element.Earth, 1 + globalEnergyBump);
 		UpdateLabels();
 	}
 
