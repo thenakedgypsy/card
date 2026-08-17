@@ -353,6 +353,10 @@ public partial class Enemy : CharacterBody2D, IHealth
         CurrentHealth -= value;
         GD.Print($"Enemy {Name} takes {value} damage");
 
+        PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
+        FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
+        AddChild(fdn);
+        fdn.Appear(value);       
         FlashRed();
 
         if (CurrentHealth <= 0)

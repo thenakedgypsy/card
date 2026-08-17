@@ -35,6 +35,10 @@ public partial class PlayerCore : Node2D, IHealth
 		CurrentHealth -= value;
 	    GD.Print($"Summon takes {value} damage");
 
+		PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
+		FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
+        AddChild(fdn);
+        fdn.Appear((int)value);
 		FlashRed();
 	
 	    if (CurrentHealth <= 0)

@@ -6,11 +6,12 @@
 script = ExtResource("1_ctp2a")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]
-offset_left = -30.0
-offset_top = -20.0
-offset_right = 31.0
-offset_bottom = 16.0
-theme_override_font_sizes/normal_font_size = 28
+offset_left = -82.0
+offset_top = -126.0
+offset_right = 22.0
+offset_bottom = -65.0
+scale = Vector2(1.60455, 1.72436)
+theme_override_font_sizes/normal_font_size = 40
 bbcode_enabled = true
 text = "[center]99"
 scroll_active = false
