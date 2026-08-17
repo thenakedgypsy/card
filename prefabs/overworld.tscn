@@ -16,6 +16,7 @@ script = ExtResource("1_c53fq")
 [node name="OverworldGenerator" parent="." instance=ExtResource("2_7jqe3")]
 position = Vector2(66, 498)
 TreeDepth = 12
+InitialSafeNodes = 2
 
 [node name="Deck" parent="." instance=ExtResource("2_dx411")]
 

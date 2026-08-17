@@ -25,7 +25,7 @@ public partial class TurnManager : Node
     private Node2D _playercore;
     private Hand _hand;
 
-    [Export] private float enemyTurnDelay = 00.001f;
+    [Export] private float enemyTurnDelay = 0.001f;
     [Export] private float actionSpacingDelay = 0.02f;
 
     private int _enemiesActing = 0;
@@ -48,11 +48,16 @@ public partial class TurnManager : Node
     public override void _Ready()
     {
         Instance = this;
-        _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
         enemyScene = GD.Load<PackedScene>("res://prefabs/Enemy.tscn");
+        FetchReferences();
+    }
+
+    // Dynamic fetch to avoid holding stale pointers after CoreDef node queue_free
+    private void FetchReferences()
+    {
+        _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
         _board = GetTree().GetFirstNodeInGroup("Board") as Board;
         _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
-        _board = GetTree().GetFirstNodeInGroup("Board") as Board;
         _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
         _cardManager = GetTree().GetFirstNodeInGroup("CardManager") as CardManager;
     }
@@ -60,27 +65,53 @@ public partial class TurnManager : Node
     public void Setup(int numEnemies)
     {
         GD.Print("SETUP CALLED");
+        
+        // Re-bind scene nodes destroyed in previous battles
+        FetchReferences();
+
+        if (_overworld == null || _board == null)
+        {
+            GD.PrintErr("CRITICAL: Scene nodes missing during TurnManager Setup!");
+            return;
+        }
+
         Seed = _overworld.Seed * _overworld.roundNum;
         Random rng = new Random(Seed);
-        _board.GenerateBoard(rng.Next());    
+        _board.GenerateBoard(rng.Next());   
         BuildGrid();
+
         for(int i = 0; i < numEnemies; i++)
         {
             Enemy enemy = enemyScene.Instantiate<Enemy>();
             _board.AddChild(enemy);
         }
-        PlaceEntities();
-        BeginPlayerTurn(); 
-    }
 
+        PlaceEntities();
+        BeginPlayerTurn();
+    }
 
     public void BeginPlayerTurn()
     {
         State = GameState.PlayerTurn;
         _isPostEnemySummonPhase = false;
-        _energyManager.RegenerateEnergy();
+
+        if (_energyManager != null)
+        {
+            _energyManager.RegenerateEnergy();
+        }
+
         energyPlayedThisTurn = 0;
-        while (_hand.GetNumCards() < 5) _cardManager.DrawCard();
+
+        // Safety limit prevents main thread soft-locking if deck runs out or _hand drops
+        int maxDraws = 10;
+        while (_hand != null && _hand.GetNumCards() < 5 && maxDraws > 0)
+        {
+            if (_cardManager != null)
+            {
+                _cardManager.DrawCard();
+            }
+            maxDraws--;
+        }
     }
 
     public bool CanPlayEnergy() => energyPlayedThisTurn + 1 <= energyPlayLimit;
@@ -92,22 +123,47 @@ public partial class TurnManager : Node
         await ToSignal(GetTree().CreateTimer(enemyTurnDelay), SceneTreeTimer.SignalName.Timeout);
 
         State = GameState.EnemyTurn;
-        _playercore = GetParent().GetNode<Node2D>("Board/PlayerCore");
+        _playercore = GetParent().GetNodeOrNull<Node2D>("Board/PlayerCore");
         RebakeNav();
 
-        // Register initial positions
         _occupiedEnemyCells.Clear();
         var enemies = GetTree().GetNodesInGroup("Enemies").Cast<Enemy>().Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0).ToList();
         
         if (enemies.Count == 0)
         {
+            GD.Print("All enemies defeated! Starting Core Defence cleanup...");
+            
             CoreDef def = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
+            if (def == null)
+            {
+                GD.PrintErr("CRITICAL: CoreDef could not be found in group 'ActiveDef'!");
+            }
+            else
+            {
+                GD.Print("CoreDef instance successfully located via group.");
+            }
+
             Overworld _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
-            _cardManager.Reset();
-			_overworld.InScene = false;
-			def.QueueFree();
-            BeginPlayerTurn();
-            return;
+            if (_overworld == null)
+            {
+                GD.PrintErr("CRITICAL: Overworld node could not be found!");
+            }
+            else
+            {
+                GD.Print($"Overworld found. Setting InScene to false. Previous state was: {_overworld.InScene}");
+                _overworld.InScene = false;
+            }
+
+            if (_cardManager != null)
+            {
+                _cardManager.Reset();
+            }
+
+            if (def != null)
+            {
+                def.CallDeferred("queue_free");
+                GD.Print("CoreDef queue_free called successfully.");
+            }
         }
 
         foreach (var enemy in enemies)
@@ -116,16 +172,16 @@ public partial class TurnManager : Node
             enemy.ResetTurnState();
         }
 
-        // Execute Phases
         await ExecuteEnemyTurnPhase(enemies);
         
-        // Attack Phase
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
-            await enemy.ExecuteAttackPhaseAsync(_playercore);
+            if (_playercore != null)
+            {
+                await enemy.ExecuteAttackPhaseAsync(_playercore);
+            }
         }
 
-        // Follow Up / Leftover Movement Phase
         var remainingEnemies = enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0).ToList();
         if (remainingEnemies.Count > 0)
         {
@@ -143,7 +199,6 @@ public partial class TurnManager : Node
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
     {
-        // 1. Evaluate distances considering summons as blockers
         bool allFullyBlocked = true;
         var distances = new Dictionary<Enemy, int>();
 
@@ -154,7 +209,6 @@ public partial class TurnManager : Node
             if (dist != int.MaxValue) allFullyBlocked = false;
         }
 
-        // 2. Re-order: if all are fully blocked, recalculate ignoring summons
         if (allFullyBlocked)
         {
             foreach (var enemy in enemies)
@@ -165,13 +219,11 @@ public partial class TurnManager : Node
 
         enemies.Sort((a, b) => distances[a].CompareTo(distances[b]));
 
-        // 3. Begin calculating positions sequentially
         foreach (var enemy in enemies)
         {
             enemy.PlanMove(_playercore);
         }
 
-        // 4. Async Move to positions concurrently
         var moveTasks = new List<Task>();
         for (int i = 0; i < enemies.Count; i++)
         {
@@ -255,7 +307,7 @@ public partial class TurnManager : Node
     private void BuildGrid()
     {
         _astarGrid = new AStarGrid2D();
-        _astarGrid.Region = new Rect2I(-12, -8, 25, 20); 
+        _astarGrid.Region = new Rect2I(-12, -8, 25, 20);
         _astarGrid.CellSize = new Vector2(64, 32);
         _astarGrid.DiagonalMode = AStarGrid2D.DiagonalModeEnum.Never;
         _astarGrid.Update();
@@ -264,11 +316,13 @@ public partial class TurnManager : Node
     public void RebakeNav()
     {
         if (_astarGrid == null) BuildGrid();
-        else
+        else if (_board != null)
         {
             _astarGrid.Region = _board.GetUsedRect();
             _astarGrid.Update();
         }
+
+        if (_board == null) return;
 
         Rect2I region = _astarGrid.Region;
         for (int x = region.Position.X; x < region.End.X; x++)
@@ -281,7 +335,6 @@ public partial class TurnManager : Node
             }
         }
 
-        // Summons are solid by default
         var summons = GetTree().GetNodesInGroup("Summons");
         foreach (Node node in summons)
         {
@@ -293,8 +346,8 @@ public partial class TurnManager : Node
         }
     }
 
-    public Vector2I WorldToCell(Vector2 worldPosition) => _board.LocalToMap(_board.ToLocal(worldPosition));
-    public Vector2 CellToWorld(Vector2I cell) => _board.ToGlobal(_board.MapToLocal(cell));
+    public Vector2I WorldToCell(Vector2 worldPosition) => _board != null ? _board.LocalToMap(_board.ToLocal(worldPosition)) : Vector2I.Zero;
+    public Vector2 CellToWorld(Vector2I cell) => _board != null ? _board.ToGlobal(_board.MapToLocal(cell)) : Vector2.Zero;
     public int TileDistance(Vector2I a, Vector2I b) => Mathf.Abs(a.X - b.X) + Mathf.Abs(a.Y - b.Y);
     public bool IsSolidCell(Vector2I cell) => _astarGrid.IsInBoundsv(cell) && _astarGrid.IsPointSolid(cell);
 
@@ -314,7 +367,7 @@ public partial class TurnManager : Node
 
         if (pathArray.Count <= 1) return null;
         var path = new List<Vector2I>(pathArray);
-        path.RemoveAt(0); 
+        path.RemoveAt(0);
         return path;
     }
 
@@ -322,7 +375,6 @@ public partial class TurnManager : Node
     {
         if (_astarGrid == null || !_astarGrid.IsInBoundsv(from) || !_astarGrid.IsInBoundsv(to)) return null;
 
-        // Strip summon solid status
         var summons = GetTree().GetNodesInGroup("Summons");
         var modifiedCells = new List<Vector2I>();
         foreach (Node node in summons)
@@ -348,7 +400,6 @@ public partial class TurnManager : Node
         if (wasFromSolid) _astarGrid.SetPointSolid(from, true);
         if (wasToSolid) _astarGrid.SetPointSolid(to, true);
 
-        // Restore summon solid status
         foreach (Vector2I cell in modifiedCells) _astarGrid.SetPointSolid(cell, true);
 
         if (pathArray.Count <= 1) return null;
@@ -402,87 +453,84 @@ public partial class TurnManager : Node
             return path.Count;
         }
         
-        return int.MaxValue; 
+        return int.MaxValue;
     }
 
     public void PlaceEntities()
-{
-    // 1. Get the PlayerCore and all Enemies
-    _playercore = GetParent().GetNodeOrNull<Node2D>("Board/PlayerCore");
-    var enemies = GetTree().GetNodesInGroup("Enemies");
-
-    if (_playercore == null || enemies.Count == 0) return;
-
-    // 2. Gather all walkable cells from the Board
-    var usedCells = _board.GetUsedCells();
-    List<Vector2I> walkableCells = new List<Vector2I>();
-    
-    foreach (Vector2I cell in usedCells)
     {
-        if (_board.IsCellWalkable(cell))
+        if (_board == null) return;
+
+        _playercore = GetParent().GetNodeOrNull<Node2D>("Board/PlayerCore");
+        var enemies = GetTree().GetNodesInGroup("Enemies");
+
+        if (_playercore == null || enemies.Count == 0) return;
+
+        var usedCells = _board.GetUsedCells();
+        List<Vector2I> walkableCells = new List<Vector2I>();
+        
+        foreach (Vector2I cell in usedCells)
         {
-            walkableCells.Add(cell);
-        }
-    }
-
-    if (walkableCells.Count < enemies.Count + 1)
-    {
-        GD.PrintErr("Not enough walkable cells to place the core and all enemies!");
-        return;
-    }
-
-    // 3. Find the two farthest walkable cells (O(N^2) comparison)
-    float maxDistance = -1f;
-    Vector2I farthestA = Vector2I.Zero;
-    Vector2I farthestB = Vector2I.Zero;
-
-    for (int i = 0; i < walkableCells.Count; i++)
-    {
-        for (int j = i + 1; j < walkableCells.Count; j++)
-        {
-            // Using straight-line distance squared to find the absolute farthest visual points
-            float dist = ((Vector2)walkableCells[i]).DistanceSquaredTo((Vector2)walkableCells[j]);
-            if (dist > maxDistance)
+            if (_board.IsCellWalkable(cell))
             {
-                maxDistance = dist;
-                farthestA = walkableCells[i];
-                farthestB = walkableCells[j];
+                walkableCells.Add(cell);
             }
         }
+
+        if (walkableCells.Count < enemies.Count + 1)
+        {
+            GD.PrintErr("Not enough walkable cells to place the core and all enemies!");
+            return;
+        }
+
+        float maxDistance = -1f;
+        Vector2I farthestA = Vector2I.Zero;
+        Vector2I farthestB = Vector2I.Zero;
+
+        for (int i = 0; i < walkableCells.Count; i++)
+        {
+            for (int j = i + 1; j < walkableCells.Count; j++)
+            {
+                float dist = ((Vector2)walkableCells[i]).DistanceSquaredTo((Vector2)walkableCells[j]);
+                if (dist > maxDistance)
+                {
+                    maxDistance = dist;
+                    farthestA = walkableCells[i];
+                    farthestB = walkableCells[j];
+                }
+            }
+        }
+
+        Vector2I coreCell = farthestA.X < farthestB.X ? farthestA : farthestB;
+        Vector2I firstEnemyCell = farthestA.X < farthestB.X ? farthestB : farthestA;
+
+        walkableCells.Remove(coreCell);
+        walkableCells.Remove(firstEnemyCell);
+
+        _playercore.GlobalPosition = CellToWorld(coreCell);
+        
+        Node2D firstEnemy = enemies[0] as Node2D;
+        if (firstEnemy != null)
+        {
+            firstEnemy.GlobalPosition = CellToWorld(firstEnemyCell);
+        }
+
+        walkableCells.Sort((a, b) =>
+        {
+            float distA = ((Vector2)a).DistanceSquaredTo((Vector2)coreCell);
+            float distB = ((Vector2)b).DistanceSquaredTo((Vector2)coreCell);
+            return distB.CompareTo(distA);
+        });
+
+        for (int i = 1; i < enemies.Count; i++)
+        {
+            Node2D enemy = enemies[i] as Node2D;
+            if (enemy != null)
+            {
+                Vector2I nextCell = walkableCells[i - 1];
+                enemy.GlobalPosition = CellToWorld(nextCell);
+            }
+        }
+
+        RebakeNav();
     }
-
-    // 4. Assign Leftmost to Core, Rightmost to First Enemy
-    Vector2I coreCell = farthestA.X < farthestB.X ? farthestA : farthestB;
-    Vector2I firstEnemyCell = farthestA.X < farthestB.X ? farthestB : farthestA;
-
-    // Remove placed cells from the available pool so they don't overlap
-    walkableCells.Remove(coreCell);
-    walkableCells.Remove(firstEnemyCell);
-
-    // Move the Core and the First Enemy to their starting positions
-    _playercore.GlobalPosition = CellToWorld(coreCell);
-    
-    Node2D firstEnemy = enemies[0] as Node2D;
-    firstEnemy.GlobalPosition = CellToWorld(firstEnemyCell);
-
-    // 5. Place the remaining enemies progressively closer
-    // Sort the remaining cells by descending distance to the Core (farthest first)
-    walkableCells.Sort((a, b) => 
-    {
-        float distA = ((Vector2)a).DistanceSquaredTo((Vector2)coreCell);
-        float distB = ((Vector2)b).DistanceSquaredTo((Vector2)coreCell);
-        return distB.CompareTo(distA);
-    });
-
-    // Place the rest of the enemies
-    for (int i = 1; i < enemies.Count; i++)
-    {
-        Node2D enemy = enemies[i] as Node2D;
-        Vector2I nextCell = walkableCells[i - 1]; // Skip first enemy, so index is i-1
-        enemy.GlobalPosition = CellToWorld(nextCell);
-    }
-
-    // Finalize: Update Nav Grid now that entities are occupying their final spots
-    RebakeNav();
-}
 }
