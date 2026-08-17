@@ -1,4 +1,4 @@
 {
   "name": "Minor Fireball",
-  "text": "Deal {damage} damage."
+  "text": "Deal {damage} damage, every turn for {turnsActive} turns."
 }
