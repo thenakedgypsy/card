@@ -405,12 +405,19 @@ public partial class Enemy : CharacterBody2D, IHealth
                 switch (statusEffect.TypeName)
                 {
                     case StatusEffect.Type.Burn:
-                        TakeDamage(statusEffect.Damage);
-                        //will need a check to if turns are up - and to remove child if so
+                        if (statusEffect.TurnsLeftActive > 0)
+                        {
+                            statusEffect.TurnsLeftActive--;
+                            TakeDamage(statusEffect.Damage);
+                        }
+                        else
+                        {
+                            //remove status effect - somehow
+                        }
                     
                         break;
                     case StatusEffect.Type.Slow:
-
+                    
                         break;
                     case StatusEffect.Type.Confuse:
 
@@ -421,7 +428,6 @@ public partial class Enemy : CharacterBody2D, IHealth
                     case StatusEffect.Type.Stun:
 
                         break;
-
                     case StatusEffect.Type.Disarm:
 
                         break;
