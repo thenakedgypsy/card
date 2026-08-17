@@ -43,7 +43,6 @@ public partial class CardPileDisplay : ScrollContainer
             ClearDisplay();
             return;
         }
-        ClearDisplay();
 
         // Ensure _contentContainer exists even if called before _Ready()
         if (_contentContainer == null)
