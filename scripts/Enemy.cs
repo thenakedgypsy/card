@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 public partial class Enemy : CharacterBody2D, IHealth
@@ -26,6 +27,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     public bool HasAttackedThisTurn { get; private set; }
     public bool WasPathBlocked { get; private set; }
 
+    public StatusEffect StatusEffect = null;
+
     private Vector2I? _reservedCell = null;
     private Node2D _target;
     private TurnManager _turnManager;
@@ -39,8 +42,11 @@ public partial class Enemy : CharacterBody2D, IHealth
         _sprite = GetNode<Sprite2D>("Sprite2D");
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
+
+
         CurrentHealth = Health;
     }
+    
 
     public void ResetTurnState(bool resetMovement = true)
     {
@@ -383,4 +389,22 @@ public partial class Enemy : CharacterBody2D, IHealth
     private void _on_area_2d_mouse_exited() => MouseOff();
 
     public bool IsHovered() => _isHovered;
+
+    //function check self for statuseffect child it is
+    //then apply damage
+
+    //just add damage to self for now 
+    public void TryTriggerStatusEffect()
+    {
+        Node[] enemyChildren = GetChildren().ToArray();
+
+        foreach (Node child in enemyChildren)
+        {
+            if(child is StatusEffect statusEffect)
+            {
+                GD.Print($"status type name: {statusEffect.TypeName} Turns left{statusEffect.TurnsLeftActive}");
+                statusEffect.ApplyStatusEffect();
+            }
+        }
+    }
 }

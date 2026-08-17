@@ -199,6 +199,13 @@ public partial class TurnManager : Node
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
     {
+        //do first? Going off how poison works in slay the spire (start if enemy turn)
+        foreach (var enemy in enemies)
+        {
+            enemy.TryTriggerStatusEffect();
+        }
+
+        // 1. Evaluate distances considering summons as blockers
         bool allFullyBlocked = true;
         var distances = new Dictionary<Enemy, int>();
 

@@ -6,6 +6,7 @@ public partial class SpellTargeter : Node2D
 {
     private Sprite2D _sprite;
 
+    private CardEffect.EffectType _effectType;
     private Dictionary<string, Variant> _data;
     private string _cardID;
     private Card.Element _element;
@@ -50,7 +51,7 @@ public partial class SpellTargeter : Node2D
     }
 
 
-    public void Setup(Card.Element ele, Dictionary<string, Variant> data, string cardID)
+    public void Setup(Card.Element ele, Dictionary<string, Variant> data, string cardID, CardEffect.EffectType type)
     {
         _sprite = GetNode<Sprite2D>("Sprite2D");
 
@@ -63,6 +64,7 @@ public partial class SpellTargeter : Node2D
         _data = data;
         _cardID = cardID;
         _element = ele;
+        _effectType = type;
 
         ZIndex = 3;
         _readyToTarget = true;
@@ -74,19 +76,35 @@ public partial class SpellTargeter : Node2D
         return _mouse.GetHoveredEnemy();
     }
 
-
+//add statuseffect in here?
     private void Cast(Enemy target)
     {
-        int damage = int.Parse(_data["damage"].ToString());
+        int damage;
 
-        GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
+        switch (_effectType)
+        {
+            case CardEffect.EffectType.EnemyDamage:
+                damage = int.Parse(_data["damage"].ToString());
+                GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
+                target.TakeDamage(damage);
+                _readyToTarget = false;
+            break;
+            case CardEffect.EffectType.StatusEffect:
+                PackedScene scene = GD.Load<PackedScene>("res://prefabs/statusEffect.tscn");  
 
+                StatusEffect statusEffect = scene.Instantiate() as StatusEffect;
+                statusEffect.Setup(_data, _element);
+        
+                GD.Print($"Casting {_cardID} on {target.Name} for {statusEffect}");
 
-        target.TakeDamage(damage);
-
-
-        _readyToTarget = false;
-
+                target.AddChild(statusEffect);
+                GD.Print($"Added status{statusEffect} effect to target{target}");
+                
+            break;
+            default:
+                GD.PushWarning("EFFECT TYPE NO WORK");
+            break;
+        }
         QueueFree();
     }
 

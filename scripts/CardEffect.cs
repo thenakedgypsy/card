@@ -1,12 +1,14 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 public partial class CardEffect : Node2D
 {
     public enum EffectType
     {
         EnemyDamage,
+        StatusEffect,
         Summon,
         SummonModify,
         CoreModify,
@@ -40,9 +42,9 @@ public partial class CardEffect : Node2D
             _Summon();
             QueueFree();
         }
-        if (type == EffectType.EnemyDamage)
+        if (type == EffectType.EnemyDamage || type == EffectType.StatusEffect)
         {
-            _EnemyDamage();
+            _AttackEnemy();
             QueueFree();
         }
     }
@@ -60,39 +62,39 @@ public partial class CardEffect : Node2D
            
     }
 
-private void _EnemyDamage()
-{
-    PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
-
-    if (scene == null)
+    private void _AttackEnemy()
     {
-        GD.Print("ERROR: SpellTargeter scene not found");
-        return;
+        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+
+        if (scene == null)
+        {
+            GD.Print("ERROR: SpellTargeter scene not found");
+            return;
+        }
+
+
+        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
+
+        if (targeter == null)
+        {
+            GD.Print("ERROR: Could not create SpellTargeter");
+            return;
+        }
+
+
+        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+
+        if (mouse == null)
+        {
+            GD.Print("ERROR: Mouse not found");
+            return;
+        }
+
+        mouse.AddChild(targeter);
+
+        //pass down 
+        targeter.Setup(element, effectData, cardID, type);
+
+        GD.Print("SpellTargeter created");
     }
-
-
-    SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
-
-    if (targeter == null)
-    {
-        GD.Print("ERROR: Could not create SpellTargeter");
-        return;
-    }
-
-
-    Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-
-    if (mouse == null)
-    {
-        GD.Print("ERROR: Mouse not found");
-        return;
-    }
-
-
-    mouse.AddChild(targeter);
-
-    targeter.Setup(element, effectData, cardID);
-
-    GD.Print("SpellTargeter created");
-}
 }
