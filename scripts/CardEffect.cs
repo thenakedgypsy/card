@@ -42,19 +42,9 @@ public partial class CardEffect : Node2D
             _Summon();
             QueueFree();
         }
-        if (type == EffectType.EnemyDamage)
+        if (type == EffectType.EnemyDamage || type == EffectType.StatusEffect)
         {
-            _EnemyDamage();
-            QueueFree();
-        }
-        if (type == EffectType.EnemyDamage)
-        {
-            _EnemyDamage();
-            QueueFree();
-        }
-        if (type == EffectType.StatusEffect)
-        {
-            _EnemyStatusEffect();
+            _AttackEnemy();
             QueueFree();
         }
     }
@@ -72,7 +62,7 @@ public partial class CardEffect : Node2D
            
     }
 
-    private void _EnemyDamage()
+    private void _AttackEnemy()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
 
@@ -106,26 +96,5 @@ public partial class CardEffect : Node2D
         targeter.Setup(element, effectData, cardID, type);
 
         GD.Print("SpellTargeter created");
-    }
-    private void _EnemyStatusEffect()
-    {
-        //make a new status effect instance and pass in everything it needs?
-
-        //load scene
-        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
-        
-        //
-        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
-        Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-
-        //do i need this as its all in _EnemyDamage already?
-        targeter.Setup(element, effectData, cardID, type);
-
-        //grabbing mouse + adding a child (the targeter) to the omuse
-        mouse.AddChild(targeter);
-        //create targeter
-
-        GD.Print("Applying status effect!");
-
     }
 }
