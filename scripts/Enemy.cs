@@ -409,10 +409,12 @@ public partial class Enemy : CharacterBody2D, IHealth
                         {
                             statusEffect.TurnsLeftActive--;
                             TakeDamage(statusEffect.Damage);
+                            GD.Print($"{statusEffect.Damage} damage. {statusEffect.TurnsLeftActive} turns left.");
+
                         }
                         else
                         {
-                            //remove status effect - somehow
+                           
                         }
                     
                         break;

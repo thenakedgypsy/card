@@ -35,12 +35,18 @@ public partial class StatusEffect : Node2D
     }
 
     //generic apply status 
+    //dont think we'll need this for burn at least - just does a damage per turn.
     private void _ApplyBurn(int damage, int numberOfTurns)
     {
         //safety first!
 
-        GD.Print($"{damage} damage for {numberOfTurns} turns");
 
+        
+    }
+
+    //Add reduce function in? Might leave for now but sometimes we may reduce by more than 1
+    private void _ReduceTurnsLeftActive()
+    {
         
     }
 
