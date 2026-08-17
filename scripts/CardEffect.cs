@@ -103,7 +103,7 @@ public partial class CardEffect : Node2D
         mouse.AddChild(targeter);
 
         //pass down 
-        targeter.Setup(element, effectData, cardID);
+        targeter.Setup(element, effectData, cardID, type);
 
         GD.Print("SpellTargeter created");
     }
@@ -119,7 +119,7 @@ public partial class CardEffect : Node2D
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
 
         //do i need this as its all in _EnemyDamage already?
-        targeter.Setup(element, effectData, cardID );
+        targeter.Setup(element, effectData, cardID, type);
 
         //grabbing mouse + adding a child (the targeter) to the omuse
         mouse.AddChild(targeter);

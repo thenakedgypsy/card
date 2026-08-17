@@ -145,7 +145,7 @@ public partial class TurnManager : Node
         //do first? Going off how poison works in slay the spire (start if enemy turn)
         foreach (var enemy in enemies)
         {
-            enemy.StatusEffectCheck();
+            enemy.TryTriggerStatusEffect();
         }
 
         // 1. Evaluate distances considering summons as blockers

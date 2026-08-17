@@ -1,0 +1,4 @@
+{
+  "name": "Water Turret",
+  "text": "Summon a water turret \n Damage: {damage}\n Health: {health}\n Range: {range}"
+}

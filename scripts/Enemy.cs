@@ -394,7 +394,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     //then apply damage
 
     //just add damage to self for now 
-    public void StatusEffectCheck()
+    public void TryTriggerStatusEffect()
     {
         Node[] enemyChildren = GetChildren().ToArray();
 
@@ -402,41 +402,9 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             if(child is StatusEffect statusEffect)
             {
-                switch (statusEffect.TypeName)
-                {
-                    case StatusEffect.Type.Burn:
-                        if (statusEffect.TurnsLeftActive > 0)
-                        {
-                            //could seperate this out into a seperate Apply StatusEffect function
-                            //as I've named this function Check - and it also applies the effect mechanic 
-                            statusEffect.TurnsLeftActive--;
-                            TakeDamage(statusEffect.Damage);
-                            GD.Print($"{statusEffect.Damage} damage. {statusEffect.TurnsLeftActive} turns left.");
-                        }
-                        else
-                        {
-                           statusEffect.QueueFree();
-                        }
-                    
-                        break;
-                    case StatusEffect.Type.Slow:
-                    
-                        break;
-                    case StatusEffect.Type.Confuse:
-
-                        break;
-                    case StatusEffect.Type.Haste:
-
-                        break;
-                    case StatusEffect.Type.Stun:
-
-                        break;
-                    case StatusEffect.Type.Disarm:
-
-                        break;
-                }
+                GD.Print($"status type name: {statusEffect.TypeName} Turns left{statusEffect.TurnsLeftActive}");
+                statusEffect.ApplyStatusEffect();
             }
         }
     }
-
 }

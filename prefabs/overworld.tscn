@@ -13,9 +13,8 @@
 [node name="Overworld" type="Node2D" groups=["Overworld"]]
 script = ExtResource("1_c53fq")
 
-[node name="OverworldGenerator" parent="." instance=ExtResource("2_7jqe3")]
-position = Vector2(66, 498)
-NodePrefab = null
+[node name="OverworldGenerator2" parent="." instance=ExtResource("2_7jqe3")]
+position = Vector2(0, 555)
 
 [node name="Deck" parent="." instance=ExtResource("2_dx411")]
 

@@ -6,7 +6,8 @@
   {
     "effectType": "StatusEffect",
     "statusType": "Burn",
-    "damage" : 2
-   
+    "damage" : 2,
+    "turnsActive": 2
+
   }
 }
