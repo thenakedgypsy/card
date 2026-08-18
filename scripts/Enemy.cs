@@ -154,13 +154,6 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     // --- STEP 2: MOVEMENT ANIMATION ---
 
-    private void SetBlockedVisualState(bool blocked)
-    {
-        if (_sprite == null)
-            return;
-
-        _sprite.SelfModulate = blocked ? Colors.Red : Colors.White;
-    }
 
     public async Task AnimateMoveAsync(float delay = 0f)
     {
@@ -373,24 +366,52 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
     }
 
+// Replace SetBlockedVisualState with UpdateVisualState logic
+    private void SetBlockedVisualState(bool blocked)
+    {
+        WasPathBlocked = blocked;
+        UpdateVisualState();
+    }
+
+    public void SetHovered(bool hovered)
+    {
+        _isHovered = hovered;
+        UpdateVisualState();
+    }
+
+    public void UpdateVisualState()
+    {
+        if (_sprite == null || !GodotObject.IsInstanceValid(_sprite))
+            return;
+
+        if (_isHovered)
+        {
+            _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.Yellow;
+        }
+        else
+        {
+            _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.White;
+        }
+    }
+
     public void MouseOver()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         if (mouse != null) mouse.SetHoveredEnemy(this);
-
-        _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.Yellow;
     }
 
     public void MouseOff()
     {
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
-        if (mouse != null) mouse.SetHoveredEnemy(null);
-
-        _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.White;
+        if (mouse != null && mouse.GetHoveredEnemy() == this)
+        {
+            mouse.SetHoveredEnemy(null);
+        }
     }
 
-    private void _on_area_2d_mouse_entered() => MouseOver();
-    private void _on_area_2d_mouse_exited() => MouseOff();
+    // Disable raw Area2D signal side-effects (Mouse.cs handles hover centrally)
+    private void _on_area_2d_mouse_entered() { }
+    private void _on_area_2d_mouse_exited() { }
 
     public bool IsHovered() => _isHovered;
 
