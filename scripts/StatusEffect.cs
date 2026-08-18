@@ -38,7 +38,7 @@ public partial class StatusEffect : Node2D
         {
             case StatusEffect.Type.Burn:
 
-                if (TurnsLeftActive > 0)
+                if (TurnsLeftActive > 1 )
                 {
                     GD.Print("In TriggerStatusEffect then if TurnsLeftActive");
                     //could seperate this out into a seperate Apply StatusEffect function
@@ -47,8 +47,10 @@ public partial class StatusEffect : Node2D
                     TriggerBurn();
                     TurnsLeftActive--;
                 }
-                else
+                else if(TurnsLeftActive == 1)
                 {
+                    TriggerBurn();
+                    GD.Print($"Removing Burn!");
                     QueueFree();
                 }
                 break;
