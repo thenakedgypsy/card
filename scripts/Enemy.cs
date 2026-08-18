@@ -406,8 +406,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             if(child is StatusEffect statusEffect)
             {
-                GD.Print($"status type name: {statusEffect.TypeName} Turns left{statusEffect.TurnsLeftActive}");
-                statusEffect.ApplyStatusEffect();
+                statusEffect.TriggerStatusEffect();
             }
         }
     }
