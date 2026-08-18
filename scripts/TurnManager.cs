@@ -156,6 +156,7 @@ public partial class TurnManager : Node
 
             if (_cardManager != null)
             {
+                GD.Print($"Resetting card manager");
                 _cardManager.Reset();
             }
 

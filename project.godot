@@ -40,6 +40,7 @@ ActiveDef=""
 Deck=""
 CardPool=""
 CardPileDisplay=""
+CardManager=""
 
 [input]
 

@@ -60,6 +60,15 @@ public partial class CardManager : Node
             ActiveDiscard.Clear();
         }
 
+        foreach (Node child in ActiveHand.GetChildren())
+        {
+            if (child is Card card)
+            {
+                _deck.AddCard(card.CardID);
+                card.QueueFree();
+            }
+        }
+
         if (_deck != null)
         {
             _deck.Shuffle();
@@ -96,7 +105,7 @@ public partial class CardManager : Node
         
         // 3. Create the Godot node
         Card newCard = CardPrefab.Instantiate<Card>();
-        AddChild(newCard); 
+        ActiveHand.AddChild(newCard); 
         
         // 4. Hydrate the ID and data
         newCard.Generate(drawnId);
