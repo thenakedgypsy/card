@@ -177,7 +177,7 @@ public partial class TurnManager : Node
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
             enemy.TryTriggerStatusEffect();
-               
+            
 
             if (_playercore != null)
             {

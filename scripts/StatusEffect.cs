@@ -33,47 +33,39 @@ public partial class StatusEffect : Node2D
 
     public void TriggerStatusEffect()
     {
-
-        switch (TypeName)
+        if (TurnsLeftActive >= 1 )
         {
-            case StatusEffect.Type.Burn:
-
-                if (TurnsLeftActive > 1 )
-                {
-                    GD.Print("In TriggerStatusEffect then if TurnsLeftActive");
-                    //could seperate this out into a seperate Apply StatusEffect function
-                    //as I've named this function Check - and it also applies the effect mechanic 
-                    GD.Print($"status type name: {TypeName} Turns left{TurnsLeftActive}");
+            TurnsLeftActive--;
+            switch (TypeName)
+            {
+                case StatusEffect.Type.Burn:
                     TriggerBurn();
-                    TurnsLeftActive--;
-                }
-                else if(TurnsLeftActive == 1)
-                {
-                    TriggerBurn();
-                    GD.Print($"Removing Burn!");
-                    QueueFree();
-                }
-                break;
-            case StatusEffect.Type.Slow:
-            
-                break;
-            case StatusEffect.Type.Confuse:
-
-                break;
-            case StatusEffect.Type.Haste:
-
-                break;
-            case StatusEffect.Type.Stun:
-
-                break;
-            case StatusEffect.Type.Disarm:
-
-                break;
+                    break;
+                case StatusEffect.Type.Slow:
+                    break;
+                case StatusEffect.Type.Confuse:
+                    break;
+                case StatusEffect.Type.Haste:
+                    break;
+                case StatusEffect.Type.Stun:
+                    break;
+                case StatusEffect.Type.Disarm:
+                    break;
+            }
+        }
+        else if(TurnsLeftActive <= 1)
+        {
+            TurnsLeftActive--;
+            GD.Print($"Removing Burn! {TurnsLeftActive}");
+            QueueFree();
+        }
+        else
+        {
+            //im tired - just added an else incase its 0 - which it shouldnt be
+             QueueFree();
         }
     }
 
-    //generic apply status 
-    //dont think we'll need this for burn at least - just does a damage per turn.
     public void TriggerBurn()
     {
         Node2D parent = GetParent<Node2D>();
