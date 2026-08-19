@@ -31,51 +31,37 @@ public partial class StatusEffect : Node2D
         TypeName = parsedStatusType;
     }
 
-    public void ApplyStatusEffect()
+    public void TriggerStatusEffect()
     {
-
-        GD.Print($"Apply Status!!!! before switch");
-        switch (TypeName)
+        if (TurnsLeftActive > 0 )
         {
-            case StatusEffect.Type.Burn:
-                GD.Print($"In status. Turns active: {TurnsLeftActive}");
-
-                if (TurnsLeftActive > 0)
-                {
-                    GD.Print("In TurnsLeftActive");
-                    //could seperate this out into a seperate Apply StatusEffect function
-                    //as I've named this function Check - and it also applies the effect mechanic 
-                    ApplyBurn();
-                }
-                else
-                {
-                    QueueFree();
-                }
-                break;
-            case StatusEffect.Type.Slow:
-            
-                break;
-            case StatusEffect.Type.Confuse:
-
-                break;
-            case StatusEffect.Type.Haste:
-
-                break;
-            case StatusEffect.Type.Stun:
-
-                break;
-            case StatusEffect.Type.Disarm:
-
-                break;
+            TurnsLeftActive--;
+            switch (TypeName)
+            {
+                case StatusEffect.Type.Burn:
+                    TriggerBurn();
+                    break;
+                case StatusEffect.Type.Slow:
+                    break;
+                case StatusEffect.Type.Confuse:
+                    break;
+                case StatusEffect.Type.Haste:
+                    break;
+                case StatusEffect.Type.Stun:
+                    break;
+                case StatusEffect.Type.Disarm:
+                    break;
+            }
+        }
+        else
+        {
+            QueueFree(); 
         }
     }
 
-    //generic apply status 
-    //dont think we'll need this for burn at least - just does a damage per turn.
-    public void ApplyBurn()
+    public void TriggerBurn()
     {
         Node2D parent = GetParent<Node2D>();
-        TurnsLeftActive--;
         if (parent.HasMethod("TakeDamage"))
         {
             parent.Call("TakeDamage", Damage);
