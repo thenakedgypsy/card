@@ -12,10 +12,11 @@ public partial class FloatingDamageNumber : Node2D
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 
-	public void Appear(int number, Card.Element element = Card.Element.Neutral) //placeholder ele
+	public void Appear(int number, Card.Element element) //placeholder ele
 	{
 		label.Text = $"[center]{number}";
 		Animate();
+        GD.Print($"ELEMENT IS ${element} IN FLOATY");
 	}
 
 	public void Animate()

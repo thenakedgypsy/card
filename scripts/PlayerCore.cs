@@ -38,7 +38,7 @@ public partial class PlayerCore : Node2D, IHealth
 		PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
 		FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
         AddChild(fdn);
-        fdn.Appear((int)value);
+        fdn.Appear((int)value, Card.Element.Fire);
 		FlashRed();
 	
 	    if (CurrentHealth <= 0)

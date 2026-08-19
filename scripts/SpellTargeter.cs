@@ -86,7 +86,7 @@ public partial class SpellTargeter : Node2D
             case CardEffect.EffectType.EnemyDamage:
                 damage = int.Parse(_data["damage"].ToString());
                 GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
-                target.TakeDamage(damage);
+                target.TakeDamage(damage, Card.Element.Fire);
                 _readyToTarget = false;
             break;
             case CardEffect.EffectType.StatusEffect:

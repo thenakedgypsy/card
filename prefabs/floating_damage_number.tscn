@@ -1,6 +1,8 @@
-[gd_scene load_steps=2 format=3 uid="uid://dqmvni6uefp3u"]
+[gd_scene load_steps=3 format=3 uid="uid://dqmvni6uefp3u"]
 
 [ext_resource type="Script" path="res://scripts/FloatingDamageNumber.cs" id="1_ctp2a"]
+
+[sub_resource type="RichTextEffect" id="RichTextEffect_cwj4j"]
 
 [node name="FloatingDamageNumber" type="Node2D"]
 script = ExtResource("1_ctp2a")
@@ -17,3 +19,4 @@ text = "[center]99"
 scroll_active = false
 autowrap_mode = 0
 shortcut_keys_enabled = false
+custom_effects = [SubResource("RichTextEffect_cwj4j")]

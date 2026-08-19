@@ -74,11 +74,11 @@ public partial class StatusEffect : Node2D
     //dont think we'll need this for burn at least - just does a damage per turn.
     public void ApplyBurn()
     {
-        Node2D parent = GetParent<Node2D>();
+        Enemy parent = GetParent<Node2D>() as Enemy;
         TurnsLeftActive--;
         if (parent.HasMethod("TakeDamage"))
         {
-            parent.Call("TakeDamage", Damage);
+            parent.TakeDamage(Damage, Card.Element.Fire);
         }
      
         GD.Print($"ApplyBurn {Damage} damage. {TurnsLeftActive} turns left.");
