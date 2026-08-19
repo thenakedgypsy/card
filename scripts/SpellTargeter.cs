@@ -16,8 +16,8 @@ public partial class SpellTargeter : Node2D
     private TurnManager _turnManager;
 
     private int _splashTiles = 0;
-    private List<Enemy> _highlightedEnemies = new List<Enemy>();
-    private Enemy _lastHoveredTarget; // Caches target to prevent calculating highlights every frame
+    private HashSet<Enemy> _highlightedEnemies = new HashSet<Enemy>();
+    private Enemy _lastHoveredTarget;
 
     public override void _Ready()
     {
@@ -38,7 +38,6 @@ public partial class SpellTargeter : Node2D
 
     public override void _ExitTree()
     {
-        // Ensures highlights clean up safely when the spell is cast or canceled
         ClearHighlights();
     }
 
@@ -46,13 +45,13 @@ public partial class SpellTargeter : Node2D
     {
         Enemy primaryTarget = CheckTarget();
         
-        // Performance optimization: Only recalculate AoE highlights if our primary target has changed
-        if (primaryTarget == _lastHoveredTarget) return;
+        // Only skip recalculation if primary target hasn't changed and remains valid
+        if (primaryTarget == _lastHoveredTarget && IsInstanceValid(_lastHoveredTarget)) return;
         _lastHoveredTarget = primaryTarget;
 
-        List<Enemy> newHighlights = GetAoETargets(primaryTarget);
+        HashSet<Enemy> newHighlights = GetAoETargets(primaryTarget);
 
-        // Turn OFF highlights for enemies that are no longer targeted
+        // Turn OFF highlights for enemies leaving the AoE radius
         foreach (var enemy in _highlightedEnemies)
         {
             if (!newHighlights.Contains(enemy) && IsInstanceValid(enemy))
@@ -61,10 +60,10 @@ public partial class SpellTargeter : Node2D
             }
         }
 
-        // Turn ON highlights for the new targets
+        // Always force ON for all current AoE targets to prevent mouse-hover overrides
         foreach (var enemy in newHighlights)
         {
-            if (!_highlightedEnemies.Contains(enemy) && IsInstanceValid(enemy))
+            if (IsInstanceValid(enemy))
             {
                 enemy.SetHovered(true);
             }
@@ -87,13 +86,13 @@ public partial class SpellTargeter : Node2D
 
     private void CheckInput()
     {
-        if(Input.IsActionJustPressed("lClick"))
+        if (Input.IsActionJustPressed("lClick"))
         {
             Enemy target = CheckTarget();
     
-            if(target != null)
+            if (target != null)
             {
-                List<Enemy> targets = GetAoETargets(target);
+                HashSet<Enemy> targets = GetAoETargets(target);
                 Cast(targets);
             }
             else
@@ -119,7 +118,6 @@ public partial class SpellTargeter : Node2D
         _element = ele;
         _effectType = type;
 
-        // Extract splash radius
         if (_data.TryGetValue("splashTiles", out Variant splash))
         {
             _splashTiles = int.Parse(_data["splashTiles"].ToString());
@@ -134,30 +132,36 @@ public partial class SpellTargeter : Node2D
         return _mouse.GetHoveredEnemy();
     }
 
-    private List<Enemy> GetAoETargets(Enemy primaryTarget)
+    private HashSet<Enemy> GetAoETargets(Enemy primaryTarget)
     {
-        List<Enemy> targets = new List<Enemy>();
-        if (primaryTarget == null) return targets;
+        HashSet<Enemy> targets = new HashSet<Enemy>();
+        if (!IsInstanceValid(primaryTarget)) return targets;
 
-        // Always target the primary enemy
         targets.Add(primaryTarget);
 
-        // Add splash targets if radius > 0
         if (_splashTiles > 0 && _turnManager != null)
         {
-            Vector2I primaryCell = _turnManager.WorldToCell(primaryTarget.GlobalPosition);
+            // Use logical grid cell instead of raw world position to prevent animation desync
+            Vector2I primaryCell = primaryTarget.CurrentCell;
             
-            // Fetches all enemy nodes without relying strictly on Godot Groups
-            List<Enemy> allEnemies = GetAllEnemies(GetTree().Root);
+            var allEnemies = GetTree().GetNodesInGroup("Enemy");
 
-            foreach (Enemy enemy in allEnemies)
+            foreach (Node node in allEnemies)
             {
-                if (enemy != primaryTarget && enemy.CurrentHealth > 0)
+                if (node is Enemy enemy && enemy != primaryTarget && enemy.CurrentHealth > 0)
                 {
-                    Vector2I enemyCell = _turnManager.WorldToCell(enemy.GlobalPosition);
+                    Vector2I enemyCell = enemy.CurrentCell;
                     
-                    // Manhattan distance calculates our horizontal/vertical tile radius
-                    int dist = Mathf.Abs(primaryCell.X - enemyCell.X) + Mathf.Abs(primaryCell.Y - enemyCell.Y);
+                    int dx = primaryCell.X - enemyCell.X;
+                    int dy = primaryCell.Y - enemyCell.Y;
+
+                    // Screen-Space Isometric Diamond Distance
+                    int screenX = Mathf.Abs(dx - dy);
+                    int screenY = Mathf.Abs(dx + dy);
+                    int dist = (screenX + screenY) / 2;
+
+                    // NOTE: If you want an 8-directional box AoE instead of a diamond, replace 'dist' with:
+                    // int dist = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
                     
                     if (dist <= _splashTiles)
                     {
@@ -170,38 +174,20 @@ public partial class SpellTargeter : Node2D
         return targets;
     }
 
-    // Helper to recursively find enemies in the scene without needing an explicit Group assignment
-    private List<Enemy> GetAllEnemies(Node node)
+    private void Cast(HashSet<Enemy> targets)
     {
-        List<Enemy> enemies = new List<Enemy>();
-        foreach (Node child in node.GetChildren())
-        {
-            if (child is Enemy enemy)
-            {
-                enemies.Add(enemy);
-            }
-            enemies.AddRange(GetAllEnemies(child)); // Recurse
-        }
-        return enemies;
-    }
-
-    private void Cast(List<Enemy> targets)
-    {
-        // Parse damage once to avoid repeating it in the loop
         int damage = 0;
         if (_effectType == CardEffect.EffectType.EnemyDamage && _data.ContainsKey("damage"))
         {
             damage = int.Parse(_data["damage"].ToString());
         }
 
-        // Cache the status prefab if needed
         PackedScene statusScene = null;
         if (_effectType == CardEffect.EffectType.StatusEffect)
         {
             statusScene = GD.Load<PackedScene>("res://prefabs/statusEffect.tscn");
         }
 
-        // Apply effect to all validated targets
         foreach (Enemy target in targets)
         {
             if (!IsInstanceValid(target)) continue;
