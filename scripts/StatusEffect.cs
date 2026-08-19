@@ -33,7 +33,7 @@ public partial class StatusEffect : Node2D
 
     public void TriggerStatusEffect()
     {
-        if (TurnsLeftActive >= 1 )
+        if (TurnsLeftActive > 1 )
         {
             TurnsLeftActive--;
             switch (TypeName)
@@ -53,16 +53,11 @@ public partial class StatusEffect : Node2D
                     break;
             }
         }
-        else if(TurnsLeftActive <= 1)
+        else
         {
             TurnsLeftActive--;
             GD.Print($"Removing Burn! {TurnsLeftActive}");
             QueueFree();
-        }
-        else
-        {
-            //im tired - just added an else incase its 0 - which it shouldnt be
-             QueueFree();
         }
     }
 
