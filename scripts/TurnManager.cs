@@ -177,6 +177,9 @@ public partial class TurnManager : Node
         
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
+            enemy.TryTriggerStatusEffect();
+            
+
             if (_playercore != null)
             {
                 await enemy.ExecuteAttackPhaseAsync(_playercore);
@@ -200,11 +203,9 @@ public partial class TurnManager : Node
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
     {
+
         //do first? Going off how poison works in slay the spire (start if enemy turn)
-        foreach (var enemy in enemies)
-        {
-            enemy.TryTriggerStatusEffect();
-        }
+    
 
         // 1. Evaluate distances considering summons as blockers
         bool allFullyBlocked = true;
