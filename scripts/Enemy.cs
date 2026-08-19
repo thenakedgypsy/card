@@ -33,20 +33,25 @@ public partial class Enemy : CharacterBody2D, IHealth
     private Node2D _target;
     private TurnManager _turnManager;
     private Sprite2D _sprite;
-    private bool _isHovered;
+
+    // Split hover states to avoid race conditions between Mouse.cs and SpellTargeter.cs
+    private bool _isMouseHovered = false;
+    private bool _isAoEHovered = false;
 
     private List<Vector2I> _plannedPath = new List<Vector2I>();
 
+    // Helper property to access logical grid position safely regardless of animations
+    public Vector2I CurrentCell => _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
+
     public override void _Ready()
     {
+        AddToGroup("Enemy");
+        
         _sprite = GetNode<Sprite2D>("Sprite2D");
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
-
-
         CurrentHealth = Health;
     }
-    
 
     public void ResetTurnState(bool resetMovement = true)
     {
@@ -75,7 +80,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
         Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
 
-        // 1. Unmark own tile as blocked so we don't trap ourselves or others doing calculations
         _turnManager.FreeCell(myCell);
 
         Vector2I targetCell = playerCell;
@@ -91,12 +95,10 @@ public partial class Enemy : CharacterBody2D, IHealth
             }
         }
 
-        // 2. See if a path is possible without being blocked (Summons are solid by default here)
         List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
         
         if (path == null || path.Count == 0)
         {
-            // Path IS blocked. Find shortest route excluding summons.
             WasPathBlocked = true;
             SetBlockedVisualState(true);
             path = _turnManager.FindPathIgnoringSummons(myCell, targetCell);
@@ -108,27 +110,22 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         if (path == null || path.Count == 0)
         {
-            // Still no path (completely boxed in by terrain/enemies)
-            _turnManager.OccupyCell(myCell); // Re-occupy current spot
+            _turnManager.OccupyCell(myCell);
             _reservedCell = myCell;
             return;
         }
 
-        // 3. Trace it as far as possible
         int stepsToTake = 0;
         for (int i = 0; i < path.Count && stepsToTake < RemainingMovement; i++)
         {
             Vector2I checkCell = path[i];
 
-            // Stop if tile is filled by another enemy
             if (_turnManager.IsEnemyOccupied(checkCell))
                 break;
 
-            // If we are on the blocked fallback path, stop once we hit a summon (making us adjacent)
             if (WasPathBlocked && _turnManager.IsCellOccupiedBySummon(checkCell))
                 break;
 
-            // Never walk directly onto the primary target's cell
             if (checkCell == targetCell)
                 break;
 
@@ -147,13 +144,11 @@ public partial class Enemy : CharacterBody2D, IHealth
             RemainingMovement -= stepsToTake;
         }
 
-        // 4. Mark this tile as filled for subsequent enemies
         _turnManager.OccupyCell(destinationCell);
         _reservedCell = destinationCell;
     }
 
     // --- STEP 2: MOVEMENT ANIMATION ---
-
 
     public async Task AnimateMoveAsync(float delay = 0f)
     {
@@ -173,7 +168,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             await MoveToTileAsync(targetWorldPos);
         }
 
-        // Only clear planned path, leave reserved cell intact for subsequent phases
         _plannedPath.Clear();
     }
 
@@ -227,7 +221,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             await AttackAsync(attackTarget);
             HasAttackedThisTurn = true;
-            RemainingMovement = 0; // Usually attacking ends movement completely
+            RemainingMovement = 0;
         }
     }
 
@@ -244,7 +238,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             return null;
         }
 
-        // Attack if path was blocked and we are in range of the blocking summon
         if (WasPathBlocked)
         {
             Node2D blockingSummon = _turnManager.GetFirstBlockingSummon(myCell, playerCell);
@@ -252,7 +245,6 @@ public partial class Enemy : CharacterBody2D, IHealth
                 return blockingSummon;
         }
 
-        // Attack if near the player core
         if (IsInRange(playerCore))
             return playerCore;
 
@@ -278,7 +270,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(target))
             return int.MaxValue;
     
-        Vector2I myCell = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
+        Vector2I myCell = CurrentCell;
         Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
     
         return _turnManager.GetPathLengthToTarget(myCell, targetCell, ignoreSummons);
@@ -289,7 +281,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(target))
             return false;
 
-        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
+        Vector2I myCell = CurrentCell;
         Vector2I targetCell = _turnManager.WorldToCell(target.GlobalPosition);
 
         return _turnManager.TileDistance(myCell, targetCell) <= AttackRange;
@@ -322,20 +314,18 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public async Task FlashYellowAsync()
     {
-        Color original = _sprite.SelfModulate;
         Tween tween = CreateTween();
         tween.TweenProperty(_sprite, "self_modulate", Colors.Orange, 0.25f);
-        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
+        UpdateVisualState();
     }
 
     public async void FlashRed()
     {
-        Color original = _sprite.SelfModulate;
         Tween tween = CreateTween();
         tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.25f);
-        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
         await ToSignal(tween, Tween.SignalName.Finished);
+        UpdateVisualState();
     }
 
     public float GetMaxHealth() => Health;
@@ -356,7 +346,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             GD.Print($"Enemy {Name} IS DESTROYED");
 
-            Vector2I cellToFree = _reservedCell ?? _turnManager.WorldToCell(GlobalPosition);
+            Vector2I cellToFree = CurrentCell;
             _turnManager.FreeCell(cellToFree);
 
             SetProcess(false);
@@ -366,16 +356,23 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
     }
 
-// Replace SetBlockedVisualState with UpdateVisualState logic
     private void SetBlockedVisualState(bool blocked)
     {
         WasPathBlocked = blocked;
         UpdateVisualState();
     }
 
+    // Called by SpellTargeter for AoE targeting
     public void SetHovered(bool hovered)
     {
-        _isHovered = hovered;
+        _isAoEHovered = hovered;
+        UpdateVisualState();
+    }
+
+    // Called by Mouse.cs for direct mouse hover
+    public void SetMouseHovered(bool hovered)
+    {
+        _isMouseHovered = hovered;
         UpdateVisualState();
     }
 
@@ -384,7 +381,9 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (_sprite == null || !GodotObject.IsInstanceValid(_sprite))
             return;
 
-        if (_isHovered)
+        bool isHighlighted = _isMouseHovered || _isAoEHovered;
+
+        if (isHighlighted)
         {
             _sprite.SelfModulate = WasPathBlocked ? Colors.Red : Colors.Yellow;
         }
@@ -396,12 +395,14 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public void MouseOver()
     {
+        SetMouseHovered(true);
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         if (mouse != null) mouse.SetHoveredEnemy(this);
     }
 
     public void MouseOff()
     {
+        SetMouseHovered(false);
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         if (mouse != null && mouse.GetHoveredEnemy() == this)
         {
@@ -409,23 +410,18 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
     }
 
-    // Disable raw Area2D signal side-effects (Mouse.cs handles hover centrally)
     private void _on_area_2d_mouse_entered() { }
     private void _on_area_2d_mouse_exited() { }
 
-    public bool IsHovered() => _isHovered;
+    public bool IsHovered() => _isMouseHovered || _isAoEHovered;
 
-    //function check self for statuseffect child it is
-    //then apply damage
-
-    //just add damage to self for now 
     public void TryTriggerStatusEffect()
     {
         Node[] enemyChildren = GetChildren().ToArray();
 
         foreach (Node child in enemyChildren)
         {
-            if(child is StatusEffect statusEffect)
+            if (child is StatusEffect statusEffect)
             {
                 statusEffect.TriggerStatusEffect();
             }

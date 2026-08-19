@@ -7,7 +7,8 @@
     "effectType": "StatusEffect",
     "statusType": "Burn",
     "damage" : 2,
-    "turnsActive": 3
+    "turnsActive": 3,
+    "splashTiles" : 0
 
   }
 }
