@@ -4,6 +4,9 @@ using System;
 public partial class FloatingDamageNumber : Node2D
 {
 	public RichTextLabel label;
+
+    private Card.Element damageElement;
+
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -14,7 +17,7 @@ public partial class FloatingDamageNumber : Node2D
 
 	public void Appear(int number, Card.Element element) //placeholder ele
 	{
-		label.Text = $"[center]{number}";
+		label.Text = $"[center][color=#{_getColour().ToHtml()}]{number}";
 		Animate();
         GD.Print($"ELEMENT IS ${element} IN FLOATY");
 	}
@@ -39,5 +42,24 @@ public partial class FloatingDamageNumber : Node2D
 
         // 3. Free the node automatically when the animations finish
         tween.Chain().TweenCallback(Callable.From(QueueFree));
+    }
+
+    public Color _getColour()
+    {
+        switch (damageElement)
+        {
+            case Card.Element.Earth:
+                return Colors.Brown;
+            case Card.Element.Wind:
+                return Colors.White;
+            case Card.Element.Fire:
+                return Colors.Red;
+            case Card.Element.Water:
+                return Colors.Blue;
+            case Card.Element.Neutral:
+                return Colors.Gray;
+            default:
+            return Colors.WhiteSmoke;
+        }       
     }
 }
