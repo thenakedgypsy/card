@@ -7,19 +7,25 @@ public partial class FloatingDamageNumber : Node2D
 
     private Card.Element damageElement;
 
+    private int damageNumber;
+
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
 	 	label = GetNode<RichTextLabel>("RichTextLabel");
+        
+        GD.Print($"{damageElement} Card Element");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
 
 	public void Appear(int number, Card.Element element) //placeholder ele
 	{
-		label.Text = $"[center][color=#{_getColour().ToHtml()}]{number} [img=32x32]res://assets/cards/art/fireball.png[/img]";
+        damageNumber = number;
+        damageElement = element;
+		label.Text = _getTextString();
 		Animate();
-        GD.Print($"ELEMENT IS ${element} IN FLOATY");
+        GD.Print($"{_getTextString()}");
 	}
 
 	public void Animate()
@@ -44,26 +50,23 @@ public partial class FloatingDamageNumber : Node2D
         tween.Chain().TweenCallback(Callable.From(QueueFree));
     }
 
-    public Color _getColour()
+    public string _getTextString()
     {
         switch (damageElement)
         {
             case Card.Element.Earth:
-                return Colors.Brown;
+                return $"[center][color=#{Colors.Brown.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/brown.png[/img]";
             case Card.Element.Wind:
-                return Colors.White;
+                return $"[center][color=#{Colors.White.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/pale.png[/img]";
             case Card.Element.Fire:
-                return Colors.Red;
+                return $"[center][color=#{Colors.Orange.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/orange.png[/img]";
             case Card.Element.Water:
-                return Colors.Blue;
+                return $"[center][color=#{Colors.Blue.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/blue.png[/img]";
             case Card.Element.Neutral:
-                return Colors.Gray;
+                //will need a neutral colour/image
+                return $"[center][color=#{Colors.Gray.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/pale.png[/img]";
             default:
-            return Colors.WhiteSmoke;
+            return $"[center][color=#{Colors.Gray.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/pale.png[/img]";
         }       
     }
-
-    //could have either get image function for damage icon
-    //or get damage string - which creates the whole string needed the output
-    //i.e. Colour + image + damage
 }

@@ -136,7 +136,7 @@ public partial class Summon : Node2D, IHealth
 
 		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
 		if (enemy.HasMethod("TakeDamage"))
-			enemy.TakeDamage(AttackDamage, Card.Element.Fire);
+			enemy.TakeDamage(AttackDamage, Element);
 		FlashRed();
 		DrawLineBetween(enemy.GlobalPosition, 5f);
 	}
