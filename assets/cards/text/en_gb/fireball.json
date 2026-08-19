@@ -1,4 +1,4 @@
 {
   "name": "Fireball",
-  "text": "Deal {damage} damage with AOE {splashtiles}"
+  "text": "Deal {damage} damage with AOE {splashTiles}"
 }
