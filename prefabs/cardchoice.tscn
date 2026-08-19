@@ -15,4 +15,5 @@ offset_left = -958.0
 offset_top = -536.0
 offset_right = 963.0
 offset_bottom = 544.0
+mouse_filter = 2
 texture = ExtResource("3_0vhcj")

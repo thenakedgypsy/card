@@ -21,6 +21,7 @@ z_index = -1
 z_as_relative = false
 offset_right = 1921.0
 offset_bottom = 1080.0
+mouse_filter = 2
 texture = ExtResource("1_geqo8")
 
 [node name="Mouse" parent="." instance=ExtResource("3_171fx")]
