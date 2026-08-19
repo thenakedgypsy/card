@@ -61,7 +61,7 @@ public partial class StatusEffect : Node2D
 
     public void TriggerBurn()
     {
-        Node2D parent = GetParent<Node2D>();
+        Enemy parent = GetParent<Node2D>() as Enemy;
         if (parent.HasMethod("TakeDamage"))
         {
             parent.TakeDamage(Damage, Card.Element.Fire);
