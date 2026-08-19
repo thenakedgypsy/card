@@ -37,12 +37,12 @@ public partial class FloatingDamageNumber : Node2D
         tween.SetParallel(true);
 
         // Move upward by 50 pixels over 0.8 seconds
-        tween.TweenProperty(this, "position", Position + new Vector2(0, -50), 0.8f)
+        tween.TweenProperty(this, "position", Position + new Vector2(0, -50), 1.5f)
              .SetTrans(Tween.TransitionType.Quad)
              .SetEase(Tween.EaseType.In);
 
         // Fade out alpha over 0.8 seconds
-        tween.TweenProperty(this, "modulate:a", 0.0f, 0.8f)
+        tween.TweenProperty(this, "modulate:a", 0.0f, 1.5f)
              .SetTrans(Tween.TransitionType.Quad)
              .SetEase(Tween.EaseType.Out);
 
