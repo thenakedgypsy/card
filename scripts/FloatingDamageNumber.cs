@@ -17,7 +17,7 @@ public partial class FloatingDamageNumber : Node2D
 
 	public void Appear(int number, Card.Element element) //placeholder ele
 	{
-		label.Text = $"[center][color=#{_getColour().ToHtml()}]{number}";
+		label.Text = $"[center][color=#{_getColour().ToHtml()}]{number} [img=32x32]res://assets/cards/art/fireball.png[/img]";
 		Animate();
         GD.Print($"ELEMENT IS ${element} IN FLOATY");
 	}
@@ -62,4 +62,8 @@ public partial class FloatingDamageNumber : Node2D
             return Colors.WhiteSmoke;
         }       
     }
+
+    //could have either get image function for damage icon
+    //or get damage string - which creates the whole string needed the output
+    //i.e. Colour + image + damage
 }
