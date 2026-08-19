@@ -42,6 +42,7 @@ public partial class StatusEffect : Node2D
                     TriggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
+                //not sure what to do with slow - same as stun for now.
                     break;
                 case StatusEffect.Type.Confuse:
                     break;

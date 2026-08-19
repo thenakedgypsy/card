@@ -1,0 +1,12 @@
+{
+  "type": "Spell",
+  "cost": 1,
+  "element": "Earth",
+  "effectData": 
+  {
+    "effectType": "StatusEffect",
+    "statusType": "Stun",
+    "damage" : 1,
+    "turnsActive": 1
+  }
+}
