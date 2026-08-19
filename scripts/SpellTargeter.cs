@@ -112,7 +112,7 @@ public partial class SpellTargeter : Node2D
 
         _sprite.Texture = texture;
         _sprite.SelfModulate = new Color(1f, 1f, 1f, 0.5f);
-
+        GD.Print(_data);
         _data = data;
         _cardID = cardID;
         _element = ele;
@@ -204,11 +204,7 @@ public partial class SpellTargeter : Node2D
                     {
                         StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
                         statusEffect.Setup(_data, _element);
-                
-                        GD.Print($"Casting {_cardID} on {target.Name} for {statusEffect}");
-
                         target.AddChild(statusEffect);
-                        GD.Print($"Added status{statusEffect} effect to target{target}");
                     }
                     break;
                     

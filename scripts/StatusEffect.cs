@@ -26,7 +26,6 @@ public partial class StatusEffect : Node2D
         Damage = int.Parse(data["damage"].ToString());
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
-        StatusEffect.Type TypeName;
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
     }
@@ -49,6 +48,9 @@ public partial class StatusEffect : Node2D
                 case StatusEffect.Type.Haste:
                     break;
                 case StatusEffect.Type.Stun:
+                        GD.Print($"trigger stun!!!! ");
+
+                    _triggerStun();
                     break;
                 case StatusEffect.Type.Disarm:
                     break;
@@ -69,5 +71,15 @@ public partial class StatusEffect : Node2D
         }
      
         GD.Print($"ApplyBurn {Damage} damage. {TurnsLeftActive} turns left.");
+    }
+    private void _triggerStun()
+    {
+        Enemy parent = GetParent<Node2D>() as Enemy;
+        if (parent.HasMethod("TakeDamage"))
+        {
+            parent.TakeDamage(Damage);
+        }
+     
+        GD.Print($"_triggerStun {Damage} damage. {TurnsLeftActive} turns left.");
     }
 }

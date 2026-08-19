@@ -2,6 +2,7 @@
   "type": "Spell",
   "cost": 1,
   "element": "Earth",
+  "rarity": "Common",
   "effectData": 
   {
     "effectType": "StatusEffect",
