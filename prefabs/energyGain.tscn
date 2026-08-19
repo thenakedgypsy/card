@@ -19,6 +19,7 @@ offset_left = -530.0
 offset_top = -718.0
 offset_right = 2429.0
 offset_bottom = 1781.0
+mouse_filter = 2
 texture = ExtResource("2_8jvew")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]

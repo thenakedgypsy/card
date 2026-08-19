@@ -6,6 +6,7 @@
   "effectData": 
   {
     "effectType": "EnemyDamage",
-    "damage": 99
+    "damage": 12,
+    "splashTiles": 2
   }
 }

@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=4 uid="uid://iua0l5tdn75t"]
+[gd_scene load_steps=13 format=4 uid="uid://iua0l5tdn75t"]
 
 [ext_resource type="Texture2D" uid="uid://b6koki6d4iaw3" path="res://icon.svg" id="1_geqo8"]
 [ext_resource type="Script" path="res://scripts/CoreDef.cs" id="1_pbm1q"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://budqpbjl0ncgm" path="res://prefabs/TurnManager.tscn" id="6_0nfh7"]
 [ext_resource type="PackedScene" uid="uid://cp810nuhfua1l" path="res://prefabs/EndTurnButton.tscn" id="7_lde5s"]
 [ext_resource type="PackedScene" uid="uid://bhi5iqytqhq8h" path="res://prefabs/Playzone.tscn" id="8_7svoi"]
+[ext_resource type="PackedScene" uid="uid://cewtx1wpr1mdy" path="res://prefabs/card_pile_display_butotn.tscn" id="9_37x7g"]
 [ext_resource type="PackedScene" uid="uid://ciwyjb20oblvq" path="res://prefabs/Board.tscn" id="9_po3xl"]
 [ext_resource type="PackedScene" uid="uid://dules16lpku10" path="res://prefabs/Enemy.tscn" id="10_5tjbw"]
 [ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="11_sr32x"]
@@ -21,6 +22,7 @@ z_index = -1
 z_as_relative = false
 offset_right = 1921.0
 offset_bottom = 1080.0
+mouse_filter = 2
 texture = ExtResource("1_geqo8")
 
 [node name="Mouse" parent="." instance=ExtResource("3_171fx")]
@@ -47,6 +49,14 @@ scale = Vector2(1.53039, 2.25578)
 visible = false
 position = Vector2(991, 168.999)
 scale = Vector2(5.05943, 2.27162)
+
+[node name="CardPileDisplayButotn2" parent="." instance=ExtResource("9_37x7g")]
+offset_left = 45.0
+offset_top = 994.0
+offset_right = 133.0
+offset_bottom = 1040.0
+text = "DiSCOI"
+PileName = "Discard"
 
 [node name="Board" parent="." instance=ExtResource("9_po3xl")]
 position = Vector2(1051.35, 394)
