@@ -21,13 +21,16 @@ public partial class StatusEffect : Node2D
 
     public StatusEffect.Type TypeName;
 
-    public void Setup(Dictionary<string, Variant> data, Card.Element ele)
+    private Enemy target;
+
+    public void Setup(Dictionary<string, Variant> data, Card.Element ele, Enemy enemyTarget)
     {
         Damage = int.Parse(data["damage"].ToString());
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
+        target = enemyTarget;
     }
 
     public void TriggerStatusEffect()
@@ -48,7 +51,6 @@ public partial class StatusEffect : Node2D
                 case StatusEffect.Type.Haste:
                     break;
                 case StatusEffect.Type.Stun:
-                        GD.Print($"trigger stun!!!! ");
 
                     _triggerStun();
                     break;
@@ -58,6 +60,7 @@ public partial class StatusEffect : Node2D
         }
         else
         {
+            _checkToRemoveStun();
             QueueFree(); 
         }
     }
@@ -74,12 +77,19 @@ public partial class StatusEffect : Node2D
     }
     private void _triggerStun()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        if (parent.HasMethod("TakeDamage"))
-        {
-            parent.TakeDamage(Damage);
-        }
-     
+        target.TakeDamage(Damage);
+   
+        target.MoveDistance = 0;
+
         GD.Print($"_triggerStun {Damage} damage. {TurnsLeftActive} turns left.");
+    }
+
+    private void _checkToRemoveStun()
+    {
+        if(TypeName == StatusEffect.Type.Stun)
+        {
+            //will need a variable outside of enemy to reset to OG value
+             target.MoveDistance = 4;
+        }
     }
 }

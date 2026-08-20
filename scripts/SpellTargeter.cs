@@ -203,7 +203,7 @@ public partial class SpellTargeter : Node2D
                     if (statusScene != null)
                     {
                         StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
-                        statusEffect.Setup(_data, _element);
+                        statusEffect.Setup(_data, _element, target);
                         target.AddChild(statusEffect);
                     }
                     break;
