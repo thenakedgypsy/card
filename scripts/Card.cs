@@ -34,6 +34,7 @@ public partial class Card : Node2D
     // Removed Hand and Discard node references here
     private Sprite2D _art;
     private Sprite2D _frame;
+    private Sprite2D _rarityFrame;
     private RichTextLabel _title;
     private RichTextLabel _costDisplay;
     private RichTextLabel _text;
@@ -58,6 +59,7 @@ public partial class Card : Node2D
         _costDisplay = GetNode<RichTextLabel>("Cost");
         _typeDisplay = GetNode<RichTextLabel>("Type");
         _frame = GetNode<Sprite2D>("Frame");
+        _rarityFrame = GetNode<Sprite2D>("Rarity");
         
         _title.Text = cardName = "Uninstantiated Card";
     }
@@ -169,8 +171,11 @@ public partial class Card : Node2D
 
         Texture2D texture = GD.Load<Texture2D>(path);
         Texture2D frame = GD.Load<Texture2D>($"res://assets/cards/cardFrames/{element}.png");
+        Texture2D rarityFrameTexture = GD.Load<Texture2D>($"res://assets/cards/cardFrames/rarityFrames/{_rarity}.png");
+
         _art.Texture = texture;
         _frame.Texture = frame;
+        _rarityFrame.Texture = rarityFrameTexture;
     }
 
     // =========================
