@@ -136,7 +136,7 @@ public partial class Summon : Node2D, IHealth
 
 		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
 		if (enemy.HasMethod("TakeDamage"))
-            enemy.Call("TakeDamage", AttackDamage);
+			enemy.TakeDamage(AttackDamage, Element);
 		FlashRed();
 		DrawLineBetween(enemy.GlobalPosition, 5f);
 	}
@@ -178,13 +178,14 @@ public partial class Summon : Node2D, IHealth
 
 	public void TakeDamage(int value)
 	{
-	    CurrentHealth -= value;
-	    GD.Print($"Summon takes {value} damage");
+		CurrentHealth -= value;
+		GD.Print($"Summon takes {value} damage");
 
 		PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
 		FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
-        AddChild(fdn);
-        fdn.Appear(value);
+		
+		AddChild(fdn);
+		fdn.Appear(value, Card.Element.Earth);
 
 		FlashRed();
 	

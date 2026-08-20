@@ -331,7 +331,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     public float GetMaxHealth() => Health;
     public float GetCurrentHealth() => CurrentHealth;
 
-    public void TakeDamage(int value)
+    public void TakeDamage(int value, Card.Element element)
     {
         CurrentHealth -= value;
         GD.Print($"Enemy {Name} takes {value} damage");
@@ -339,7 +339,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
         FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
         AddChild(fdn);
-        fdn.Appear(value);       
+        fdn.Appear(value, element);       
         FlashRed();
 
         if (CurrentHealth <= 0)
