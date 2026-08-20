@@ -13,7 +13,7 @@ shader_parameter/custom_shine_color = Color(0.201527, 0.201527, 0.201527, 1)
 shader_parameter/shine_speed = 0.494
 shader_parameter/shine_size = 0.251
 shader_parameter/shine_angle = 0.785
-shader_parameter/pause_duration = 1.964
+shader_parameter/pause_duration = 1.073
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_m5nyi"]
 size = Vector2(64, 106)
