@@ -37,7 +37,7 @@ public partial class FloatingDamageNumber : Node2D
         tween.SetParallel(true);
 
         // Move upward by 50 pixels over 0.8 seconds
-        tween.TweenProperty(this, "position", Position + new Vector2(0, -50), 1.5f)
+        tween.TweenProperty(this, "position", Position + new Vector2(0, -75), 2.5f)
              .SetTrans(Tween.TransitionType.Quad)
              .SetEase(Tween.EaseType.In);
 
@@ -55,18 +55,18 @@ public partial class FloatingDamageNumber : Node2D
         switch (damageElement)
         {
             case Card.Element.Earth:
-                return $"[center][color=#{Colors.Brown.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/brown.png[/img]";
+                return $"[center][color=#{Colors.Brown.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/brown.png[/img]";
             case Card.Element.Wind:
-                return $"[center][color=#{Colors.White.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/pale.png[/img]";
+                return $"[center][color=#{Colors.White.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/pale.png[/img]";
             case Card.Element.Fire:
-                return $"[center][color=#{Colors.Orange.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/orange.png[/img]";
+                return $"[center][color=#{Colors.Orange.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/orange.png[/img]";
             case Card.Element.Water:
-                return $"[center][color=#{Colors.Blue.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/blue.png[/img]";
+                return $"[center][color=#{Colors.Blue.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/blue.png[/img]";
             case Card.Element.Neutral:
                 //will need a neutral colour/image
-                return $"[center][color=#{Colors.Gray.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/pale.png[/img]";
+                return $"[center][color=#{Colors.Gray.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/pale.png[/img]";
             default:
-            return $"[center][color=#{Colors.Gray.ToHtml()}]{damageNumber} [img=32x32]res://assets/interface/pale.png[/img]";
+            return $"[center][color=#{Colors.Gray.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/pale.png[/img]";
         }       
     }
 }
