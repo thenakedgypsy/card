@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -331,14 +332,15 @@ public partial class Enemy : CharacterBody2D, IHealth
     public float GetMaxHealth() => Health;
     public float GetCurrentHealth() => CurrentHealth;
 
-    public async Task TakeDamage(int value, Card.Element element)
+    public void TakeDamage(int value, Card.Element element)
     {
         CurrentHealth -= value;
         GD.Print($"Enemy {Name} takes {value} damage");
 
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
         FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
-        AddChild(fdn);
+        GetParent().AddChild(fdn);
+        fdn.GlobalPosition = GlobalPosition;
         fdn.Appear(value, element);       
         FlashRed();
 
@@ -357,18 +359,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             if (_sprite != null && GodotObject.IsInstanceValid(_sprite))
             {
                 _sprite.Visible = false;
-            }
-
-            // Wait for all FloatingDamageNumber tweens to finish before destroying the Enemy node
-            foreach (Node child in GetChildren())
-            {
-                if (child is FloatingDamageNumber damageNum && GodotObject.IsInstanceValid(damageNum.tween))
-                {
-                    if (damageNum.tween.IsRunning())
-                    {
-                        await ToSignal(damageNum.tween, Tween.SignalName.Finished); //dont leave this line until this number is cleaned up
-                    }
-                }
             }
 
             CallDeferred(Node.MethodName.QueueFree);

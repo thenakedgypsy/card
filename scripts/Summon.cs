@@ -138,7 +138,7 @@ public partial class Summon : Node2D, IHealth
 		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
 		FlashRed();		
 		DrawLineBetween(enemy.GlobalPosition, 5f);	
-		await enemy.TakeDamage(AttackDamage, Element);				
+		enemy.TakeDamage(AttackDamage, Element);				
 	}
 
 	private void EndTurn()
