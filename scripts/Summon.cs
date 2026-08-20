@@ -124,13 +124,13 @@ public partial class Summon : Node2D, IHealth
 
 		if (nearestEnemy != null && minDistance <= AttackRange)
 		{
-			await Attack(nearestEnemy);
+			Attack(nearestEnemy);
 		}
 
 		EndTurn();
 	}
 
-	private async Task Attack(Enemy enemy)
+	private void Attack(Enemy enemy)
 	{
 		if (!GodotObject.IsInstanceValid(enemy))
 			return;
