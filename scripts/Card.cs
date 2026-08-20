@@ -172,7 +172,7 @@ public partial class Card : Node2D
 
         Texture2D texture = GD.Load<Texture2D>(path);
         Texture2D frame = GD.Load<Texture2D>($"res://assets/cards/cardFrames/{element}.png");
-        Texture2D rarityFrameTexture = GD.Load<Texture2D>($"res://assets/cards/cardFrames/rarityFrames/common.png");
+        Texture2D rarityFrameTexture = GD.Load<Texture2D>($"res://assets/cards/cardFrames/rarityFrames/Common.png");
 
         _art.Texture = texture;
         _frame.Texture = frame;
