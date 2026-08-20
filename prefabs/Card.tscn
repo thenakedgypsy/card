@@ -11,7 +11,7 @@ shader = ExtResource("3_11gkd")
 shader_parameter/rarity_preset = 4
 shader_parameter/custom_shine_color = Color(0.201527, 0.201527, 0.201527, 1)
 shader_parameter/shine_speed = 0.494
-shader_parameter/shine_size = 0.443
+shader_parameter/shine_size = 0.251
 shader_parameter/shine_angle = 0.785
 shader_parameter/pause_duration = 1.964
 
