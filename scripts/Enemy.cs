@@ -331,7 +331,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     public float GetMaxHealth() => Health;
     public float GetCurrentHealth() => CurrentHealth;
 
-    public void TakeDamage(int value, Card.Element element)
+    public async Task TakeDamage(int value, Card.Element element)
     {
         CurrentHealth -= value;
         GD.Print($"Enemy {Name} takes {value} damage");
@@ -352,6 +352,25 @@ public partial class Enemy : CharacterBody2D, IHealth
             SetProcess(false);
             SetPhysicsProcess(false);
             SetDeferred("monitoring", false);
+
+            // Hide sprite so the enemy model disappears immediately, leaving only the floating text -- we can have a death anim here 
+            if (_sprite != null && GodotObject.IsInstanceValid(_sprite))
+            {
+                _sprite.Visible = false;
+            }
+
+            // Wait for all FloatingDamageNumber tweens to finish before destroying the Enemy node
+            foreach (Node child in GetChildren())
+            {
+                if (child is FloatingDamageNumber damageNum && GodotObject.IsInstanceValid(damageNum.tween))
+                {
+                    if (damageNum.tween.IsRunning())
+                    {
+                        await ToSignal(damageNum.tween, Tween.SignalName.Finished); //dont leave this line until this number is cleaned up
+                    }
+                }
+            }
+
             CallDeferred(Node.MethodName.QueueFree);
         }
     }

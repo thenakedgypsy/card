@@ -37,9 +37,16 @@ public partial class HealthBar : TextureProgressBar
 		MaxValue = healthTarget.GetMaxHealth();
 		Value = healthTarget.GetCurrentHealth();
 
-		if (Value < MaxValue && !Visible)
+		if (Value > 0)
 		{
-			Visible = true;
+			if (Value < MaxValue && !Visible)
+			{
+				Visible = true;
+			}
+		}
+		else
+		{
+			Visible = false;
 		}
 	}
 }

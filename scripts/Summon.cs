@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class Summon : Node2D, IHealth
 {
@@ -92,7 +93,7 @@ public partial class Summon : Node2D, IHealth
 		_line.Visible = false;
 	}
 
-	public void TakeTurn()
+	public async Task TakeTurn()
 	{
 		if (!AttacksEnemies)
 		{
@@ -123,22 +124,21 @@ public partial class Summon : Node2D, IHealth
 
 		if (nearestEnemy != null && minDistance <= AttackRange)
 		{
-			Attack(nearestEnemy);
+			await Attack(nearestEnemy);
 		}
 
 		EndTurn();
 	}
 
-	private void Attack(Enemy enemy)
+	private async Task Attack(Enemy enemy)
 	{
 		if (!GodotObject.IsInstanceValid(enemy))
 			return;
 
 		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
-		if (enemy.HasMethod("TakeDamage"))
-			enemy.TakeDamage(AttackDamage, Element);
-		FlashRed();
-		DrawLineBetween(enemy.GlobalPosition, 5f);
+		FlashRed();		
+		DrawLineBetween(enemy.GlobalPosition, 5f);	
+		await enemy.TakeDamage(AttackDamage, Element);				
 	}
 
 	private void EndTurn()

@@ -9,6 +9,8 @@ public partial class FloatingDamageNumber : Node2D
 
     private int damageNumber;
 
+    public Tween tween;
+
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
@@ -31,18 +33,35 @@ public partial class FloatingDamageNumber : Node2D
 	public void Animate()
     {
         // 1. Create a Tween bound to this node
-        Tween tween = CreateTween();
+        tween = CreateTween();
 
-        // 2. Run float up and fade out at the same time
-        tween.SetParallel(true);
-
-        // Move upward by 50 pixels over 0.8 seconds
-        tween.TweenProperty(this, "position", Position + new Vector2(0, -75), 2.5f)
-             .SetTrans(Tween.TransitionType.Quad)
-             .SetEase(Tween.EaseType.In);
-
-        // Fade out alpha over 0.8 seconds
-        tween.TweenProperty(this, "modulate:a", 0.0f, 1.5f)
+        // Randomize horizontal trajectory
+        float randomXOffset = (float)GD.RandRange(-50.0f, 50.0f); // Random left/right arc
+        Vector2 startPos = Position;
+        Vector2 targetPos = startPos + new Vector2(randomXOffset, -30); // Final resting position
+        float arcHeight = 45.0f; // Apex peak height
+        float totalDuration = 1.5f;
+        
+        // Arc movement with earlier apex peak
+        tween.TweenMethod(Callable.From<float>((t) => 
+        {
+            // Fast-forward initial vertical progress so it arcs earlier
+            float skewedT = Mathf.Pow(t, 0.6f); 
+            
+            // Base linear position
+            Vector2 currentPos = startPos.Lerp(targetPos, t);
+            
+            // Parabolic arc applied using the skewed progression
+            float heightOffset = 4 * arcHeight * skewedT * (1.0f - skewedT);
+            currentPos.Y -= heightOffset;
+            
+            Position = currentPos;
+        }), 0.0f, 1.0f, totalDuration)
+        .SetTrans(Tween.TransitionType.Linear);
+        
+        // Fade out timing
+        tween.Parallel().TweenProperty(this, "modulate:a", 0.0f, 0.5f)
+             .SetDelay(0.5f)
              .SetTrans(Tween.TransitionType.Quad)
              .SetEase(Tween.EaseType.Out);
 

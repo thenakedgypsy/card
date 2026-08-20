@@ -2,12 +2,12 @@
   "type": "Summon",
   "cost": 1,
   "element": "Wind",
-  "rarity": "Common",
+  "rarity": "Uncommon",
   "effectData": 
   {
 	  "effectType": "Summon",
 	  "health": 30,
-	  "damage": 3,
+	  "damage": 6,
 	  "range": 4,
 	  "attacksEnemies": true
   }
