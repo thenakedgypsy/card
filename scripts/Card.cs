@@ -43,6 +43,7 @@ public partial class Card : Node2D
     private EnergyManager _energyManager;
     private CardEffect _effect;
     private Rarity _rarity;
+    private ShaderMaterial _rarityShader;
     
 
     public override void _Ready()
@@ -60,7 +61,7 @@ public partial class Card : Node2D
         _typeDisplay = GetNode<RichTextLabel>("Type");
         _frame = GetNode<Sprite2D>("Frame");
         _rarityFrame = GetNode<Sprite2D>("Rarity");
-        
+      
         _title.Text = cardName = "Uninstantiated Card";
     }
     
@@ -171,11 +172,28 @@ public partial class Card : Node2D
 
         Texture2D texture = GD.Load<Texture2D>(path);
         Texture2D frame = GD.Load<Texture2D>($"res://assets/cards/cardFrames/{element}.png");
-        Texture2D rarityFrameTexture = GD.Load<Texture2D>($"res://assets/cards/cardFrames/rarityFrames/{_rarity}.png");
+        Texture2D rarityFrameTexture = GD.Load<Texture2D>($"res://assets/cards/cardFrames/rarityFrames/common.png");
 
         _art.Texture = texture;
         _frame.Texture = frame;
         _rarityFrame.Texture = rarityFrameTexture;
+        int presetIndex = _rarity switch
+        {
+            Rarity.Common => 1,
+            Rarity.Uncommon => 2,
+            Rarity.Rare => 3,
+            Rarity.Epic => 4,
+            Rarity.Legendary => 5,
+            _ => 1
+        };
+
+        if (_rarityFrame.Material is ShaderMaterial shaderMat)
+        {
+            _rarityShader = (ShaderMaterial)shaderMat.Duplicate();
+            _rarityFrame.Material = _rarityShader;
+        }
+        GD.Print("Adding shader to frame at rarity ", presetIndex);
+        _rarityShader.SetShaderParameter("rarity_preset", presetIndex);
     }
 
     // =========================
