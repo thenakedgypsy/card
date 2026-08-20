@@ -26,7 +26,6 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	private string _tooltip;
 	private Sprite2D _sprite;
 	private PackedScene _scene;
-	private Dictionary<string, Variant> _sceneData;
 	private Overworld _overworld;
 	public bool _mouseOver;
 	public OverworldNode[] previousNodes;
