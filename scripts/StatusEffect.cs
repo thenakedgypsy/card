@@ -19,7 +19,9 @@ public partial class StatusEffect : Node2D
 
     public int TurnsLeftActive;
 
-    public StatusEffect.Type TypeName;
+    public Type TypeName;
+
+    
 
     public void Setup(Dictionary<string, Variant> data, Card.Element ele)
     {
@@ -29,6 +31,15 @@ public partial class StatusEffect : Node2D
         StatusEffect.Type TypeName;
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
+        InstantiateSprite();
+    }
+
+    public void InstantiateSprite()
+    {
+        Sprite2D sprite = GetNode<Sprite2D>("Sprite2D");
+        Texture2D texture = GD.Load<Texture2D>($"res://assets/icons/{TypeName}.png");
+        sprite.Texture = texture;
+
     }
 
     public void TriggerStatusEffect()

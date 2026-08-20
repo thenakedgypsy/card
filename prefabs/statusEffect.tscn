@@ -1,6 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://lrh3cypiiui7"]
+[gd_scene load_steps=3 format=3 uid="uid://lrh3cypiiui7"]
 
 [ext_resource type="Script" path="res://scripts/StatusEffect.cs" id="1_8ulv0"]
+[ext_resource type="Texture2D" uid="uid://bxwddwiicttb0" path="res://assets/icons/Burn.png" id="2_ujrw2"]
 
 [node name="StatusEffect" type="Node2D"]
+position = Vector2(0, 2)
 script = ExtResource("1_8ulv0")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("2_ujrw2")
