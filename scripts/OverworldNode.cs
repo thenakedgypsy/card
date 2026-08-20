@@ -116,15 +116,15 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		}
 		var sceneVariant = data["sceneData"];
 		var godotDict = sceneVariant.AsGodotDictionary();
-		Dictionary<string, Variant> SceneData = new Dictionary<string, Variant>();
+		Dictionary<string, Variant> sceneData = new Dictionary<string, Variant>();
 		foreach (var key in godotDict.Keys)
 		{
 			string name = key.ToString();
 			var valueVar = godotDict[key];
-			SceneData.Add(name, valueVar);
+			sceneData.Add(name, valueVar);
 		}
 
-		return SceneData;
+		return sceneData;
 	}
 	
 	public void LoadCoreDefence()
