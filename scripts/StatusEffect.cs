@@ -21,7 +21,7 @@ public partial class StatusEffect : Node2D
 
     public Type TypeName;
 
-    
+    #pragma warning disable IDE0059 //this turns off annoying ide rule thats flagged here
 
     public void Setup(Dictionary<string, Variant> data, Card.Element ele)
     {
@@ -29,6 +29,7 @@ public partial class StatusEffect : Node2D
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
         StatusEffect.Type TypeName;
+        
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
         InstantiateSprite();
@@ -39,7 +40,6 @@ public partial class StatusEffect : Node2D
         Sprite2D sprite = GetNode<Sprite2D>("Sprite2D");
         Texture2D texture = GD.Load<Texture2D>($"res://assets/icons/{TypeName}.png");
         sprite.Texture = texture;
-
     }
 
     public void TriggerStatusEffect()
