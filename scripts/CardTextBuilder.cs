@@ -85,10 +85,12 @@ public static class CardTextBuilder
     {
         List<string> effectStrings = new List<string>();
 
-        foreach (var item in effectsArray)
+        for (int i = 0; i < effectsArray.Count; i++)
         {
-            var effect = item.AsGodotDictionary();
-            string effectText = ParseSingleEffect(effect);
+            var effect = effectsArray[i].AsGodotDictionary();
+            // Use lowercase variants for any effect after the first (index > 0)
+            bool isLower = i > 0;
+            string effectText = ParseSingleEffect(effect, isLower);
             if (!string.IsNullOrEmpty(effectText))
             {
                 effectStrings.Add(effectText);
@@ -99,7 +101,7 @@ public static class CardTextBuilder
         return string.Join(joiner, effectStrings);
     }
 
-    private static string ParseSingleEffect(Dictionary effect)
+    private static string ParseSingleEffect(Dictionary effect, bool isLower = false)
     {
         string type = effect.ContainsKey("effectType") ? effect["effectType"].ToString() : "";
 
@@ -107,7 +109,8 @@ public static class CardTextBuilder
         {
             case "EnemyDamage":
                 int damage = effect.ContainsKey("damage") ? (int)effect["damage"] : 0;
-                string baseDamage = GetTerm("enemy_damage").Replace("{damage}", damage.ToString());
+                string key = isLower ? "enemy_damage_lower" : "enemy_damage";
+                string baseDamage = GetTerm(key).Replace("{damage}", damage.ToString());
 
                 if (effect.ContainsKey("splashTiles") && (int)effect["splashTiles"] > 0)
                 {
@@ -121,9 +124,19 @@ public static class CardTextBuilder
                 int turns = effect.ContainsKey("turnsActive") ? (int)effect["turnsActive"] : 1;
                 int statusDmg = effect.ContainsKey("damage") ? (int)effect["damage"] : 0;
 
-                string templateKey = status == "Burn" 
-                    ? (turns > 1 ? "burn_status_plural" : "burn_status")
-                    : (turns > 1 ? "status_effect_plural" : "status_effect");
+                string templateKey;
+                if (status == "Burn")
+                {
+                    templateKey = turns > 1 
+                        ? (isLower ? "burn_status_plural_lower" : "burn_status_plural")
+                        : (isLower ? "burn_status_lower" : "burn_status");
+                }
+                else
+                {
+                    templateKey = turns > 1 
+                        ? (isLower ? "status_effect_plural_lower" : "status_effect_plural")
+                        : (isLower ? "status_effect_lower" : "status_effect");
+                }
 
                 string statusStr = GetTerm(templateKey)
                     .Replace("{statusType}", status)
