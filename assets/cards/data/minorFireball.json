@@ -1,9 +1,15 @@
 {
+  "name": "Minor Fireball",
   "type": "Spell",
   "cost": 1,
   "element": "Fire",
   "effects": 
   [
+    {
+      "effectType": "EnemyDamage",
+      "damage" : 2,
+      "splashTiles" : 0
+    },
     {
       "effectType": "StatusEffect",
       "statusType": "Burn",

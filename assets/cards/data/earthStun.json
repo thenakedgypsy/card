@@ -1,4 +1,5 @@
 {
+  "name": "Earth Stun",
   "type": "Spell",
   "cost": 1,
   "element": "Earth",

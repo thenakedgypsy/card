@@ -1,4 +1,5 @@
 {
+  "name": "Earth Shatter",
   "type": "Spell",
   "cost": 4,
   "element": "Earth",

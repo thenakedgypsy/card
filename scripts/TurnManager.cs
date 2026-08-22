@@ -131,10 +131,20 @@ public partial class TurnManager : Node
             .Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0)
             .ToList();
 
+
         if (enemies.Count == 0)
         {
-            // ... (existing cleanup logic)[cite: 2]
+            GD.Print("All enemies defeated! Victory.");
+            State = GameState.CleanupStep;
+            
+            // Close battle scene & notify Overworld
+            _overworld.InScene = false;
+            
+            // Queue free the CoreDef container scene
+            GetParent().QueueFree(); 
+            return;
         }
+        
 
         foreach (var enemy in enemies)
         {

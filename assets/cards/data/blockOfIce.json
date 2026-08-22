@@ -1,4 +1,5 @@
 {
+  "name": "Block of Ice",
   "type": "Summon",
   "cost": 1,
   "element": "Water",
@@ -7,6 +8,8 @@
   {
     "effectType": "Summon",
     "health": 15,
+    "damage": 0,
+    "range": 0,
     "attacksEnemies": false
   }
 }

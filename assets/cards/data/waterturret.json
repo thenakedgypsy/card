@@ -1,4 +1,5 @@
 {
+  "name": "Water Turret",
   "type": "Summon",
   "cost": 2,
   "element": "Water",

@@ -1,4 +1,5 @@
 {
+  "name": "Major Fireball",
   "type": "Spell",
   "cost": 2,
   "element": "Fire",
