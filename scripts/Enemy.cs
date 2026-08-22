@@ -100,81 +100,83 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public void PlanMove(Node2D playerCore)
     {
-        _plannedPath.Clear();
-        WasPathBlocked = false;
+        _plannedPath.Clear(); 
+        WasPathBlocked = false; 
 
-        if (IsStunned || RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
-            return;
+        // Early exit if stunned, dead, or out of movement[cite: 1]
+        if (IsStunned || RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this)) 
+            return; 
 
-        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
-        Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition);
+        Vector2I myCell = _turnManager.WorldToCell(GlobalPosition); 
+        Vector2I playerCell = _turnManager.WorldToCell(playerCore.GlobalPosition); 
 
-        _turnManager.FreeCell(myCell);
+        _turnManager.FreeCell(myCell); 
 
-        Vector2I targetCell = playerCell;
-        Node2D primaryTarget = playerCore;
+        Vector2I targetCell = playerCell; 
+        Node2D primaryTarget = playerCore; 
 
-        if (AttacksSummons)
+        if (AttacksSummons) 
         {
-            Node2D nearestSummon = GetNearestSummon();
-            if (nearestSummon != null)
+            Node2D nearestSummon = GetNearestSummon(); 
+            if (nearestSummon != null) 
             {
-                primaryTarget = nearestSummon;
-                targetCell = _turnManager.WorldToCell(nearestSummon.GlobalPosition);
+                primaryTarget = nearestSummon; 
+                targetCell = _turnManager.WorldToCell(nearestSummon.GlobalPosition); 
             }
         }
 
-        List<Vector2I> path = _turnManager.FindPath(myCell, targetCell);
-        
-        if (path == null || path.Count == 0)
+        List<Vector2I> path = _turnManager.FindPath(myCell, targetCell); 
+
+        if (path == null || path.Count == 0) 
         {
-            WasPathBlocked = true;
-            SetBlockedVisualState(true);
-            path = _turnManager.FindPathIgnoringSummons(myCell, targetCell);
+            WasPathBlocked = true; 
+            SetBlockedVisualState(true); 
+            path = _turnManager.FindPathIgnoringSummons(myCell, targetCell); 
         }
         else
         {
-            SetBlockedVisualState(false);
+            SetBlockedVisualState(false); 
         }
 
-        if (path == null || path.Count == 0)
+        if (path == null || path.Count == 0) 
         {
-            _turnManager.OccupyCell(myCell);
-            _reservedCell = myCell;
-            return;
+            _turnManager.OccupyCell(myCell); 
+            _reservedCell = myCell; 
+            return; 
         }
 
-        int stepsToTake = 0;
-        for (int i = 0; i < path.Count && stepsToTake < RemainingMovement; i++)
+        int stepsToTake = 0; 
+        for (int i = 0; i < path.Count && stepsToTake < RemainingMovement; i++) 
         {
-            Vector2I checkCell = path[i];
+            Vector2I checkCell = path[i]; 
 
-            if (_turnManager.IsEnemyOccupied(checkCell))
-                break;
+            // Stop if another active enemy is occupying/reserving the cell[cite: 1]
+            if (_turnManager.IsEnemyOccupied(checkCell)) 
+                break; 
 
-            if (WasPathBlocked && _turnManager.IsCellOccupiedBySummon(checkCell))
-                break;
+            if (WasPathBlocked && _turnManager.IsCellOccupiedBySummon(checkCell)) 
+                break; 
 
-            if (checkCell == targetCell)
-                break;
+            if (checkCell == targetCell) 
+                break; 
 
-            stepsToTake++;
+            stepsToTake++; 
         }
 
-        Vector2I destinationCell = myCell;
-        
-        if (stepsToTake > 0)
+        Vector2I destinationCell = myCell; 
+
+        if (stepsToTake > 0) 
         {
-            destinationCell = path[stepsToTake - 1];
-            for (int i = 0; i < stepsToTake; i++)
+            destinationCell = path[stepsToTake - 1]; 
+            for (int i = 0; i < stepsToTake; i++) 
             {
-                _plannedPath.Add(path[i]);
+                _plannedPath.Add(path[i]); 
             }
-            RemainingMovement -= stepsToTake;
+            RemainingMovement -= stepsToTake; 
         }
 
-        _turnManager.OccupyCell(destinationCell);
-        _reservedCell = destinationCell;
+        _turnManager.OccupyCell(destinationCell); 
+        _reservedCell = destinationCell; 
     }
 
     // --- STEP 2: MOVEMENT ANIMATION ---

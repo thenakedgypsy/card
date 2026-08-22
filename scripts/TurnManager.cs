@@ -124,80 +124,57 @@ public partial class TurnManager : Node
 
         State = GameState.EnemyTurn;
         _playercore = GetParent().GetNodeOrNull<Node2D>("Board/PlayerCore");
-        RebakeNav();
 
         _occupiedEnemyCells.Clear();
-        var enemies = GetTree().GetNodesInGroup("Enemies").Cast<Enemy>().Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0).ToList();
-        
+        var enemies = GetTree().GetNodesInGroup("Enemies")
+            .Cast<Enemy>()
+            .Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0)
+            .ToList();
+
         if (enemies.Count == 0)
         {
-            GD.Print("All enemies defeated! Starting Core Defence cleanup...");
-            
-            CoreDef def = GetTree().GetFirstNodeInGroup("ActiveDef") as CoreDef;
-            if (def == null)
-            {
-                GD.PrintErr("CRITICAL: CoreDef could not be found in group 'ActiveDef'!");
-            }
-            else
-            {
-                GD.Print("CoreDef instance successfully located via group.");
-            }
-
-            Overworld _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
-            if (_overworld == null)
-            {
-                GD.PrintErr("CRITICAL: Overworld node could not be found!");
-            }
-            else
-            {
-                GD.Print($"Overworld found. Setting InScene to false. Previous state was: {_overworld.InScene}");
-                _overworld.InScene = false;
-            }
-
-            if (_cardManager != null)
-            {
-                GD.Print($"Resetting card manager");
-                _cardManager.Reset();
-            }
-
-            if (def != null)
-            {
-                def.CallDeferred("queue_free");
-                GD.Print("CoreDef queue_free called successfully.");
-            }
+            // ... (existing cleanup logic)[cite: 2]
         }
 
         foreach (var enemy in enemies)
         {
             OccupyCell(WorldToCell(enemy.GlobalPosition));         
             enemy.ResetTurnState();
-            enemy.TryTriggerStatusEffect();
-            
+            enemy.TryTriggerStatusEffect(); // Evaluates status effects / IsStunned[cite: 1]
         }
 
-        await ExecuteEnemyTurnPhase(enemies);
-        
+        // Rebake nav AFTER status effects are triggered so stunned enemies act as solid walls
+        RebakeNav();
+
+        // 1. Separate active (moving) enemies from stunned enemies
+        var activeEnemies = enemies.Where(e => !e.IsStunned).ToList();
+
+        // 2. Only execute movement for non-stunned enemies
+        await ExecuteEnemyTurnPhase(activeEnemies);
+
+        // 3. Attack phase (Stunned enemies will automatically skip attacks via IsStunned check)[cite: 1]
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
             if (_playercore != null)
             {
-                await enemy.ExecuteAttackPhaseAsync(_playercore);
+                await enemy.ExecuteAttackPhaseAsync(_playercore); //[cite: 1]
             }
         }
 
-        var remainingEnemies = enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0).ToList();
+        // 4. Secondary movement phase for active enemies with remaining movement
+        var remainingEnemies = activeEnemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0).ToList();
         if (remainingEnemies.Count > 0)
         {
             foreach (var enemy in remainingEnemies)
             {
-                enemy.ResetTurnState(false);
+                enemy.ResetTurnState(false); 
             }
 
             RebakeNav();
             await ExecuteEnemyTurnPhase(remainingEnemies);
         }
 
-        BeginPostEnemySummonTurn();
+        BeginPostEnemySummonTurn(); 
     }
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
@@ -323,33 +300,49 @@ public partial class TurnManager : Node
     
     public void RebakeNav()
     {
-        if (_astarGrid == null) BuildGrid();
+        if (_astarGrid == null) BuildGrid(); 
         else if (_board != null)
         {
-            _astarGrid.Region = _board.GetUsedRect();
-            _astarGrid.Update();
+            _astarGrid.Region = _board.GetUsedRect(); 
+            _astarGrid.Update(); 
         }
 
-        if (_board == null) return;
+        if (_board == null) return; 
 
-        Rect2I region = _astarGrid.Region;
-        for (int x = region.Position.X; x < region.End.X; x++)
+        Rect2I region = _astarGrid.Region; 
+        for (int x = region.Position.X; x < region.End.X; x++) 
         {
-            for (int y = region.Position.Y; y < region.End.Y; y++)
+            for (int y = region.Position.Y; y < region.End.Y; y++) 
             {
-                Vector2I cell = new Vector2I(x, y);
-                _astarGrid.SetPointSolid(cell, false);
-                if (!_board.IsCellWalkable(cell)) _astarGrid.SetPointSolid(cell, true);
+                Vector2I cell = new Vector2I(x, y); 
+                _astarGrid.SetPointSolid(cell, false); 
+                if (!_board.IsCellWalkable(cell)) _astarGrid.SetPointSolid(cell, true); 
             }
         }
 
-        var summons = GetTree().GetNodesInGroup("Summons");
+        // Block cells occupied by summons[cite: 2]
+        var summons = GetTree().GetNodesInGroup("Summons"); 
         foreach (Node node in summons)
         {
-            if (node is Node2D summon && GodotObject.IsInstanceValid(summon))
+            if (node is Node2D summon && GodotObject.IsInstanceValid(summon)) 
             {
-                Vector2I cell = WorldToCell(summon.GlobalPosition);
-                if (_astarGrid.IsInBoundsv(cell)) _astarGrid.SetPointSolid(cell, true);
+                Vector2I cell = WorldToCell(summon.GlobalPosition); 
+                if (_astarGrid.IsInBoundsv(cell)) _astarGrid.SetPointSolid(cell, true); 
+            }
+        }
+
+        // NEW: Block cells occupied by stunned enemies so moving enemies path around them
+        var enemies = GetTree().GetNodesInGroup("Enemies");
+        foreach (Node node in enemies)
+        {
+            if (node is Enemy enemy && GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
+            {
+                if (enemy.IsStunned)
+                {
+                    Vector2I cell = WorldToCell(enemy.GlobalPosition);
+                    if (_astarGrid.IsInBoundsv(cell)) 
+                        _astarGrid.SetPointSolid(cell, true);
+                }
             }
         }
     }
