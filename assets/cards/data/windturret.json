@@ -5,10 +5,10 @@
   "rarity": "Common",
   "effectData": 
   {
-	  "effectType": "Summon",
-	  "health": 30,
-	  "range": 4,
-	  "attacksEnemies": true,
+	"effectType": "Summon",
+	"health": 30,
+	"range": 4,
+	"attacksEnemies": true,
 	"effectData" :
 	{
 	  "effectType": "EnemyDamage",

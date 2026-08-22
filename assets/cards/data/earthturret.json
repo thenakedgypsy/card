@@ -12,7 +12,7 @@
     "attacksEnemies": true,
     "effectData": 
     {
-      "effectType": "EnemyDamage",
+      "effectType": "StatusEffect",
       "damage": 10
     }
     
