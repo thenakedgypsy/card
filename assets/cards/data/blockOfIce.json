@@ -4,12 +4,9 @@
   "cost": 1,
   "element": "Water",
   "rarity": "Uncommon",
-  "effectData": 
-  {
-    "effectType": "Summon",
-    "health": 15,
-    "damage": 0,
-    "range": 0,
-    "attacksEnemies": false
-  }
+  "effectType": "Summon",
+  "health": 15, 
+  "range": 0,
+  "attacksEnemies": false,
+  "effects":[] 
 }
