@@ -14,7 +14,6 @@ public partial class SpellTargeter : Node2D
     private Mouse _mouse;
     private TurnManager _turnManager;
 
-    private int _splashTiles = 0;
     private HashSet<Enemy> _highlightedEnemies = new();
     private Enemy _lastHoveredTarget;
 
@@ -50,11 +49,6 @@ public partial class SpellTargeter : Node2D
         _cardID = cardID;
         _element = ele;
 
-        if (_effects.Count > 0 && _effects[0].TryGetValue("splashTiles", out Variant splash))
-        {
-            _splashTiles = splash.AsInt32();
-        }
-
         ZIndex = 3;
         _readyToTarget = true;
     }
@@ -65,18 +59,12 @@ public partial class SpellTargeter : Node2D
         _cardID = cardID;
         _element = ele;
 
-        if (_effects.Count > 0 && _effects[0].TryGetValue("splashTiles", out Variant splash))
-        {
-            _splashTiles = splash.AsInt32();
-        }
-
         _readyToTarget = false; 
         
         _sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
         if (_sprite != null) _sprite.Visible = false;
 
-        HashSet<Enemy> targets = GetAoETargets(primaryTarget);
-        await CastAsync(targets);
+        await CastAsync(primaryTarget);
     }
 
     private void CheckInput()
@@ -86,8 +74,7 @@ public partial class SpellTargeter : Node2D
             Enemy target = CheckTarget();
             if (target != null)
             {
-                HashSet<Enemy> targets = GetAoETargets(target);
-                _ = CastAsync(targets);
+                _ = CastAsync(target);
             }
             else
             {
@@ -96,7 +83,7 @@ public partial class SpellTargeter : Node2D
         }
     }
 
-    private async System.Threading.Tasks.Task CastAsync(HashSet<Enemy> targets)
+    private async Task CastAsync(Enemy primaryTarget)
     {
         _readyToTarget = false;
         ClearHighlights();
@@ -112,6 +99,10 @@ public partial class SpellTargeter : Node2D
                 continue;
 
             int damage = effectData.ContainsKey("damage") ? effectData["damage"].AsInt32() : 0;
+
+            // Fetch splashTiles dynamically for THIS specific effect
+            int splashTiles = effectData.TryGetValue("splashTiles", out Variant splash) ? splash.AsInt32() : 0;
+            HashSet<Enemy> targets = GetAoETargets(primaryTarget, splashTiles);
 
             foreach (Enemy target in targets)
             {
@@ -148,14 +139,14 @@ public partial class SpellTargeter : Node2D
 
     private Enemy CheckTarget() => _mouse.GetHoveredEnemy();
 
-    private HashSet<Enemy> GetAoETargets(Enemy primaryTarget)
+    private HashSet<Enemy> GetAoETargets(Enemy primaryTarget, int splashTiles)
     {
         HashSet<Enemy> targets = new();
         if (!IsInstanceValid(primaryTarget)) return targets;
 
         targets.Add(primaryTarget);
 
-        if (_splashTiles > 0 && _turnManager != null)
+        if (splashTiles > 0 && _turnManager != null)
         {
             Vector2I primaryCell = primaryTarget.CurrentCell;
             var allEnemies = GetTree().GetNodesInGroup("Enemy");
@@ -172,12 +163,25 @@ public partial class SpellTargeter : Node2D
                     int screenY = Mathf.Abs(dx + dy);
                     int dist = (screenX + screenY) / 2;
                     
-                    if (dist <= _splashTiles) targets.Add(enemy);
+                    if (dist <= splashTiles) targets.Add(enemy);
                 }
             }
         }
 
         return targets;
+    }
+
+    private int GetMaxSplashTiles()
+    {
+        int maxSplash = 0;
+        foreach (var effect in _effects)
+        {
+            if (effect.TryGetValue("splashTiles", out Variant splash))
+            {
+                maxSplash = Math.Max(maxSplash, splash.AsInt32());
+            }
+        }
+        return maxSplash;
     }
 
     private void UpdateHighlights()
@@ -186,7 +190,8 @@ public partial class SpellTargeter : Node2D
         if (primaryTarget == _lastHoveredTarget && IsInstanceValid(_lastHoveredTarget)) return;
         _lastHoveredTarget = primaryTarget;
 
-        HashSet<Enemy> newHighlights = GetAoETargets(primaryTarget);
+        // Uses max splash radius across all card effects so any potential target is highlighted
+        HashSet<Enemy> newHighlights = GetAoETargets(primaryTarget, GetMaxSplashTiles());
 
         foreach (var enemy in _highlightedEnemies)
         {
