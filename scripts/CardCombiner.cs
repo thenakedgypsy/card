@@ -1,0 +1,281 @@
+using Godot;
+
+using System;
+using System.Collections.Generic;
+
+public static class CardCombiner
+{
+    // Holds dynamically created card data in memory during runtime
+    private static readonly Dictionary<string, Godot.Collections.Dictionary<string, Variant>> DynamicCards = new();
+
+    // Map generated combination IDs back to the underlying atomic/base card IDs that form them
+    private static readonly Dictionary<string, List<string>> CombinationRecipes = new();
+
+    /// <summary>
+    /// Combines any two card IDs (base or already combined) into a new combined Card ID.
+    /// Supports infinite recursive combinations.
+    /// </summary>
+    public static string CombineCards(string cardIdA, string cardIdB)
+    {
+        // 1. Fetch data for both cards to compare their elements
+        var dataA = GetCardData(cardIdA);
+        var dataB = GetCardData(cardIdB);
+    
+        if (dataA == null || dataB == null)
+        {
+            GD.PrintErr($"CardCombiner: Failed to retrieve data for {cardIdA} or {cardIdB}");
+            return null;
+        }
+    
+        // 2. Validate that both cards share the exact same element
+        string elementA = dataA.GetValueOrDefault("element", "Neutral").ToString();
+        string elementB = dataB.GetValueOrDefault("element", "Neutral").ToString();
+    
+        if (!string.Equals(elementA, elementB, StringComparison.OrdinalIgnoreCase))
+        {
+            GD.Print($"CardCombiner: Combination failed. '{cardIdA}' ({elementA}) and '{cardIdB}' ({elementB}) are different elements.");
+            return null; // Prevents combination
+        }
+    
+        // 3. Unravel both card IDs into their base constituent card IDs
+        List<string> baseCardsA = GetBaseCardIds(cardIdA);
+        List<string> baseCardsB = GetBaseCardIds(cardIdB);
+    
+        List<string> allBaseCards = new List<string>();
+        allBaseCards.AddRange(baseCardsA);
+        allBaseCards.AddRange(baseCardsB);
+    
+        // Sort so that (Fireball + Stun) produces the EXACT same ID as (Stun + Fireball)
+        allBaseCards.Sort(StringComparer.Ordinal);
+    
+        // 4. Generate a clean, fixed-length ID based on constituents
+        string combinationId = GenerateCombinationId(allBaseCards);
+    
+        // Save recipe mapping
+        CombinationRecipes[combinationId] = allBaseCards;
+    
+        // If we've already generated this exact combo before, reuse it!
+        if (DynamicCards.ContainsKey(combinationId))
+        {
+            return combinationId;
+        }
+    
+        // 5. Load full data for every base card and construct merged definition
+        List<Godot.Collections.Dictionary<string, Variant>> baseDataList = new List<Godot.Collections.Dictionary<string, Variant>>();
+        foreach (string id in allBaseCards)
+        {
+            var data = LoadCardDataFromDisk(id);
+            if (data != null)
+            {
+                baseDataList.Add(data);
+            }
+            else
+            {
+                GD.PrintErr($"CardCombiner: Failed to load base card data for ID: {id}");
+            }
+        }
+    
+        if (baseDataList.Count == 0) return null;
+    
+        // 6. Perform full merge across all base cards
+        Godot.Collections.Dictionary<string, Variant> combinedData = MergeAllCardData(baseDataList);
+    
+        // Cache in memory
+        DynamicCards[combinationId] = combinedData;
+    
+        return combinationId;
+    }
+
+    /// <summary>
+    /// Returns card data dictionary (checks runtime combined cache first, falls back to JSON files).
+    /// </summary>
+    public static Godot.Collections.Dictionary<string, Variant> GetCardData(string cardId)
+    {
+        if (DynamicCards.TryGetValue(cardId, out var dynamicData))
+        {
+            return dynamicData;
+        }
+
+        return LoadCardDataFromDisk(cardId);
+    }
+
+    // ==========================================
+    // UNRAVELING & ID GENERATION
+    // ==========================================
+
+    private static List<string> GetBaseCardIds(string cardId)
+    {
+        if (CombinationRecipes.TryGetValue(cardId, out var constituents))
+        {
+            return new List<string>(constituents);
+        }
+        
+        // It's a standard base card ID from disk
+        return new List<string> { cardId };
+    }
+
+    private static string GenerateCombinationId(List<string> sortedBaseCards)
+    {
+        string rawKey = string.Join("+", sortedBaseCards);
+        // Create a short 32-bit hash representation to keep string IDs short & clean
+        uint hash = 2166136261;
+        foreach (char c in rawKey)
+        {
+            hash = (hash ^ c) * 16777619;
+        }
+
+        return $"comb_{hash:x8}";
+    }
+
+    // ==========================================
+    // MERGING LOGIC
+    // ==========================================
+
+    private static Godot.Collections.Dictionary<string, Variant> MergeAllCardData(List<Godot.Collections.Dictionary<string, Variant>> cards)
+    {
+        var result = new Godot.Collections.Dictionary<string, Variant>();
+
+        List<string> names = new List<string>();
+        int totalCost = 0;
+        int totalHealth = 0;
+        bool isSummon = false;
+        string highestRarity = "Common";
+        string primaryType = cards[0].GetValueOrDefault("type", "Spell").ToString();
+        string primaryElement = cards[0].GetValueOrDefault("element", "Neutral").ToString();
+
+        List<Godot.Collections.Dictionary<string, Variant>> mergedEffects = new List<Godot.Collections.Dictionary<string, Variant>>();
+
+        foreach (var card in cards)
+        {
+            // Name concatenation
+            if (card.ContainsKey("name")) names.Add(card["name"].ToString());
+
+            // Cost summation
+            if (card.ContainsKey("cost")) totalCost += Convert.ToInt32(card["cost"]);
+
+            // Summon HP summation
+            if (card.ContainsKey("health"))
+            {
+                isSummon = true;
+                totalHealth += Convert.ToInt32(card["health"]);
+            }
+
+            // Rarity upgrade check
+            string r = card.GetValueOrDefault("rarity", "Common").ToString();
+            highestRarity = GetHigherRarity(highestRarity, r);
+
+            // Merge Effects
+            List<Godot.Collections.Dictionary<string, Variant>> cardEffects = ExtractEffectsList(card);
+            foreach (var effect in cardEffects)
+            {
+                MergeSingleEffectIntoList(mergedEffects, effect);
+            }
+        }
+
+        // Apply calculated root properties
+        result["name"] = string.Join(" & ", names);
+        result["cost"] = totalCost;
+        result["type"] = primaryType;
+        result["element"] = primaryElement;
+        result["rarity"] = highestRarity;
+
+        if (isSummon)
+        {
+            result["health"] = totalHealth;
+            result["effectType"] = "Summon";
+        }
+
+        // Output Array of effects for Godot JSON compliance
+        var godotEffectsArray = new Godot.Collections.Array<Godot.Collections.Dictionary<string, Variant>>();
+        foreach (var eff in mergedEffects)
+        {
+            godotEffectsArray.Add(eff);
+        }
+        result["effects"] = godotEffectsArray;
+
+        return result;
+    }
+
+    private static void MergeSingleEffectIntoList(
+        List<Godot.Collections.Dictionary<string, Variant>> targetList, 
+        Godot.Collections.Dictionary<string, Variant> newEffect)
+    {
+        string type = newEffect.GetValueOrDefault("effectType", "").ToString();
+        string status = newEffect.GetValueOrDefault("statusType", "").ToString();
+
+        // Match based on both effectType and statusType (e.g. StatusEffect + Burn)
+        var existing = targetList.Find(e => 
+            e.GetValueOrDefault("effectType", "").ToString() == type &&
+            e.GetValueOrDefault("statusType", "").ToString() == status);
+
+        if (existing != null)
+        {
+            // Sum numerical values for overlapping effects
+            CombineKeys(existing, newEffect, "damage");
+            CombineKeys(existing, newEffect, "turnsActive");
+            CombineKeys(existing, newEffect, "splashTiles");
+            CombineKeys(existing, newEffect, "range");
+        }
+        else
+        {
+            // Add as a distinct new effect entry
+            targetList.Add(DuplicateDictionary(newEffect));
+        }
+    }
+
+    private static void CombineKeys(Godot.Collections.Dictionary<string, Variant> target, Godot.Collections.Dictionary<string, Variant> source, string key)
+    {
+        if (source.ContainsKey(key))
+        {
+            int valTarget = target.ContainsKey(key) ? Convert.ToInt32(target[key]) : 0;
+            int valSource = Convert.ToInt32(source[key]);
+            target[key] = valTarget + valSource;
+        }
+    }
+
+    // ==========================================
+    // HELPERS & FILE I/O
+    // ==========================================
+
+    private static Godot.Collections.Dictionary<string, Variant> LoadCardDataFromDisk(string cardId)
+    {
+        string path = $"res://assets/cards/data/{cardId}.json";
+        if (!FileAccess.FileExists(path)) return null;
+
+        using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
+        var json = new Json();
+        if (json.Parse(file.GetAsText()) == Error.Ok)
+        {
+            return json.Data.AsGodotDictionary<string, Variant>();
+        }
+        return null;
+    }
+
+    private static List<Godot.Collections.Dictionary<string, Variant>> ExtractEffectsList(Godot.Collections.Dictionary<string, Variant> cardData)
+    {
+        var list = new List<Godot.Collections.Dictionary<string, Variant>>();
+        if (cardData.ContainsKey("effects") && cardData["effects"].VariantType == Variant.Type.Array)
+        {
+            foreach (var item in cardData["effects"].AsGodotArray())
+            {
+                list.Add(item.AsGodotDictionary<string, Variant>());
+            }
+        }
+        return list;
+    }
+
+    private static Godot.Collections.Dictionary<string, Variant> DuplicateDictionary(Godot.Collections.Dictionary<string, Variant> original)
+    {
+        var clone = new Godot.Collections.Dictionary<string, Variant>();
+        foreach (var kvp in original) clone[kvp.Key] = kvp.Value;
+        return clone;
+    }
+
+    private static string GetHigherRarity(string rarityA, string rarityB)
+    {
+        List<string> rarities = new() { "Common", "Uncommon", "Rare", "Epic", "Legendary" };
+        int idxA = rarities.IndexOf(rarityA);
+        int idxB = rarities.IndexOf(rarityB);
+        return rarities[Math.Max(idxA >= 0 ? idxA : 0, idxB >= 0 ? idxB : 0)];
+    }
+}
