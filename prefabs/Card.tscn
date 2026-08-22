@@ -42,10 +42,10 @@ offset_top = 2.0
 offset_right = 305.0
 offset_bottom = 234.0
 scale = Vector2(0.168059, 0.180852)
-mouse_filter = 2
+mouse_filter = 1
 theme_override_font_sizes/normal_font_size = 33
-text = "This is example text, the actual text will be shown on this card afer instantiation"
-scroll_active = false
+text = "This is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiationThis is example text, the actual text will be shown on this card afer instantiation"
+autowrap_mode = 2
 
 [node name="Cost" type="RichTextLabel" parent="."]
 offset_left = 20.0
