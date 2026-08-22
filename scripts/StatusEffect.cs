@@ -17,28 +17,27 @@ public partial class StatusEffect : Node2D
 	public Card.Element Element;
 	public int Damage;
 
-    private int DOT;
+    private int Power;
 
     public int TurnsLeftActive;
 
     public Type TypeName;
 
     #pragma warning disable IDE0059 //this turns off annoying ide rule thats flagged here
+    private Enemy _getEnemyTarget() => GetParent<Node2D>() as Enemy;
 
     public void Setup(Godot.Collections.Dictionary<string, Variant> data, Card.Element ele)
     {
         
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
-        
+        Power = data["power"].ToString().ToInt();
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
         GD.Print("Status setup", data);
         InstantiateSprite();
 
-
-
-        GD.Print($"${TypeName}");
+        GD.Print($"power = {Power} Turns left {TurnsLeftActive} status type {TypeName}");
     }
 
     public void InstantiateSprite()
@@ -83,6 +82,7 @@ public partial class StatusEffect : Node2D
                 case StatusEffect.Type.Disarm:
                     break;
             }
+            if(Damage > 0) _enemyTakeDamage();
         }
         else
         {
@@ -92,26 +92,28 @@ public partial class StatusEffect : Node2D
 
     private void _triggerBurn()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        if (parent.HasMethod("TakeDamage"))
-        {
-            parent.TakeDamage(Damage, Card.Element.Fire);
-        }
+        //leaving this in for now incase other mechanics happen
     }
     private void _triggerSlow()
     {
-        
+        int enemyMoveDistance = _getEnemyTarget().MoveDistance; 
+        int slowAmount = enemyMoveDistance - Power;
+        _getEnemyTarget().isSlowed = true;
+        _getEnemyTarget().MoveDistance = slowAmount;
+        _getEnemyTarget().Set("RemainingMovement", slowAmount);
+
+        GD.Print($"_triggerSlow {TurnsLeftActive} turns left. Move speed {slowAmount}");
+
     }
     private void _triggerStun()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
         //removed the damage from here. can be applied via a seperate effect. 
         //using a bool rather than modulating.
-        parent.IsStunned = true;
-        parent.MoveDistance = 0;
-        parent.Set("RemainingMovement", 0);
+        _getEnemyTarget().IsStunned = true;
+        _getEnemyTarget().MoveDistance = 0;
+        _getEnemyTarget().Set("RemainingMovement", 0);
 
-    
+
         GD.Print($"_triggerStun {TurnsLeftActive} turns left.");
     }
 
@@ -122,7 +124,4 @@ public partial class StatusEffect : Node2D
             _getEnemyTarget().TakeDamage(Damage, Element);
         }
     }
-
-    private Enemy _getEnemyTarget() => GetParent<Node2D>() as Enemy;
-
 }

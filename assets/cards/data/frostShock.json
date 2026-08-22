@@ -3,12 +3,13 @@
   "cost": 1,
   "element": "Water",
   "rarity": "Common",
-  "effectData": 
-  {
-    "effectType": "StatusEffect",
-    "statusType": "Slow",
-    "damage" : 1,
-    "dot": 0,
-    "turnsActive": 2
-  }
+  "effects": 
+  [
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Slow",
+      "turnsActive": 2,
+      "power": 2
+    }
+  ]
 }

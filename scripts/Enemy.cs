@@ -35,6 +35,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     private Node2D _target;
     private TurnManager _turnManager;
     private Sprite2D _sprite;
+    public bool isSlowed { get; set; }
 
     public bool IsStunned { get; set; }
 
@@ -71,7 +72,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             RemainingMovement = MoveDistance;
             HasAttackedThisTurn = false;
             
-
         }
 
         WasPathBlocked = false;

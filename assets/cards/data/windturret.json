@@ -20,7 +20,8 @@
 	  	  "effectType": "StatusEffect",
 	  	  "statusType": "Stun",
 	  	  "turnsActive": 1,
-		  "splashTiles": 0
+		  	"splashTiles": 0,
+				"power": 0
 		}
 	]
   }
