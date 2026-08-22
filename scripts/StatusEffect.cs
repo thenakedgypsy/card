@@ -28,11 +28,12 @@ public partial class StatusEffect : Node2D
         Damage = int.Parse(data["damage"].ToString());
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
-        StatusEffect.Type TypeName;
-        
+       
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
         InstantiateSprite();
+
+        GD.Print($"${TypeName}");
     }
 
     public void InstantiateSprite()
@@ -50,10 +51,10 @@ public partial class StatusEffect : Node2D
             switch (TypeName)
             {
                 case StatusEffect.Type.Burn:
-                    TriggerBurn();
+                    _triggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
-                //not sure what to do with slow - same as stun for now.
+                    _triggerSlow();
                     break;
                 case StatusEffect.Type.Confuse:
                     break;
@@ -74,15 +75,13 @@ public partial class StatusEffect : Node2D
         }
     }
 
-    public void TriggerBurn()
+    private void _triggerBurn()
     {
         Enemy parent = GetParent<Node2D>() as Enemy;
         if (parent.HasMethod("TakeDamage"))
         {
             parent.TakeDamage(Damage, Card.Element.Fire);
         }
-     
-        GD.Print($"ApplyBurn {Damage} damage. {TurnsLeftActive} turns left.");
     }
     private void _triggerStun()
     {
@@ -93,8 +92,17 @@ public partial class StatusEffect : Node2D
         }
    
         parent.MoveDistance = 0;
+    }
 
-        GD.Print($"_triggerStun {Damage} damage. {TurnsLeftActive} turns left.");
+    private void _triggerSlow()
+    {
+        Enemy parent = GetParent<Node2D>() as Enemy;
+        if (parent.HasMethod("TakeDamage"))
+        {
+            parent.TakeDamage(Damage, Element);
+        }
+   
+        parent.MoveDistance = 2;
     }
 
     private void _checkToRemoveStun()

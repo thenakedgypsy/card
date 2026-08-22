@@ -1,0 +1,13 @@
+{
+  "type": "Spell",
+  "cost": 1,
+  "element": "Water",
+  "rarity": "Common",
+  "effectData": 
+  {
+    "effectType": "StatusEffect",
+    "statusType": "Slow",
+    "damage" : 1,
+    "turnsActive": 2
+  }
+}
