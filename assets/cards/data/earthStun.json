@@ -3,11 +3,12 @@
   "cost": 1,
   "element": "Earth",
   "rarity": "Common",
-  "effectData": 
-  {
-    "effectType": "StatusEffect",
-    "statusType": "Stun",
-    "damage" : 1,
-    "turnsActive": 1
-  }
+  "effects":
+  [
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Stun",
+      "turnsActive": 1
+    }
+  ]
 }

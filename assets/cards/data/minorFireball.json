@@ -2,13 +2,19 @@
   "type": "Spell",
   "cost": 1,
   "element": "Fire",
-  "effectData": 
-  {
-    "effectType": "StatusEffect",
-    "statusType": "Burn",
-    "damage" : 2,
-    "turnsActive": 3,
-    "splashTiles" : 0
-
-  }
+  "effects": 
+  [
+    {
+      "effectType": "EnemyDamage",
+      "damage" : 2,
+      "splashTiles" : 0
+    },
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Burn",
+      "damage" : 2,
+      "turnsActive": 3,
+      "splashTiles" : 0    
+    }
+  ]
 }

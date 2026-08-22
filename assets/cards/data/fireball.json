@@ -3,10 +3,11 @@
   "cost": 1,
   "element": "Fire",
   "rarity": "Uncommon",
-  "effectData": 
-  {
-    "effectType": "EnemyDamage",
-    "damage": 4,
-    "splashTiles": 1
-  }
+  "effects": [
+    {
+      "effectType": "EnemyDamage",
+      "damage": 4,
+      "splashTiles": 1
+    }
+  ]
 }

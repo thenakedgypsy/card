@@ -9,11 +9,13 @@
     "health": 30,
     "range": 2,
     "attacksEnemies": true,
-    "effectData" :
+    "effects" : 
+    [
       {
         "effectType": "EnemyDamage",
         "damage": 4,
         "splashTiles": 1
       }
+    ]
   }
 }

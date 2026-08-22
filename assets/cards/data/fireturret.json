@@ -9,13 +9,14 @@
     "health": 30,
     "range": 1,
     "attacksEnemies": true,
-    "effectData" :
-    {
-      "effectType": "StatusEffect",
-      "damage": 3,
-      "statusType": "Burn",
-      "turnsActive": 5,
-      "splashTiles": 1
-    }
+    "effects":[
+      {
+        "effectType": "StatusEffect",
+        "damage": 3,
+        "statusType": "Burn",
+        "turnsActive": 5,
+        "splashTiles": 1
+      }
+    ]
   }
 }

@@ -25,12 +25,13 @@ public partial class StatusEffect : Node2D
 
     public void Setup(Godot.Collections.Dictionary<string, Variant> data, Card.Element ele)
     {
-        Damage = int.Parse(data["damage"].ToString());
+        
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
         
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
+        GD.Print("Status setup", data);
         InstantiateSprite();
     }
 
@@ -41,8 +42,20 @@ public partial class StatusEffect : Node2D
         sprite.Texture = texture;
     }
 
+    //handle anything that is needed when this is applied to the enemie
+    public void OnApplied()
+    {
+        switch (TypeName)
+        {
+            case Type.Stun:
+                _triggerStun();
+                break;
+        }
+    }
+
     public void TriggerStatusEffect()
     {
+        GD.Print("Triggering status");
         if (TurnsLeftActive > 0 )
         {
             TurnsLeftActive--;
@@ -68,7 +81,6 @@ public partial class StatusEffect : Node2D
         }
         else
         {
-            _checkToRemoveStun();
             QueueFree(); 
         }
     }
@@ -86,23 +98,11 @@ public partial class StatusEffect : Node2D
     private void _triggerStun()
     {
         Enemy parent = GetParent<Node2D>() as Enemy;
-        if (parent.HasMethod("TakeDamage"))
-        {
-            parent.TakeDamage(Damage, Element);
-        }
-   
+        //removed the damage from here. can be applied via a seperate effect. 
+        //using a bool rather than modulating.
+        parent.IsStunned = true;
         parent.MoveDistance = 0;
-
-        GD.Print($"_triggerStun {Damage} damage. {TurnsLeftActive} turns left.");
-    }
-
-    private void _checkToRemoveStun()
-    {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        if(TypeName == StatusEffect.Type.Stun)
-        {
-            //will need a variable outside of enemy to reset to OG value
-             parent.MoveDistance = 4;
-        }
+        parent.Set("RemainingMovement", 0);
+        GD.Print($"_triggerStun {TurnsLeftActive} turns left.");
     }
 }
