@@ -69,7 +69,8 @@ public static class CardTextBuilder
             var subEffects = effectData["effects"].AsGodotArray();
             if (subEffects.Count > 0)
             {
-                string combinedEffects = BuildSpellText(subEffects);
+                // Pass startsWithLower: true because the text follows "will "
+                string combinedEffects = BuildSpellText(subEffects, startsWithLower: true);
                 string suffix = GetTerm("summon_and_then")
                     .Replace("{name}", name)
                     .Replace("{effects}", combinedEffects);
@@ -81,15 +82,15 @@ public static class CardTextBuilder
         return baseText;
     }
 
-    private static string BuildSpellText(Array effectsArray)
+    private static string BuildSpellText(Array effectsArray, bool startsWithLower = false)
     {
         List<string> effectStrings = new List<string>();
 
         for (int i = 0; i < effectsArray.Count; i++)
         {
             var effect = effectsArray[i].AsGodotDictionary();
-            // Use lowercase variants for any effect after the first (index > 0)
-            bool isLower = i > 0;
+            // Use lowercase if it's the start of a "will ..." sentence OR if it's chained after "and then" (i > 0)
+            bool isLower = startsWithLower || i > 0;
             string effectText = ParseSingleEffect(effect, isLower);
             if (!string.IsNullOrEmpty(effectText))
             {
