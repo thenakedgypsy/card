@@ -1,7 +1,6 @@
 using Godot;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 public partial class CardEffect : Node2D
 {
@@ -15,36 +14,43 @@ public partial class CardEffect : Node2D
         DeckModify      
     }
 
-    public EffectType type;
     public Card.Element element;
-    public Godot.Collections.Dictionary<string, Variant> effectData;
     public string cardID;
-
-    public override void _Ready()
-    {
     
-    }
+    private Godot.Collections.Dictionary<string, Variant> _singleEffectData;
+    private List<Godot.Collections.Dictionary<string, Variant>> _effectsList = new();
+    private bool _isSummon = false;
 
+    // Called for Summons or single-object effects
     public void ConstructEffect(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string cardId)
     {
         element = ele;
-        effectData = data;
+        _singleEffectData = data;
         cardID = cardId;
         
-        // FIX: Use AsString() instead of ToString()
-        if (effectData.ContainsKey("effectType") &&
-            Enum.TryParse(effectData["effectType"].AsString(), out EffectType parsedElement))
-            type = parsedElement;
+        if (data.ContainsKey("effectType") && data["effectType"].AsString() == "Summon")
+        {
+            _isSummon = true;
+        }
+    }
+
+    // Called for multi-step Spell cards
+    public void ConstructSpellEffects(Card.Element ele, List<Godot.Collections.Dictionary<string, Variant>> effects, string cardId)
+    {
+        element = ele;
+        _effectsList = effects;
+        cardID = cardId;
+        _isSummon = false;
     }
 
     public void Trigger()
     {
-        if (type == EffectType.Summon)
+        if (_isSummon)
         {
             _Summon();
             QueueFree();
         }
-        if (type == EffectType.EnemyDamage || type == EffectType.StatusEffect)
+        else
         {
             _AttackEnemy();
             QueueFree();
@@ -53,51 +59,26 @@ public partial class CardEffect : Node2D
 
     private void _Summon()
     {
-        // FIX: Use AsString() instead of ToString()
-        string health = effectData["health"].AsString();
+        string health = _singleEffectData["health"].AsString();
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SummonSpawner.tscn");
         SummonSpawner spawner = scene.Instantiate() as SummonSpawner;
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;           
         mouse.AddChild(spawner);
         
-        spawner.Setup(element, effectData, cardID);
+        spawner.Setup(element, _singleEffectData, cardID);
         GD.Print($"Summoning a summon with {health} hp");
-           
     }
 
     private void _AttackEnemy()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
-
-        if (scene == null)
-        {
-            GD.Print("ERROR: SpellTargeter scene not found");
-            return;
-        }
-
+        if (scene == null) return;
 
         SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
-
-        if (targeter == null)
-        {
-            GD.Print("ERROR: Could not create SpellTargeter");
-            return;
-        }
-
-
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+        mouse?.AddChild(targeter);
 
-        if (mouse == null)
-        {
-            GD.Print("ERROR: Mouse not found");
-            return;
-        }
-
-        mouse.AddChild(targeter);
-
-        //pass down 
-        targeter.Setup(element, effectData, cardID, type);
-
-        GD.Print("SpellTargeter created");
+        // Pass the full array of spell effects to targeter
+        targeter.Setup(element, _effectsList, cardID);
     }
 }

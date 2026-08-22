@@ -5,15 +5,23 @@
   "rarity": "Common",
   "effectData": 
   {
-	  "effectType": "Summon",
-	  "health": 30,
-	  "range": 4,
-	  "attacksEnemies": true,
-	"effectData" :
-	{
-	  "effectType": "EnemyDamage",
-	  "damage": 6,
-	  "splashTiles": 1
-	}
+	"effectType": "Summon",
+	"health": 30,
+	"range": 4,
+	"attacksEnemies": true,
+	"effects" :
+	[
+		{
+		  "effectType": "EnemyDamage",
+		  "damage": 1,
+		  "splashTiles": 1
+		},
+		{
+	  	  "effectType": "StatusEffect",
+	  	  "statusType": "Stun",
+	  	  "turnsActive": 1,
+		  "splashTiles": 0
+		}
+	]
   }
 }
