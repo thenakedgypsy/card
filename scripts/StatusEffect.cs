@@ -28,6 +28,11 @@ public partial class StatusEffect : Node2D
         
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
+
+        if (data.ContainsKey("damage"))
+        {
+            Damage = data["damage"].ToString().ToInt();
+        }
         
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
