@@ -53,12 +53,15 @@ public partial class StatusEffect : Node2D
                     TriggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
+                //not sure what to do with slow - same as stun for now.
                     break;
                 case StatusEffect.Type.Confuse:
                     break;
                 case StatusEffect.Type.Haste:
                     break;
                 case StatusEffect.Type.Stun:
+
+                    _triggerStun();
                     break;
                 case StatusEffect.Type.Disarm:
                     break;
@@ -66,6 +69,7 @@ public partial class StatusEffect : Node2D
         }
         else
         {
+            _checkToRemoveStun();
             QueueFree(); 
         }
     }
@@ -79,5 +83,27 @@ public partial class StatusEffect : Node2D
         }
      
         GD.Print($"ApplyBurn {Damage} damage. {TurnsLeftActive} turns left.");
+    }
+    private void _triggerStun()
+    {
+        Enemy parent = GetParent<Node2D>() as Enemy;
+        if (parent.HasMethod("TakeDamage"))
+        {
+            parent.TakeDamage(Damage, Element);
+        }
+   
+        parent.MoveDistance = 0;
+
+        GD.Print($"_triggerStun {Damage} damage. {TurnsLeftActive} turns left.");
+    }
+
+    private void _checkToRemoveStun()
+    {
+        Enemy parent = GetParent<Node2D>() as Enemy;
+        if(TypeName == StatusEffect.Type.Stun)
+        {
+            //will need a variable outside of enemy to reset to OG value
+             parent.MoveDistance = 4;
+        }
     }
 }

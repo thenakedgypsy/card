@@ -169,6 +169,7 @@ public partial class TurnManager : Node
 
         foreach (var enemy in enemies)
         {
+            enemy.TryTriggerStatusEffect();
             OccupyCell(WorldToCell(enemy.GlobalPosition));
             enemy.ResetTurnState();
         }
@@ -177,9 +178,6 @@ public partial class TurnManager : Node
         
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
-            enemy.TryTriggerStatusEffect();
-            
-
             if (_playercore != null)
             {
                 await enemy.ExecuteAttackPhaseAsync(_playercore);
