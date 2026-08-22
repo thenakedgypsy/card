@@ -86,19 +86,24 @@ public partial class StatusEffect : Node2D
     }
     private void _triggerStun()
     {
-        target.TakeDamage(Damage);
+        Enemy parent = GetParent<Node2D>() as Enemy;
+        if (parent.HasMethod("TakeDamage"))
+        {
+            parent.TakeDamage(Damage, Element);
+        }
    
-        target.MoveDistance = 0;
+        parent.MoveDistance = 0;
 
         GD.Print($"_triggerStun {Damage} damage. {TurnsLeftActive} turns left.");
     }
 
     private void _checkToRemoveStun()
     {
+        Enemy parent = GetParent<Node2D>() as Enemy;
         if(TypeName == StatusEffect.Type.Stun)
         {
             //will need a variable outside of enemy to reset to OG value
-             target.MoveDistance = 4;
+             parent.MoveDistance = 4;
         }
     }
 }
