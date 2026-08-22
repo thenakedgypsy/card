@@ -7,8 +7,12 @@
   {
 	  "effectType": "Summon",
 	  "health": 30,
-	  "damage": 6,
 	  "range": 4,
-	  "attacksEnemies": true
+	  "attacksEnemies": true,
+	"effectData" :
+	{
+	  "effectType": "EnemyDamage",
+	  "damage": 6
+	}
   }
 }

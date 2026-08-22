@@ -9,6 +9,12 @@
     "health": 10,
     "damage": 5,
     "range": 20,
-    "attacksEnemies": true
+    "attacksEnemies": true,
+    "effectData": 
+    {
+      "effectType": "EnemyDamage",
+      "damage": 10
+    }
+    
   }
 }

@@ -74,7 +74,7 @@ public partial class FloatingDamageNumber : Node2D
         switch (damageElement)
         {
             case Card.Element.Earth:
-                return $"[center][color=#{Colors.Brown.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/brown.png[/img]";
+                return $"[center][color=#{Colors.Green.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/brown.png[/img]";
             case Card.Element.Wind:
                 return $"[center][color=#{Colors.White.ToHtml()}]{damageNumber} [img=16x16]res://assets/interface/pale.png[/img]";
             case Card.Element.Fire:

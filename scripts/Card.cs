@@ -135,6 +135,18 @@ public partial class Card : Node2D
             var effectDict = data["effectData"].AsGodotDictionary();
             foreach (var key in effectDict.Keys)
             {
+                if (key.ToString() == "effectData" && effectDict[key].VariantType == Variant.Type.Dictionary)
+                {
+                    var nestedEffectDict = effectDict[key].AsGodotDictionary();
+                    foreach (var nestedKey in nestedEffectDict.Keys)
+                    {
+                        string nestedPlaceholder = $"{{{nestedKey}}}";
+                        string nestedValueStr = nestedEffectDict[nestedKey].ToString();
+                        formattedText = formattedText.Replace(nestedPlaceholder, nestedValueStr);
+                    }
+                    continue;
+                }
+
                 string placeholder = $"{{{key}}}"; // Creates "{damage}", "{health}", etc.
                 string valueStr = effectDict[key].ToString();
                 formattedText = formattedText.Replace(placeholder, valueStr);
@@ -149,7 +161,7 @@ public partial class Card : Node2D
         if (data.ContainsKey("effectData"))
         {
             var effectDict = data["effectData"].AsGodotDictionary();
-            Dictionary<string, Variant> effectData = new Dictionary<string, Variant>();
+            Godot.Collections.Dictionary<string, Variant> effectData = new Godot.Collections.Dictionary<string, Variant>();
             
             foreach (var key in effectDict.Keys)
             {

@@ -23,7 +23,7 @@ public partial class StatusEffect : Node2D
 
     #pragma warning disable IDE0059 //this turns off annoying ide rule thats flagged here
 
-    public void Setup(Dictionary<string, Variant> data, Card.Element ele)
+    public void Setup(Godot.Collections.Dictionary<string, Variant> data, Card.Element ele)
     {
         Damage = int.Parse(data["damage"].ToString());
         Element = ele;

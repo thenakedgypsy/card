@@ -1,6 +1,6 @@
 using Godot;
+using Godot.Collections;
 using System;
-using System.Collections.Generic;
 using System.Threading.Tasks;
 
 public partial class Summon : Node2D, IHealth
@@ -14,7 +14,6 @@ public partial class Summon : Node2D, IHealth
 
 	public int Health;
 	public int CurrentHealth;
-	public int Damage;
 	public Card.Element Element;
 	private Sprite2D _sprite;
 	private HealthBar _healthBar;
@@ -22,6 +21,7 @@ public partial class Summon : Node2D, IHealth
 
 	private int _drawLineRequestId = 0;
 	private TurnManager _turnManager;
+	private Dictionary<string, Variant> _attackEffectData;
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -133,12 +133,37 @@ public partial class Summon : Node2D, IHealth
 	private void Attack(Enemy enemy)
 	{
 		if (!GodotObject.IsInstanceValid(enemy))
-			return;
+		        return;
 
-		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
-		FlashRed();		
-		DrawLineBetween(enemy.GlobalPosition, 5f);	
-		enemy.TakeDamage(AttackDamage, Element);				
+		    GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
+		    FlashRed();		
+		    DrawLineBetween(enemy.GlobalPosition, 5f);	
+
+		    // NEW: Trigger complex JSON effect if it exists
+		    if (_attackEffectData != null)
+		    {
+		        // Default to EnemyDamage, but parse from JSON if provided
+		        CardEffect.EffectType type = CardEffect.EffectType.EnemyDamage; 
+		        if (_attackEffectData.TryGetValue("effectType", out Variant typeVar) &&
+		            Enum.TryParse(typeVar.ToString(), out CardEffect.EffectType parsedType))
+		        {
+		            type = parsedType;
+		        }
+
+		        // Create the targeter to handle AoE / Status calculation
+		        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+		        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
+
+		        // Add to tree (using GetParent() or Mouse group to match your architecture)
+		        GetParent().AddChild(targeter);
+
+		        targeter.SetupAutoCast(Element, _attackEffectData, Name, type, enemy);
+		    }
+		    else
+		    {
+		        // Fallback to basic attack if no JSON effect is defined
+		        enemy.TakeDamage(AttackDamage, Element);				
+		    }				
 	}
 
 	private void EndTurn()
@@ -162,10 +187,24 @@ public partial class Summon : Node2D, IHealth
 		Element = ele;
 		Health = data["health"].ToString().ToInt();
 		CurrentHealth = Health;
-		AttackDamage = data["damage"].ToString().ToInt();
 		AttackRange = data["range"].ToString().ToInt();
 		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
 		Name = summonID;	
+
+        if (data.ContainsKey("effectData"))
+        {
+            var effectDict = data["effectData"].AsGodotDictionary();
+            Dictionary<string, Variant> effectData = new Dictionary<string, Variant>();
+            
+            foreach (var key in effectDict.Keys)
+            {
+                string name = key.ToString();
+                var valueVar = effectDict[key];
+                effectData.Add(name, valueVar);
+            }
+
+			_attackEffectData = effectData;
+        }
 
         string path = $"res://assets/summons/{summonID}.png";
 

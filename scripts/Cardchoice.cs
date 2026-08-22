@@ -52,7 +52,8 @@ public partial class Cardchoice : Node2D
             {
                 Seed = _overworld.Seed;
             }
-            string randomCardId = _cardPool.PullRandomCard(Seed);
+            Random random =  new Random();
+            string randomCardId = _cardPool.PullRandomCard(random.Next(Seed) + i);
 
             // Instantiate and set up the card
             Card newCard = CardPrefab.Instantiate() as Card;
