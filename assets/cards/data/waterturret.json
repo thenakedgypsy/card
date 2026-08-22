@@ -4,19 +4,16 @@
   "cost": 2,
   "element": "Water",
   "rarity": "Common",
-  "effectData": 
-  {
-    "effectType": "Summon",
-    "health": 30,
-    "range": 2,
-    "attacksEnemies": true,
-    "effects" : 
-    [
-      {
-        "effectType": "EnemyDamage",
-        "damage": 4,
-        "splashTiles": 1
-      }
-    ]
-  }
+  "effectType": "Summon",
+  "health": 30,
+  "range": 2,
+  "attacksEnemies": true,
+  "effects" : 
+  [
+    {
+      "effectType": "EnemyDamage",
+      "damage": 4,
+      "splashTiles": 1
+    }
+  ]
 }

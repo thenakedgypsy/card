@@ -125,30 +125,28 @@ public partial class Card : Node2D
 
         //----- Effect Data -----
 
-        if (data.ContainsKey("effects") || data.ContainsKey("effectData"))
+        if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
         {
             PackedScene scene = GD.Load<PackedScene>("res://prefabs/CardEffect.tscn");
             _effect = scene.Instantiate() as CardEffect;
             AddChild(_effect);
-            
-            // Check if card has an array of spell effects or is a single Summon effect
-            if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
+
+            if (type == CardType.Summon)
+            {
+                // Pass the top-level card dictionary so the spawner gets health, range, and effects
+                _effect.ConstructEffect(element, new Godot.Collections.Dictionary<string, Variant>(data), cardID);
+            }
+            else
             {
                 var rawEffects = data["effects"].AsGodotArray();
                 var effectsList = new List<Godot.Collections.Dictionary<string, Variant>>();
-                
+
                 foreach (var item in rawEffects)
                 {
                     effectsList.Add(item.AsGodotDictionary<string, Variant>());
                 }
-                
+
                 _effect.ConstructSpellEffects(element, effectsList, cardID);
-            }
-            else if (data["effectData"].VariantType == Variant.Type.Dictionary)
-            {
-                // Single effect fallback (e.g. Summon cards)
-                var effectDict = data["effectData"].AsGodotDictionary<string, Variant>();
-                _effect.ConstructEffect(element, effectDict, cardID);
             }
         }
     }

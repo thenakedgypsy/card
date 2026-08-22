@@ -172,24 +172,23 @@ public partial class Summon : Node2D, IHealth
 
 	public void Generate(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string summonID)
 	{
-		Element = ele;
-		Health = data["health"].ToString().ToInt();
-		CurrentHealth = Health;
-		AttackRange = data["range"].ToString().ToInt();
-		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
-		Name = summonID;	
-		GD.Print("Generating summon with data: ", data);
-
-
-		if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
-		{
-		    var rawEffects = data["effects"].AsGodotArray();
-		    foreach (var item in rawEffects)
-		    {
-		        _attackEffects.Add(item.AsGodotDictionary<string, Variant>());
-				GD.Print("Adding an effect to summon, ", item.AsGodotDictionary<string, Variant>());
-		    }
-		}
+	    Element = ele;
+	    Health = data.ContainsKey("health") ? data["health"].AsInt32() : 10;
+	    CurrentHealth = Health;
+	    AttackRange = data.ContainsKey("range") ? data["range"].AsInt32() : 1;
+	    AttacksEnemies = data.ContainsKey("attacksEnemies") && data["attacksEnemies"].AsBool();
+	    Name = summonID;
+	
+	    _attackEffects.Clear();
+	
+	    if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
+	    {
+	        var rawEffects = data["effects"].AsGodotArray();
+	        foreach (var item in rawEffects)
+	        {
+	            _attackEffects.Add(item.AsGodotDictionary<string, Variant>());
+	        }
+	    }
 		else
 		{
 			GD.PushWarning($"Summon missing effects[] in {summonID} json");

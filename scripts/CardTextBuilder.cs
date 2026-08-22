@@ -31,20 +31,16 @@ public static class CardTextBuilder
         LoadTerms();
 
         string dataPath = $"res://assets/cards/data/{cardID}.json";
-
         var data = LoadJson(dataPath);
 
         if (data == null) return string.Empty;
 
-        string cardName = data != null && data.ContainsKey("name") 
-            ? data["name"].ToString() 
-            : "Unit";
-
+        string cardName = data.ContainsKey("name") ? data["name"].ToString() : "Unit";
         string cardType = data.ContainsKey("type") ? data["type"].ToString() : "";
 
-        if (cardType == "Summon" && data.ContainsKey("effectData"))
+        if (cardType == "Summon")
         {
-            return BuildSummonText(cardName, data["effectData"].AsGodotDictionary());
+            return BuildSummonText(cardName, data);
         }
         else if (data.ContainsKey("effects"))
         {
@@ -54,23 +50,24 @@ public static class CardTextBuilder
         return string.Empty;
     }
 
-    private static string BuildSummonText(string name, Dictionary effectData)
+    private static string BuildSummonText(string name, Dictionary data)
     {
-        int health = effectData.ContainsKey("health") ? (int)effectData["health"] : 0;
-        int range = effectData.ContainsKey("range") ? (int)effectData["range"] : 0;
+        // Read directly from the root data dictionary now instead of nested effectData
+        int health = data.ContainsKey("health") ? (int)data["health"] : 0;
+        int range = data.ContainsKey("range") ? (int)data["range"] : 0;
 
         string baseText = GetTerm("summon_base")
             .Replace("{name}", name)
             .Replace("{health}", health.ToString())
             .Replace("{range}", range.ToString());
 
-        if (effectData.ContainsKey("effects") && effectData["effects"].VariantType == Variant.Type.Array)
+        if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
         {
-            var subEffects = effectData["effects"].AsGodotArray();
-            if (subEffects.Count > 0)
+            var effects = data["effects"].AsGodotArray();
+            if (effects.Count > 0)
             {
-                // Pass startsWithLower: true because the text follows "will "
-                string combinedEffects = BuildSpellText(subEffects, startsWithLower: true);
+                // Pass startsWithLower: true because the sentence flows into "will ..."
+                string combinedEffects = BuildSpellText(effects, startsWithLower: true);
                 string suffix = GetTerm("summon_and_then")
                     .Replace("{name}", name)
                     .Replace("{effects}", combinedEffects);
@@ -89,7 +86,7 @@ public static class CardTextBuilder
         for (int i = 0; i < effectsArray.Count; i++)
         {
             var effect = effectsArray[i].AsGodotDictionary();
-            // Use lowercase if it's the start of a "will ..." sentence OR if it's chained after "and then" (i > 0)
+            // Use lowercase if it's the start of a "will ..." clause OR chained via "and then"
             bool isLower = startsWithLower || i > 0;
             string effectText = ParseSingleEffect(effect, isLower);
             if (!string.IsNullOrEmpty(effectText))
