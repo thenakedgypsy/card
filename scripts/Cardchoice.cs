@@ -42,9 +42,18 @@ public partial class Cardchoice : Node2D
     {
         for (int i = 0; i < 3; i++)
         {
+            int Seed;
             // Use your unfinished PullRandomCard method
-            int randomSeed = (int)GD.Randi();
-            string randomCardId = _cardPool.PullRandomCard(randomSeed);
+            if (_overworld.Seed == 0)
+            {
+                Seed = (int)GD.Randi();
+            }
+            else
+            {
+                Seed = _overworld.Seed;
+            }
+            Random random =  new Random();
+            string randomCardId = _cardPool.PullRandomCard(random.Next(Seed) + i);
 
             // Instantiate and set up the card
             Card newCard = CardPrefab.Instantiate() as Card;

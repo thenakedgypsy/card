@@ -7,7 +7,7 @@ public partial class SummonSpawner : Node2D
 
     private Sprite2D _sprite;
     private Summon _summon;
-    private Dictionary<string, Variant> _data;
+    private Godot.Collections.Dictionary<string, Variant> _data;
     private string _summonID;
     private Card.Element _element;
     private bool _readyToPlace;
@@ -77,7 +77,7 @@ public partial class SummonSpawner : Node2D
         await ToSignal(tween, Tween.SignalName.Finished);
     }
 
-    public void Setup(Card.Element ele, Dictionary<string, Variant> data, string summonID)
+    public void Setup(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string summonID)
     {
         _sprite = GetNode<Sprite2D>("Sprite2D");
         string path = $"res://assets/summons/{summonID}.png";
@@ -110,7 +110,7 @@ public partial class SummonSpawner : Node2D
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/Summon.tscn");
         Summon summon = scene.Instantiate() as Summon;
         _board.AddChild(summon);
-        summon.Generate(_element, _data, _summonID);
+        summon.Generate(_element, new Godot.Collections.Dictionary<string, Variant>(_data), _summonID);
 
         Vector2I cell = _turnManager.WorldToCell(GlobalPosition);
         summon.GlobalPosition = _turnManager.CellToWorld(cell);

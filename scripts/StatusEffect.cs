@@ -19,18 +19,27 @@ public partial class StatusEffect : Node2D
 
     public int TurnsLeftActive;
 
-    public StatusEffect.Type TypeName;
+    public Type TypeName;
 
-    private Enemy target;
+    #pragma warning disable IDE0059 //this turns off annoying ide rule thats flagged here
 
-    public void Setup(Dictionary<string, Variant> data, Card.Element ele, Enemy enemyTarget)
+    public void Setup(Godot.Collections.Dictionary<string, Variant> data, Card.Element ele)
     {
         Damage = int.Parse(data["damage"].ToString());
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
+        StatusEffect.Type TypeName;
+        
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
-        target = enemyTarget;
+        InstantiateSprite();
+    }
+
+    public void InstantiateSprite()
+    {
+        Sprite2D sprite = GetNode<Sprite2D>("Sprite2D");
+        Texture2D texture = GD.Load<Texture2D>($"res://assets/icons/{TypeName}.png");
+        sprite.Texture = texture;
     }
 
     public void TriggerStatusEffect()
@@ -67,10 +76,10 @@ public partial class StatusEffect : Node2D
 
     public void TriggerBurn()
     {
-        Node2D parent = GetParent<Node2D>();
+        Enemy parent = GetParent<Node2D>() as Enemy;
         if (parent.HasMethod("TakeDamage"))
         {
-            parent.Call("TakeDamage", Damage);
+            parent.TakeDamage(Damage, Card.Element.Fire);
         }
      
         GD.Print($"ApplyBurn {Damage} damage. {TurnsLeftActive} turns left.");

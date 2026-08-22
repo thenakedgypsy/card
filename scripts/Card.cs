@@ -34,6 +34,7 @@ public partial class Card : Node2D
     // Removed Hand and Discard node references here
     private Sprite2D _art;
     private Sprite2D _frame;
+    private Sprite2D _rarityFrame;
     private RichTextLabel _title;
     private RichTextLabel _costDisplay;
     private RichTextLabel _text;
@@ -42,6 +43,7 @@ public partial class Card : Node2D
     private EnergyManager _energyManager;
     private CardEffect _effect;
     private Rarity _rarity;
+    private ShaderMaterial _rarityShader;
     
 
     public override void _Ready()
@@ -58,7 +60,8 @@ public partial class Card : Node2D
         _costDisplay = GetNode<RichTextLabel>("Cost");
         _typeDisplay = GetNode<RichTextLabel>("Type");
         _frame = GetNode<Sprite2D>("Frame");
-        
+        _rarityFrame = GetNode<Sprite2D>("Rarity");
+      
         _title.Text = cardName = "Uninstantiated Card";
     }
     
@@ -132,6 +135,18 @@ public partial class Card : Node2D
             var effectDict = data["effectData"].AsGodotDictionary();
             foreach (var key in effectDict.Keys)
             {
+                if (key.ToString() == "effectData" && effectDict[key].VariantType == Variant.Type.Dictionary)
+                {
+                    var nestedEffectDict = effectDict[key].AsGodotDictionary();
+                    foreach (var nestedKey in nestedEffectDict.Keys)
+                    {
+                        string nestedPlaceholder = $"{{{nestedKey}}}";
+                        string nestedValueStr = nestedEffectDict[nestedKey].ToString();
+                        formattedText = formattedText.Replace(nestedPlaceholder, nestedValueStr);
+                    }
+                    continue;
+                }
+
                 string placeholder = $"{{{key}}}"; // Creates "{damage}", "{health}", etc.
                 string valueStr = effectDict[key].ToString();
                 formattedText = formattedText.Replace(placeholder, valueStr);
@@ -146,7 +161,7 @@ public partial class Card : Node2D
         if (data.ContainsKey("effectData"))
         {
             var effectDict = data["effectData"].AsGodotDictionary();
-            Dictionary<string, Variant> effectData = new Dictionary<string, Variant>();
+            Godot.Collections.Dictionary<string, Variant> effectData = new Godot.Collections.Dictionary<string, Variant>();
             
             foreach (var key in effectDict.Keys)
             {
@@ -169,8 +184,28 @@ public partial class Card : Node2D
 
         Texture2D texture = GD.Load<Texture2D>(path);
         Texture2D frame = GD.Load<Texture2D>($"res://assets/cards/cardFrames/{element}.png");
+        Texture2D rarityFrameTexture = GD.Load<Texture2D>($"res://assets/cards/cardFrames/rarityFrames/Common.png");
+
         _art.Texture = texture;
         _frame.Texture = frame;
+        _rarityFrame.Texture = rarityFrameTexture;
+        int presetIndex = _rarity switch
+        {
+            Rarity.Common => 1,
+            Rarity.Uncommon => 2,
+            Rarity.Rare => 3,
+            Rarity.Epic => 4,
+            Rarity.Legendary => 5,
+            _ => 1
+        };
+
+        if (_rarityFrame.Material is ShaderMaterial shaderMat)
+        {
+            _rarityShader = (ShaderMaterial)shaderMat.Duplicate();
+            _rarityFrame.Material = _rarityShader;
+        }
+        GD.Print("Adding shader to frame at rarity ", presetIndex);
+        _rarityShader.SetShaderParameter("rarity_preset", presetIndex);
     }
 
     // =========================

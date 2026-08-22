@@ -1,14 +1,21 @@
 {
   "type": "Summon",
-  "cost": 2,
+  "cost": 1,
   "element": "Fire",
-  "rarity": "Common",
+  "rarity": "Rare",
   "effectData": 
   {
     "effectType": "Summon",
     "health": 30,
-    "damage": 10,
     "range": 1,
-    "attacksEnemies": true
+    "attacksEnemies": true,
+    "effectData" :
+    {
+      "effectType": "StatusEffect",
+      "damage": 3,
+      "statusType": "Burn",
+      "turnsActive": 5,
+      "splashTiles": 1
+    }
   }
 }

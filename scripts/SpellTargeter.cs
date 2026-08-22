@@ -7,7 +7,9 @@ public partial class SpellTargeter : Node2D
     private Sprite2D _sprite;
 
     private CardEffect.EffectType _effectType;
-    private Dictionary<string, Variant> _data;
+    
+    // FIX: Explicitly use Godot.Collections.Dictionary to resolve casting mismatch with Summon.cs
+    private Godot.Collections.Dictionary<string, Variant> _data;
     private string _cardID;
     private Card.Element _element;
 
@@ -103,7 +105,8 @@ public partial class SpellTargeter : Node2D
         }
     }
 
-    public void Setup(Card.Element ele, Dictionary<string, Variant> data, string cardID, CardEffect.EffectType type)
+    // FIX: Match parameter type to Godot.Collections.Dictionary
+    public void Setup(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string cardID, CardEffect.EffectType type)
     {
         _sprite = GetNode<Sprite2D>("Sprite2D");
 
@@ -120,7 +123,8 @@ public partial class SpellTargeter : Node2D
 
         if (_data.TryGetValue("splashTiles", out Variant splash))
         {
-            _splashTiles = int.Parse(_data["splashTiles"].ToString());
+            // FIX: Cast Variant directly to int instead of string parsing
+            _splashTiles = splash.AsInt32();
         }
 
         ZIndex = 3;
@@ -159,9 +163,6 @@ public partial class SpellTargeter : Node2D
                     int screenX = Mathf.Abs(dx - dy);
                     int screenY = Mathf.Abs(dx + dy);
                     int dist = (screenX + screenY) / 2;
-
-                    // NOTE: If you want an 8-directional box AoE instead of a diamond, replace 'dist' with:
-                    // int dist = Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
                     
                     if (dist <= _splashTiles)
                     {
@@ -179,7 +180,8 @@ public partial class SpellTargeter : Node2D
         int damage = 0;
         if (_effectType == CardEffect.EffectType.EnemyDamage && _data.ContainsKey("damage"))
         {
-            damage = int.Parse(_data["damage"].ToString());
+            // FIX: Cast Variant directly to int
+            damage = _data["damage"].AsInt32();
         }
 
         PackedScene statusScene = null;
@@ -196,7 +198,7 @@ public partial class SpellTargeter : Node2D
             {
                 case CardEffect.EffectType.EnemyDamage:
                     GD.Print($"Casting {_cardID} on {target.Name} for {damage} damage");
-                    target.TakeDamage(damage);
+                    target.TakeDamage(damage, _element);
                     break;
                     
                 case CardEffect.EffectType.StatusEffect:
@@ -230,5 +232,32 @@ public partial class SpellTargeter : Node2D
         tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
 
         await ToSignal(tween, Tween.SignalName.Finished);
+    }
+
+    // FIX: Match parameter type to Godot.Collections.Dictionary
+    public void SetupAutoCast(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string cardID, CardEffect.EffectType type, Enemy primaryTarget)
+    {
+        // Setup the data just like normal
+        _data = data;
+        _cardID = cardID;
+        _element = ele;
+        _effectType = type;
+    
+        if (_data != null && _data.TryGetValue("splashTiles", out Variant splash))
+        {
+            // FIX: Cast Variant directly to int
+            _splashTiles = splash.AsInt32();
+        }
+    
+        // Disable mouse processing since this is AI driven
+        _readyToTarget = false; 
+        
+        // Hide the reticle sprite since the player isn't aiming it
+        _sprite = GetNodeOrNull<Sprite2D>("Sprite2D");
+        if (_sprite != null) _sprite.Visible = false;
+    
+        // Immediately calculate AoE and cast
+        HashSet<Enemy> targets = GetAoETargets(primaryTarget);
+        Cast(targets);
     }
 }

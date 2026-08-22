@@ -2,13 +2,19 @@
   "type": "Summon",
   "cost": 1,
   "element": "Earth",
-  "rarity": "Common",
+  "rarity": "Epic",
   "effectData": 
   {
     "effectType": "Summon",
     "health": 10,
     "damage": 5,
-    "range": 35,
-    "attacksEnemies": true
+    "range": 20,
+    "attacksEnemies": true,
+    "effectData": 
+    {
+      "effectType": "EnemyDamage",
+      "damage": 10
+    }
+    
   }
 }

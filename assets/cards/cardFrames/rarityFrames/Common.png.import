@@ -2,20 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-<<<<<<< HEAD
-uid="uid://ccykqd52a7o3o"
-=======
-uid="uid://8crswdh6hi6k"
->>>>>>> main
-path="res://.godot/imported/earthStun.png-7e65c6944940e786e77e583c67e13e0b.ctex"
+uid="uid://bc7iual8ck5c5"
+path="res://.godot/imported/Common.png-7e6f115431a4fa31fe614d0f1b20148d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/cards/art/earthStun.png"
-dest_files=["res://.godot/imported/earthStun.png-7e65c6944940e786e77e583c67e13e0b.ctex"]
+source_file="res://assets/cards/cardFrames/rarityFrames/Common.png"
+dest_files=["res://.godot/imported/Common.png-7e6f115431a4fa31fe614d0f1b20148d.ctex"]
 
 [params]
 

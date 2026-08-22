@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -331,15 +332,16 @@ public partial class Enemy : CharacterBody2D, IHealth
     public float GetMaxHealth() => Health;
     public float GetCurrentHealth() => CurrentHealth;
 
-    public void TakeDamage(int value)
+    public void TakeDamage(int value, Card.Element element)
     {
         CurrentHealth -= value;
         GD.Print($"Enemy {Name} takes {value} damage");
 
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/floating_damage_number.tscn");
         FloatingDamageNumber fdn = scene.Instantiate() as FloatingDamageNumber;
-        AddChild(fdn);
-        fdn.Appear(value);       
+        GetParent().AddChild(fdn);
+        fdn.GlobalPosition = GlobalPosition;
+        fdn.Appear(value, element);       
         FlashRed();
 
         if (CurrentHealth <= 0)
@@ -352,6 +354,13 @@ public partial class Enemy : CharacterBody2D, IHealth
             SetProcess(false);
             SetPhysicsProcess(false);
             SetDeferred("monitoring", false);
+
+            // Hide sprite so the enemy model disappears immediately, leaving only the floating text -- we can have a death anim here 
+            if (_sprite != null && GodotObject.IsInstanceValid(_sprite))
+            {
+                _sprite.Visible = false;
+            }
+
             CallDeferred(Node.MethodName.QueueFree);
         }
     }

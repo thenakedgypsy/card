@@ -17,7 +17,7 @@ public partial class CardEffect : Node2D
 
     public EffectType type;
     public Card.Element element;
-    public Dictionary<string, Variant> effectData;
+    public Godot.Collections.Dictionary<string, Variant> effectData;
     public string cardID;
 
     public override void _Ready()
@@ -25,13 +25,15 @@ public partial class CardEffect : Node2D
     
     }
 
-    public void ConstructEffect(Card.Element ele, Dictionary<string, Variant> data, string cardId)
+    public void ConstructEffect(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string cardId)
     {
         element = ele;
         effectData = data;
         cardID = cardId;
+        
+        // FIX: Use AsString() instead of ToString()
         if (effectData.ContainsKey("effectType") &&
-            Enum.TryParse(effectData["effectType"].ToString(), out EffectType parsedElement))
+            Enum.TryParse(effectData["effectType"].AsString(), out EffectType parsedElement))
             type = parsedElement;
     }
 
@@ -51,7 +53,8 @@ public partial class CardEffect : Node2D
 
     private void _Summon()
     {
-        string health = effectData["health"].ToString();
+        // FIX: Use AsString() instead of ToString()
+        string health = effectData["health"].AsString();
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SummonSpawner.tscn");
         SummonSpawner spawner = scene.Instantiate() as SummonSpawner;
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;           

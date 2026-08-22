@@ -1,0 +1,4 @@
+{
+  "name": "Major Fireball",
+  "text": "Deal {damage} damage, every turn for {turnsActive} turns at AOE {splashTiles}."
+}

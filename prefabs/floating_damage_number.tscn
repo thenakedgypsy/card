@@ -5,6 +5,7 @@
 [sub_resource type="RichTextEffect" id="RichTextEffect_cwj4j"]
 
 [node name="FloatingDamageNumber" type="Node2D"]
+z_index = 4
 script = ExtResource("1_ctp2a")
 
 [node name="RichTextLabel" type="RichTextLabel" parent="."]

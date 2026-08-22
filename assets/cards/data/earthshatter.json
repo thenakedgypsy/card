@@ -2,7 +2,7 @@
   "type": "Spell",
   "cost": 4,
   "element": "Earth",
-  "rarity": "Rare",
+  "rarity": "Epic",
   "effectData": 
   {
     "effectType": "EnemyDamage",

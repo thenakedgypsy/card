@@ -1,4 +1,4 @@
 {
   "name": "Fire Turret",
-  "text": "Summon a fire turret \n Damage: {damage}\n Health: {health}\n Range: {range}"
+  "text": "Summon a fire turret \n Applies: {damage} burn for {turnsActive} turns\n Health: {health}\n Range: {range}"
 }

@@ -25,6 +25,7 @@ public partial class NodeGenerator : Node2D
         _overworld = GetParent<Overworld>();
         if (_overworld != null)
         {
+            _overworld.GenerateSeed();
             _rng.Seed = (ulong)_overworld.Seed;
         }
         else

@@ -305,7 +305,7 @@ public partial class TurnManager : Node
             _summonsActing++;
             _summonsStarted++;
             summon.TurnFinished += OnSummonFinishedTurn;
-            summon.TakeTurn();
+            await summon.TakeTurn();
         }
     }
 
