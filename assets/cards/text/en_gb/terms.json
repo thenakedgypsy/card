@@ -1,0 +1,17 @@
+{
+  "summon_base": "Summon a {name} with {health} Health and {range} Range.",
+  "summon_base_lower": "summon a {name} with {health} Health and {range} Range.",
+  "summon_and_then": " The {name} will {effects}.",
+  "and": " and then ",
+  "enemy_damage": "Deal {damage} damage",
+  "enemy_damage_lower": "deal {damage} damage",
+  "splash_area": " in a {splashTiles} splash area",
+  "status_effect": "Apply {statusType} to a single target for {turnsActive} turn",
+  "status_effect_lower": "apply {statusType} to a single target for {turnsActive} turn",
+  "status_effect_plural": "Apply {statusType} to a single target for {turnsActive} turns",
+  "status_effect_plural_lower": "apply {statusType} to a single target for {turnsActive} turns",
+  "burn_status": "Deal {damage} Burn damage for {turnsActive} turn",
+  "burn_status_lower": "deal {damage} Burn damage for {turnsActive} turn",
+  "burn_status_plural": "Deal {damage} Burn damage for {turnsActive} turns",
+  "burn_status_plural_lower": "deal {damage} Burn damage for {turnsActive} turns"
+}

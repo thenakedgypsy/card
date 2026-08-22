@@ -78,15 +78,14 @@ public partial class Card : Node2D
     }
 
     private void InstantiateData(string cardID)
-    {
-        // ... (Keep EXACTLY as it was in your original code) ...
-        // Everything inside your existing InstantiateData remains the same.
-        string textPath = $"res://assets/cards/text/en_gb/{cardID}.json";       //lang stuffs
+    {     //lang stuffs
         string dataPath = $"res://assets/cards/data/{cardID}.json";
+
+        
 
         // Load both JSON files
         var data = LoadJson(dataPath);
-        var textData = LoadJson(textPath);
+
 
         if (data == null)
         {
@@ -94,11 +93,6 @@ public partial class Card : Node2D
             return;
         }
 
-        if (textData == null)
-        {
-            GD.PrintErr($"Missing card text: {textPath}");
-            return;
-        }
 
         // ===== Gameplay data =====
 
@@ -124,19 +118,10 @@ public partial class Card : Node2D
 
         // ===== Text data =====
 
-        cardName = textData.ContainsKey("name") ? textData["name"].ToString() : "Unnamed";
+        cardName = data.ContainsKey("name") ? data["name"].ToString() : "Unnamed";
         _title.Text = cardName;
         
-        string formattedText = textData.ContainsKey("text") ? textData["text"].ToString() : "";
-        
-        // Replace placeholders from either the root effects array or nested effect data.
-        if (data.ContainsKey("effects"))
-            formattedText = ReplacePlaceholders(formattedText, data["effects"]);
-        if (data.ContainsKey("effectData"))
-            formattedText = ReplacePlaceholders(formattedText, data["effectData"]);
-           
-        // Assign to RichTextLabel
-        _text.Text = formattedText;
+        _text.Text = CardTextBuilder.BuildCardText(cardID);
 
         //----- Effect Data -----
 

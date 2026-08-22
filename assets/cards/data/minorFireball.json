@@ -1,4 +1,5 @@
 {
+  "name": "Minor Fireball",
   "type": "Spell",
   "cost": 1,
   "element": "Fire",

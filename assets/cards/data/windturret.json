@@ -1,4 +1,5 @@
 {
+  "name": "Wind Turret",
   "type": "Summon",
   "cost": 1,
   "element": "Wind",

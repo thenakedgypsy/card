@@ -1,4 +1,5 @@
 {
+  "name": "Earth Turret",
   "type": "Summon",
   "cost": 1,
   "element": "Earth",
