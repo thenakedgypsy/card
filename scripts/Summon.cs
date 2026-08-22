@@ -125,13 +125,13 @@ public partial class Summon : Node2D, IHealth
 
 		if (nearestEnemy != null && minDistance <= AttackRange)
 		{
-			Attack(nearestEnemy);
+			await Attack(nearestEnemy);
 		}
 
 		EndTurn();
 	}
 
-	private void Attack(Enemy enemy)
+	private async Task Attack(Enemy enemy)
 	{
 	    if (!GodotObject.IsInstanceValid(enemy)) return;
 
@@ -145,7 +145,8 @@ public partial class Summon : Node2D, IHealth
 	        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
 
 	        GetParent().AddChild(targeter);
-	        targeter.SetupAutoCast(Element, _attackEffects, Name, enemy);
+	        await targeter.SetupAutoCast(Element, _attackEffects, Name, enemy);
+			GD.Print("Autocasting ", _attackEffects);
 	    }
 	    else
 	    {
@@ -177,23 +178,21 @@ public partial class Summon : Node2D, IHealth
 		AttackRange = data["range"].ToString().ToInt();
 		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
 		Name = summonID;	
+		GD.Print("Generating summon with data: ", data);
 
-		if (data.ContainsKey("effectData"))
+
+		if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
 		{
-		    var effectDict = data["effectData"].AsGodotDictionary();
-
-		    if (effectDict.ContainsKey("effects") && effectDict["effects"].VariantType == Variant.Type.Array)
+		    var rawEffects = data["effects"].AsGodotArray();
+		    foreach (var item in rawEffects)
 		    {
-		        var rawEffects = effectDict["effects"].AsGodotArray();
-		        foreach (var item in rawEffects)
-		        {
-		            _attackEffects.Add(item.AsGodotDictionary<string, Variant>());
-		        }
+		        _attackEffects.Add(item.AsGodotDictionary<string, Variant>());
+				GD.Print("Adding an effect to summon, ", item.AsGodotDictionary<string, Variant>());
 		    }
-		    else if (effectDict.ContainsKey("effectData") && effectDict["effectData"].VariantType == Variant.Type.Dictionary)
-		    {
-		        _attackEffects.Add(effectDict["effectData"].AsGodotDictionary<string, Variant>());
-		    }
+		}
+		else
+		{
+			GD.PushWarning($"Summon missing effects[] in {summonID} json");
 		}
 
         string path = $"res://assets/summons/{summonID}.png";

@@ -10,11 +10,13 @@
     "damage": 5,
     "range": 20,
     "attacksEnemies": true,
-    "effectData": 
-    {
-      "effectType": "StatusEffect",
-      "damage": 10
-    }
+    "effects": 
+    [
+      {
+        "effectType": "EnemyDamage",
+        "damage": 10
+      }
+    ]
     
   }
 }

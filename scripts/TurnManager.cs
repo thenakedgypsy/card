@@ -169,9 +169,10 @@ public partial class TurnManager : Node
 
         foreach (var enemy in enemies)
         {
-            enemy.TryTriggerStatusEffect();
-            OccupyCell(WorldToCell(enemy.GlobalPosition));
+            OccupyCell(WorldToCell(enemy.GlobalPosition));         
             enemy.ResetTurnState();
+            enemy.TryTriggerStatusEffect();
+            
         }
 
         await ExecuteEnemyTurnPhase(enemies);

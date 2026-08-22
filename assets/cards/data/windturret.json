@@ -13,13 +13,14 @@
 	[
 		{
 		  "effectType": "EnemyDamage",
-		  "damage": 6,
+		  "damage": 1,
 		  "splashTiles": 1
 		},
 		{
-		  "effectType": "StatusEffect",
-		  "statusType": "Stun",
-		  "turnsActive": 2
+	  	  "effectType": "StatusEffect",
+	  	  "statusType": "Stun",
+	  	  "turnsActive": 1,
+		  "splashTiles": 0
 		}
 	]
   }

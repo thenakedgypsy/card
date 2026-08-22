@@ -3,10 +3,12 @@
   "cost": 4,
   "element": "Earth",
   "rarity": "Epic",
-  "effectData": 
-  {
-    "effectType": "EnemyDamage",
-    "damage": 12,
-    "splashTiles": 2
-  }
+  "effects":
+  [
+    {
+      "effectType": "EnemyDamage",
+      "damage": 12,
+      "splashTiles": 2
+    }
+  ]
 }

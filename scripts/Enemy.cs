@@ -16,7 +16,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     [Export] public float HopHeight = 8f;
 
     [ExportGroup("Main Settings")]
-    [Export] public int MoveDistance = 4;
+    public int MoveDistance = 4;
+    [Export] public int DefaultMoveDistance = 4;
     [Export] public int Health = 10;
     public int CurrentHealth;
     [Export] public int AttackDamage = 1;
@@ -34,6 +35,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     private Node2D _target;
     private TurnManager _turnManager;
     private Sprite2D _sprite;
+
+    public bool IsStunned { get; set; }
 
     // Split hover states to avoid race conditions between Mouse.cs and SpellTargeter.cs
     private bool _isMouseHovered = false;
@@ -58,14 +61,39 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         if (resetMovement)
         {
+            // Only reset stun if no active StatusEffect child exists
+            if (!HasActiveStunEffects())
+            {
+                IsStunned = false;
+                MoveDistance = DefaultMoveDistance;
+            }
+
             RemainingMovement = MoveDistance;
             HasAttackedThisTurn = false;
+            
+
         }
 
         WasPathBlocked = false;
         _plannedPath.Clear();
         _reservedCell = null;
         SetBlockedVisualState(false);
+    }
+
+    private bool HasActiveStunEffects()
+    {
+        foreach (Node child in GetChildren())
+        {
+            if (child is StatusEffect)
+            {
+                StatusEffect status = child as StatusEffect;
+                if (status.TypeName == StatusEffect.Type.Stun)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     // --- STEP 1: POSITION CALCULATIONS ---
@@ -75,7 +103,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         _plannedPath.Clear();
         WasPathBlocked = false;
 
-        if (RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
+        if (IsStunned || RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
 
         Vector2I myCell = _turnManager.WorldToCell(GlobalPosition);
@@ -213,7 +241,7 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public async Task ExecuteAttackPhaseAsync(Node2D playerCore)
     {
-        if (HasAttackedThisTurn || CurrentHealth <= 0 || !IsInstanceValid(this))
+        if (IsStunned || HasAttackedThisTurn || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
 
         Node2D attackTarget = GetTargetToAttack(playerCore);
@@ -355,7 +383,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             SetPhysicsProcess(false);
             SetDeferred("monitoring", false);
 
-            // Hide sprite so the enemy model disappears immediately, leaving only the floating text -- we can have a death anim here 
             if (_sprite != null && GodotObject.IsInstanceValid(_sprite))
             {
                 _sprite.Visible = false;
@@ -371,14 +398,12 @@ public partial class Enemy : CharacterBody2D, IHealth
         UpdateVisualState();
     }
 
-    // Called by SpellTargeter for AoE targeting
     public void SetHovered(bool hovered)
     {
         _isAoEHovered = hovered;
         UpdateVisualState();
     }
 
-    // Called by Mouse.cs for direct mouse hover
     public void SetMouseHovered(bool hovered)
     {
         _isMouseHovered = hovered;

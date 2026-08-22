@@ -1,6 +1,7 @@
 using Godot;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 public partial class SpellTargeter : Node2D
 {
@@ -49,7 +50,6 @@ public partial class SpellTargeter : Node2D
         _cardID = cardID;
         _element = ele;
 
-        // Check splash radius off the first effect (if configured)
         if (_effects.Count > 0 && _effects[0].TryGetValue("splashTiles", out Variant splash))
         {
             _splashTiles = splash.AsInt32();
@@ -59,7 +59,7 @@ public partial class SpellTargeter : Node2D
         _readyToTarget = true;
     }
 
-    public void SetupAutoCast(Card.Element ele, List<Godot.Collections.Dictionary<string, Variant>> effects, string cardID, Enemy primaryTarget)
+    public async Task SetupAutoCast(Card.Element ele, List<Godot.Collections.Dictionary<string, Variant>> effects, string cardID, Enemy primaryTarget)
     {
         _effects = effects;
         _cardID = cardID;
@@ -76,7 +76,7 @@ public partial class SpellTargeter : Node2D
         if (_sprite != null) _sprite.Visible = false;
 
         HashSet<Enemy> targets = GetAoETargets(primaryTarget);
-        _ = CastAsync(targets);
+        await CastAsync(targets);
     }
 
     private void CheckInput()
@@ -104,7 +104,6 @@ public partial class SpellTargeter : Node2D
 
         PackedScene statusScene = GD.Load<PackedScene>("res://prefabs/statusEffect.tscn");
 
-        // Loop through all effects in sequence
         for (int i = 0; i < _effects.Count; i++)
         {
             var effectData = _effects[i];
@@ -118,6 +117,7 @@ public partial class SpellTargeter : Node2D
             {
                 if (!IsInstanceValid(target) || target.CurrentHealth <= 0) continue;
 
+                GD.Print("checking effectType = ", effectType);
                 switch (effectType)
                 {
                     case CardEffect.EffectType.EnemyDamage:
@@ -128,24 +128,23 @@ public partial class SpellTargeter : Node2D
                         if (statusScene != null)
                         {
                             StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
+                            GD.Print("Setting up status with data: ", effectData);
                             statusEffect.Setup(effectData, _element);
                             target.AddChild(statusEffect);
+                            statusEffect.OnApplied();
                         }
                         break;
                 }
             }
 
-            // Small delay between effect triggers (e.g., 0.15s)
             if (i < _effects.Count - 1)
             {
-                await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
+                await ToSignal(GetTree().CreateTimer(0.30f), SceneTreeTimer.SignalName.Timeout);
             }
         }
 
         QueueFree();
     }
-
-    // --- Highlighting logic ---
 
     private Enemy CheckTarget() => _mouse.GetHoveredEnemy();
 
