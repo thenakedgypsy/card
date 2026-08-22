@@ -8,6 +8,7 @@
     "effectType": "StatusEffect",
     "statusType": "Slow",
     "damage" : 1,
+    "dot": 0,
     "turnsActive": 2
   }
 }

@@ -17,6 +17,8 @@ public partial class StatusEffect : Node2D
 	public Card.Element Element;
 	public int Damage;
 
+    private int DOT;
+
     public int TurnsLeftActive;
 
     public Type TypeName;
@@ -26,12 +28,16 @@ public partial class StatusEffect : Node2D
     public void Setup(Godot.Collections.Dictionary<string, Variant> data, Card.Element ele)
     {
         Damage = int.Parse(data["damage"].ToString());
+        
+        
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
        
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
         InstantiateSprite();
+
+
 
         GD.Print($"${TypeName}");
     }
@@ -61,7 +67,6 @@ public partial class StatusEffect : Node2D
                 case StatusEffect.Type.Haste:
                     break;
                 case StatusEffect.Type.Stun:
-
                     _triggerStun();
                     break;
                 case StatusEffect.Type.Disarm:
@@ -85,33 +90,33 @@ public partial class StatusEffect : Node2D
     }
     private void _triggerStun()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        if (parent.HasMethod("TakeDamage"))
-        {
-            parent.TakeDamage(Damage, Element);
-        }
-   
-        parent.MoveDistance = 0;
+        _enemyTakeDamage();
+        _getEnemyTarget().MoveDistance = 0;
     }
 
     private void _triggerSlow()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        if (parent.HasMethod("TakeDamage"))
-        {
-            parent.TakeDamage(Damage, Element);
-        }
-   
-        parent.MoveDistance = 2;
+        _enemyTakeDamage();
+        _getEnemyTarget().MoveDistance = 2;
     }
 
     private void _checkToRemoveStun()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
         if(TypeName == StatusEffect.Type.Stun)
         {
             //will need a variable outside of enemy to reset to OG value
-             parent.MoveDistance = 4;
+             _getEnemyTarget().MoveDistance = 4;
         }
     }
+
+    private void _enemyTakeDamage()
+    {
+        if (_getEnemyTarget().HasMethod("TakeDamage"))
+        {
+            _getEnemyTarget().TakeDamage(Damage, Element);
+        }
+    }
+
+    private Enemy _getEnemyTarget() => GetParent<Node2D>() as Enemy;
+
 }
