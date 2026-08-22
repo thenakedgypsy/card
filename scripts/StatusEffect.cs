@@ -98,7 +98,7 @@ public partial class StatusEffect : Node2D
     {
         int enemyMoveDistance = _getEnemyTarget().MoveDistance; 
         int slowAmount = enemyMoveDistance - Power;
-        _getEnemyTarget().isSlowed = true;
+        _getEnemyTarget().IsSlowed = true;
         _getEnemyTarget().MoveDistance = slowAmount;
         _getEnemyTarget().Set("RemainingMovement", slowAmount);
 

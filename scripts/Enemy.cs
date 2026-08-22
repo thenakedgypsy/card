@@ -35,7 +35,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     private Node2D _target;
     private TurnManager _turnManager;
     private Sprite2D _sprite;
-    public bool isSlowed { get; set; }
+    public bool IsSlowed { get; set; }
 
     public bool IsStunned { get; set; }
 
@@ -63,7 +63,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (resetMovement)
         {
             // Only reset stun if no active StatusEffect child exists
-            if (!HasActiveStunEffects())
+            if (!HasActiveStunOrSlowEffects())
             {
                 IsStunned = false;
                 MoveDistance = DefaultMoveDistance;
@@ -71,7 +71,7 @@ public partial class Enemy : CharacterBody2D, IHealth
 
             RemainingMovement = MoveDistance;
             HasAttackedThisTurn = false;
-            
+
         }
 
         WasPathBlocked = false;
@@ -80,17 +80,18 @@ public partial class Enemy : CharacterBody2D, IHealth
         SetBlockedVisualState(false);
     }
 
-    private bool HasActiveStunEffects()
+    private bool HasActiveStunOrSlowEffects()
     {
         foreach (Node child in GetChildren())
         {
             if (child is StatusEffect)
             {
                 StatusEffect status = child as StatusEffect;
-                if (status.TypeName == StatusEffect.Type.Stun)
+                if (status.TypeName == StatusEffect.Type.Stun || status.TypeName == StatusEffect.Type.Slow)
                 {
                     return true;
                 }
+                
             }
         }
         return false;
