@@ -1,6 +1,7 @@
 using Godot;
 using Godot.Collections;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 public partial class Summon : Node2D, IHealth
@@ -21,7 +22,7 @@ public partial class Summon : Node2D, IHealth
 
 	private int _drawLineRequestId = 0;
 	private TurnManager _turnManager;
-	private Dictionary<string, Variant> _attackEffectData;
+	private List<Godot.Collections.Dictionary<string, Variant>> _attackEffects = new();
 
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
@@ -132,38 +133,24 @@ public partial class Summon : Node2D, IHealth
 
 	private void Attack(Enemy enemy)
 	{
-		if (!GodotObject.IsInstanceValid(enemy))
-		        return;
+	    if (!GodotObject.IsInstanceValid(enemy)) return;
 
-		    GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
-		    FlashRed();		
-		    DrawLineBetween(enemy.GlobalPosition, 5f);	
+	    GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
+	    FlashRed();        
+	    DrawLineBetween(enemy.GlobalPosition, 5f);    
 
-		    // NEW: Trigger complex JSON effect if it exists
-		    if (_attackEffectData != null)
-		    {
-		        // Default to EnemyDamage, but parse from JSON if provided
-		        CardEffect.EffectType type = CardEffect.EffectType.EnemyDamage; 
-		        if (_attackEffectData.TryGetValue("effectType", out Variant typeVar) &&
-		            Enum.TryParse(typeVar.ToString(), out CardEffect.EffectType parsedType))
-		        {
-		            type = parsedType;
-		        }
+	    if (_attackEffects.Count > 0)
+	    {
+	        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+	        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
 
-		        // Create the targeter to handle AoE / Status calculation
-		        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
-		        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
-
-		        // Add to tree (using GetParent() or Mouse group to match your architecture)
-		        GetParent().AddChild(targeter);
-
-		        targeter.SetupAutoCast(Element, _attackEffectData, Name, type, enemy);
-		    }
-		    else
-		    {
-		        // Fallback to basic attack if no JSON effect is defined
-		        enemy.TakeDamage(AttackDamage, Element);				
-		    }				
+	        GetParent().AddChild(targeter);
+	        targeter.SetupAutoCast(Element, _attackEffects, Name, enemy);
+	    }
+	    else
+	    {
+	        enemy.TakeDamage(AttackDamage, Element);                
+	    }               
 	}
 
 	private void EndTurn()
@@ -182,7 +169,7 @@ public partial class Summon : Node2D, IHealth
         await ToSignal(tween, Tween.SignalName.Finished);
     }
 
-	public void Generate(Card.Element ele, Dictionary<string, Variant> data, string summonID)
+	public void Generate(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string summonID)
 	{
 		Element = ele;
 		Health = data["health"].ToString().ToInt();
@@ -191,20 +178,23 @@ public partial class Summon : Node2D, IHealth
 		AttacksEnemies = data["attacksEnemies"].ToString() == "true";
 		Name = summonID;	
 
-        if (data.ContainsKey("effectData"))
-        {
-            var effectDict = data["effectData"].AsGodotDictionary();
-            Dictionary<string, Variant> effectData = new Dictionary<string, Variant>();
-            
-            foreach (var key in effectDict.Keys)
-            {
-                string name = key.ToString();
-                var valueVar = effectDict[key];
-                effectData.Add(name, valueVar);
-            }
+		if (data.ContainsKey("effectData"))
+		{
+		    var effectDict = data["effectData"].AsGodotDictionary();
 
-			_attackEffectData = effectData;
-        }
+		    if (effectDict.ContainsKey("effects") && effectDict["effects"].VariantType == Variant.Type.Array)
+		    {
+		        var rawEffects = effectDict["effects"].AsGodotArray();
+		        foreach (var item in rawEffects)
+		        {
+		            _attackEffects.Add(item.AsGodotDictionary<string, Variant>());
+		        }
+		    }
+		    else if (effectDict.ContainsKey("effectData") && effectDict["effectData"].VariantType == Variant.Type.Dictionary)
+		    {
+		        _attackEffects.Add(effectDict["effectData"].AsGodotDictionary<string, Variant>());
+		    }
+		}
 
         string path = $"res://assets/summons/{summonID}.png";
 

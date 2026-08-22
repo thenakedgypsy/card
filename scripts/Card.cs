@@ -129,52 +129,66 @@ public partial class Card : Node2D
         
         string formattedText = textData.ContainsKey("text") ? textData["text"].ToString() : "";
         
-        // 1. Replace dynamic placeholders from effectData (e.g. {damage})
+        // Replace placeholders from either the root effects array or nested effect data.
+        if (data.ContainsKey("effects"))
+            formattedText = ReplacePlaceholders(formattedText, data["effects"]);
         if (data.ContainsKey("effectData"))
-        {
-            var effectDict = data["effectData"].AsGodotDictionary();
-            foreach (var key in effectDict.Keys)
-            {
-                if (key.ToString() == "effectData" && effectDict[key].VariantType == Variant.Type.Dictionary)
-                {
-                    var nestedEffectDict = effectDict[key].AsGodotDictionary();
-                    foreach (var nestedKey in nestedEffectDict.Keys)
-                    {
-                        string nestedPlaceholder = $"{{{nestedKey}}}";
-                        string nestedValueStr = nestedEffectDict[nestedKey].ToString();
-                        formattedText = formattedText.Replace(nestedPlaceholder, nestedValueStr);
-                    }
-                    continue;
-                }
-
-                string placeholder = $"{{{key}}}"; // Creates "{damage}", "{health}", etc.
-                string valueStr = effectDict[key].ToString();
-                formattedText = formattedText.Replace(placeholder, valueStr);
-            }
-        }
+            formattedText = ReplacePlaceholders(formattedText, data["effectData"]);
            
         // Assign to RichTextLabel
         _text.Text = formattedText;
 
         //----- Effect Data -----
 
-        if (data.ContainsKey("effectData"))
+        if (data.ContainsKey("effects") || data.ContainsKey("effectData"))
         {
-            var effectDict = data["effectData"].AsGodotDictionary();
-            Godot.Collections.Dictionary<string, Variant> effectData = new Godot.Collections.Dictionary<string, Variant>();
-            
-            foreach (var key in effectDict.Keys)
-            {
-                string name = key.ToString();
-                var valueVar = effectDict[key];
-                effectData.Add(name, valueVar);
-            }
-
             PackedScene scene = GD.Load<PackedScene>("res://prefabs/CardEffect.tscn");
             _effect = scene.Instantiate() as CardEffect;
             AddChild(_effect);
-            _effect.ConstructEffect(element, effectData, cardID);
+            
+            // Check if card has an array of spell effects or is a single Summon effect
+            if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
+            {
+                var rawEffects = data["effects"].AsGodotArray();
+                var effectsList = new List<Godot.Collections.Dictionary<string, Variant>>();
+                
+                foreach (var item in rawEffects)
+                {
+                    effectsList.Add(item.AsGodotDictionary<string, Variant>());
+                }
+                
+                _effect.ConstructSpellEffects(element, effectsList, cardID);
+            }
+            else if (data["effectData"].VariantType == Variant.Type.Dictionary)
+            {
+                // Single effect fallback (e.g. Summon cards)
+                var effectDict = data["effectData"].AsGodotDictionary<string, Variant>();
+                _effect.ConstructEffect(element, effectDict, cardID);
+            }
         }
+    }
+
+    private string ReplacePlaceholders(string text, Variant value)
+    {
+        if (value.VariantType == Variant.Type.Dictionary)
+        {
+            foreach (var entry in value.AsGodotDictionary())
+            {
+                text = ReplacePlaceholders(text, entry.Value);
+                if (entry.Value.VariantType != Variant.Type.Dictionary &&
+                    entry.Value.VariantType != Variant.Type.Array)
+                {
+                    text = text.Replace($"{{{entry.Key}}}", entry.Value.ToString());
+                }
+            }
+        }
+        else if (value.VariantType == Variant.Type.Array)
+        {
+            foreach (var item in value.AsGodotArray())
+                text = ReplacePlaceholders(text, item);
+        }
+
+        return text;
     }
 
     private void InstantiateArt(string cardID)

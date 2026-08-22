@@ -3,13 +3,14 @@
   "cost": 2,
   "element": "Fire",
   "rarity": "Rare",
-  "effectData": 
-  {
-    "effectType": "StatusEffect",
-    "statusType": "Burn",
-    "damage" : 4,
-    "turnsActive": 3,
-    "splashTiles" : 1
-
-  }
+  "effects": [
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Burn",
+      "damage" : 4,
+      "turnsActive": 3,
+      "splashTiles" : 1
+    
+    }
+  ]
 }
