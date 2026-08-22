@@ -103,8 +103,6 @@ public partial class StatusEffect : Node2D
         parent.IsStunned = true;
         parent.MoveDistance = 0;
         parent.Set("RemainingMovement", 0);
-
-    
         GD.Print($"_triggerStun {TurnsLeftActive} turns left.");
     }
 }
