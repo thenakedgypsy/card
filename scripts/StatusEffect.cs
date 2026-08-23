@@ -10,7 +10,9 @@ public partial class StatusEffect : Node2D
         Slow,
         Confuse,
         Stun,
-        Disarm
+        Disarm,
+        Haste, //for wizards to buff enemeies
+        Shield ////for wizards to protect enemeies
     }
 
 	public Card.Element Element;
