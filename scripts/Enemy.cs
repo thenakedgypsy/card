@@ -34,7 +34,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     private Vector2I? _reservedCell = null;
     private Node2D _target;
     private TurnManager _turnManager;
-    private Sprite2D _sprite;
+    private AnimatedSprite2D _sprite;
 
     public bool IsStunned { get; set; }
 
@@ -51,7 +51,9 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         AddToGroup("Enemy");
         
-        _sprite = GetNode<Sprite2D>("Sprite2D");
+        _sprite = GetNode<AnimatedSprite2D>("Sprite2D");
+        Random random = new Random();
+        _sprite.Frame = random.Next(11);
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
         CurrentHealth = Health;
@@ -230,7 +232,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(this))
             return;
     
-        Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
+        Vector2 spriteSize = _sprite.SpriteFrames.GetFrameTexture("idle", 0).GetSize() * _sprite.Scale;
         _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
     
         if (RestDuration > 0)
