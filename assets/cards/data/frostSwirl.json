@@ -1,0 +1,22 @@
+{
+  "name": "Frost Swirl",
+  "type": "Spell",
+  "cost": 1,
+  "element": "Water",
+  "rarity": "Epic",
+  "effects":
+  [
+    {
+      "effectType": "EnemyDamage",
+      "damage": 1,
+      "splashTiles": 1
+    },
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Slow",
+      "turnsActive": 3,
+      "power": 3,
+      "splashTiles": 1
+    }
+  ] 
+}
