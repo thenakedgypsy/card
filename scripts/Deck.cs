@@ -10,8 +10,12 @@ public partial class Deck : Cardpile
 	{
         base._Ready();
 		AddCard("blockOfIce");
+		AddCard("blockOfIce");
+		AddCard("earthturret");
 		AddCard("earthturret");
 		AddCard("fireball");
+		AddCard("fireball");
+		AddCard("windturret");
 		AddCard("windturret");
 	}
 
