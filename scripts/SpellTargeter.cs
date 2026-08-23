@@ -108,7 +108,6 @@ public partial class SpellTargeter : Node2D
             {
                 if (!IsInstanceValid(target) || target.CurrentHealth <= 0) continue;
 
-                GD.Print("checking effectType = ", effectType);
                 switch (effectType)
                 {
                     case CardEffect.EffectType.EnemyDamage:
@@ -119,7 +118,7 @@ public partial class SpellTargeter : Node2D
                         if (statusScene != null)
                         {
                             StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
-                            GD.Print("Setting up status with data: ", effectData);
+                            //GD.Print("Setting up status with data: ", effectData);
                             statusEffect.Setup(effectData, _element);
                             target.AddChild(statusEffect);
                             statusEffect.OnApplied();

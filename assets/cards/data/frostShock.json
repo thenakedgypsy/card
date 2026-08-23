@@ -1,0 +1,21 @@
+{
+  "name": "Frost Shock",
+  "type": "Spell",
+  "cost": 1,
+  "element": "Water",
+  "rarity": "Common",
+  "effects": 
+  [
+     {
+      "effectType": "EnemyDamage",
+      "damage" : 1,
+      "splashTiles" : 0
+    },
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Slow",
+      "turnsActive": 2,
+      "power": 2
+    }
+  ]
+}

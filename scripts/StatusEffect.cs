@@ -9,7 +9,6 @@ public partial class StatusEffect : Node2D
         Burn,
         Slow,
         Confuse,
-        Haste,
         Stun,
         Disarm
     }
@@ -17,17 +16,21 @@ public partial class StatusEffect : Node2D
 	public Card.Element Element;
 	public int Damage;
 
+    private int Power;
+
     public int TurnsLeftActive;
 
     public Type TypeName;
 
     #pragma warning disable IDE0059 //this turns off annoying ide rule thats flagged here
+    private Enemy _getEnemyTarget() => GetParent<Node2D>() as Enemy;
 
     public void Setup(Godot.Collections.Dictionary<string, Variant> data, Card.Element ele)
     {
         
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
+        if (data.ContainsKey("power")) Power = data["power"].ToString().ToInt();
 
         if (data.ContainsKey("damage"))
         {
@@ -36,8 +39,9 @@ public partial class StatusEffect : Node2D
         
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
-        GD.Print("Status setup", data);
+        //GD.Print("Status setup", data);
         InstantiateSprite();
+
     }
 
     public void InstantiateSprite()
@@ -67,22 +71,20 @@ public partial class StatusEffect : Node2D
             switch (TypeName)
             {
                 case StatusEffect.Type.Burn:
-                    TriggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
-                //not sure what to do with slow - same as stun for now.
+                    if (_canApplySlow()) _triggerSlow();
                     break;
                 case StatusEffect.Type.Confuse:
-                    break;
-                case StatusEffect.Type.Haste:
+                    _triggerConfuse();
                     break;
                 case StatusEffect.Type.Stun:
-
                     _triggerStun();
                     break;
                 case StatusEffect.Type.Disarm:
                     break;
             }
+            if(Damage > 0) _enemyTakeDamage();
         }
         else
         {
@@ -90,24 +92,46 @@ public partial class StatusEffect : Node2D
         }
     }
 
-    public void TriggerBurn()
+    private void _triggerConfuse()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        if (parent.HasMethod("TakeDamage"))
+        if (!_getEnemyTarget().IsConfused) _getEnemyTarget().IsConfused = true;
+
+
+        GD.Print("CONFUSE THIS ONE");
+    }
+    private void _triggerSlow()
+    {
+        int enemyMoveDistance = _getEnemyTarget().MoveDistance; 
+        int slowAmount = enemyMoveDistance - Power;
+        _getEnemyTarget().IsSlowed = true;
+        _getEnemyTarget().MoveDistance = slowAmount;
+        _getEnemyTarget().Set("RemainingMovement", slowAmount);
+    }
+
+    private bool _canApplySlow()
+    {
+        int curEnemyMoveDistance = _getEnemyTarget().MoveDistance; 
+        int defaultEnemyMoveDistance = _getEnemyTarget().DefaultMoveDistance;
+
+        if (curEnemyMoveDistance < defaultEnemyMoveDistance)
         {
-            parent.TakeDamage(Damage, Card.Element.Fire);
+            return false;
         }
-     
-        GD.Print($"ApplyBurn {Damage} damage. {TurnsLeftActive} turns left.");
+
+        return true;
     }
     private void _triggerStun()
     {
-        Enemy parent = GetParent<Node2D>() as Enemy;
-        //removed the damage from here. can be applied via a seperate effect. 
-        //using a bool rather than modulating.
-        parent.IsStunned = true;
-        parent.MoveDistance = 0;
-        parent.Set("RemainingMovement", 0);
-        GD.Print($"_triggerStun {TurnsLeftActive} turns left.");
+        _getEnemyTarget().IsStunned = true;
+        _getEnemyTarget().MoveDistance = 0;
+        _getEnemyTarget().Set("RemainingMovement", 0);
+    }
+
+    private void _enemyTakeDamage()
+    {
+        if (_getEnemyTarget().HasMethod("TakeDamage"))
+        {
+            _getEnemyTarget().TakeDamage(Damage, Element);
+        }
     }
 }

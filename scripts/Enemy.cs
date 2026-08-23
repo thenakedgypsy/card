@@ -35,9 +35,9 @@ public partial class Enemy : CharacterBody2D, IHealth
     private Node2D _target;
     private TurnManager _turnManager;
     private Sprite2D _sprite;
-
+    public bool IsSlowed { get; set; }
     public bool IsStunned { get; set; }
-
+    public bool IsConfused { get; set; }
     // Split hover states to avoid race conditions between Mouse.cs and SpellTargeter.cs
     private bool _isMouseHovered = false;
     private bool _isAoEHovered = false;
@@ -67,10 +67,14 @@ public partial class Enemy : CharacterBody2D, IHealth
                 IsStunned = false;
                 MoveDistance = DefaultMoveDistance;
             }
+            if (!HasActiveSlowEffects())
+            {
+                IsSlowed = false;
+                MoveDistance = DefaultMoveDistance;
+            }
 
             RemainingMovement = MoveDistance;
             HasAttackedThisTurn = false;
-            
 
         }
 
@@ -91,17 +95,35 @@ public partial class Enemy : CharacterBody2D, IHealth
                 {
                     return true;
                 }
+                
             }
         }
         return false;
     }
-
+    private bool HasActiveSlowEffects()
+        {
+            foreach (Node child in GetChildren())
+            {
+                if (child is StatusEffect)
+                {
+                    StatusEffect status = child as StatusEffect;
+                    if (status.TypeName == StatusEffect.Type.Slow)
+                    {
+                        return true;
+                    }
+                    
+                }
+            }
+            return false;
+        }
     // --- STEP 1: POSITION CALCULATIONS ---
 
     public void PlanMove(Node2D playerCore)
     {
+        GD.Print("plan called");
         _plannedPath.Clear(); 
         WasPathBlocked = false; 
+        GD.Print($"{IsConfused}");
 
         // Early exit if stunned, dead, or out of movement[cite: 1]
         if (IsStunned || RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this)) 
