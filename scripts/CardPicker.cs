@@ -7,9 +7,12 @@ public partial class CardPicker : Node2D
     [Signal] public delegate void CardsCombinedEventHandler(string newCardId);
 
     [Export] public PackedScene CardPrefab;
+    
+    // Exported button that the player must press to execute the combo
+    [Export] public Button CombineButton;
 
     // Grid layout configuration for displaying deck cards on screen
-    [Export] public int CardsPerRow = 4;
+    [Export] public int CardsPerRow = 6;
     [Export] public Vector2 CardSpacing = new Vector2(160, 220);
     [Export] public Vector2 GridOffset = new Vector2(0, 50);
 
@@ -21,6 +24,9 @@ public partial class CardPicker : Node2D
     private Card _slot2Card = null;
 
     private readonly List<Card> _spawnedDeckCards = new List<Card>();
+    // Store original positions to snap cards back when unpicked
+    private readonly Dictionary<Card, Vector2> _originalPositions = new Dictionary<Card, Vector2>();
+    
     private Deck _deck;
 
     public override void _Ready()
@@ -34,6 +40,17 @@ public partial class CardPicker : Node2D
         {
             GD.PrintErr("CardPicker: Missing CardPrefab or Deck reference!");
             return;
+        }
+        
+        // Setup the combine button
+        if (CombineButton != null)
+        {
+            CombineButton.Pressed += CombineSelectedCards;
+            CombineButton.Disabled = true; // Disabled until two cards are picked
+        }
+        else
+        {
+            GD.PrintErr("CardPicker: CombineButton is not assigned in the inspector!");
         }
 
         DisplayDeckCards();
@@ -61,7 +78,7 @@ public partial class CardPicker : Node2D
             Card newCard = CardPrefab.Instantiate() as Card;
             AddChild(newCard);
 
-            // Hydrate values (Element, Name, Cost, Art) and enable mouse clicking[cite: 1, 4]
+            // Hydrate values (Element, Name, Cost, Art) and enable mouse clicking
             newCard.Generate(cardId);
             newCard.location = Card.Location.Unpurchased;
 
@@ -71,9 +88,11 @@ public partial class CardPicker : Node2D
 
             float startX = -((Math.Min(totalCards, CardsPerRow) - 1) * CardSpacing.X) / 2f;
             Vector2 position = new Vector2(startX + (col * CardSpacing.X), row * CardSpacing.Y) + GridOffset;
+            
             newCard.Position = position;
+            _originalPositions[newCard] = position; // Save position for unpicking
 
-            // Subscribe to click signal[cite: 1, 4]
+            // Subscribe to click signal
             newCard.CardClicked += OnDeckCardClicked;
 
             _spawnedDeckCards.Add(newCard);
@@ -82,6 +101,24 @@ public partial class CardPicker : Node2D
 
     private void OnDeckCardClicked(Card clickedCard)
     {
+        // --- UNPICKING LOGIC ---
+        // If the clicked card is already in Slot 1, unpick it (and Slot 2 if occupied)
+        if (clickedCard == _slot1Card)
+        {
+            UnpickSlot1();
+            UpdateButtonState();
+            return;
+        }
+        
+        // If the clicked card is already in Slot 2, unpick just Slot 2
+        if (clickedCard == _slot2Card)
+        {
+            UnpickSlot2();
+            UpdateButtonState();
+            return;
+        }
+
+        // --- PICKING LOGIC ---
         // Slot 1 Selection: Pick the initial card from the deck
         if (_slot1Card == null)
         {
@@ -96,9 +133,44 @@ public partial class CardPicker : Node2D
         {
             _slot2Card = clickedCard;
             _slot2Card.Position = Slot2Position;
+        }
+        
+        UpdateButtonState();
+    }
 
-            // Both valid cards chosen -> Combine them
-            CombineSelectedCards();
+    private void UnpickSlot1()
+    {
+        if (_slot1Card != null)
+        {
+            _slot1Card.Position = _originalPositions[_slot1Card];
+            _slot1Card = null;
+        }
+
+        // If we unpick the first slot, the element constraint is lifted.
+        // Unpick slot 2 as well so they don't get trapped with an invalid element combo.
+        if (_slot2Card != null)
+        {
+            UnpickSlot2();
+        }
+
+        ResetDeckFilter();
+    }
+
+    private void UnpickSlot2()
+    {
+        if (_slot2Card != null)
+        {
+            _slot2Card.Position = _originalPositions[_slot2Card];
+            _slot2Card = null;
+        }
+    }
+
+    private void UpdateButtonState()
+    {
+        if (CombineButton != null)
+        {
+            // Enable button only when both slots are filled
+            CombineButton.Disabled = (_slot1Card == null || _slot2Card == null);
         }
     }
 
@@ -113,7 +185,7 @@ public partial class CardPicker : Node2D
 
             if (card.element != targetElement)
             {
-                // Disable input signal so non-matching cards cannot be picked[cite: 4]
+                // Disable input signal so non-matching cards cannot be picked
                 card.CardClicked -= OnDeckCardClicked;
 
                 // Visual Feedback: Darken and turn semi-transparent
@@ -122,11 +194,27 @@ public partial class CardPicker : Node2D
         }
     }
 
+    /// <summary>
+    /// Restores all cards to their default interactable state when Slot 1 is unpicked.
+    /// </summary>
+    private void ResetDeckFilter()
+    {
+        foreach (Card card in _spawnedDeckCards)
+        {
+            // Safely unsubscribe then resubscribe to avoid duplicate signal connections
+            card.CardClicked -= OnDeckCardClicked;
+            card.CardClicked += OnDeckCardClicked;
+
+            // Reset visual feedback to normal
+            card.Modulate = new Color(1f, 1f, 1f, 1f);
+        }
+    }
+
     private void CombineSelectedCards()
     {
         if (_slot1Card == null || _slot2Card == null) return;
 
-        // Combine using CardCombiner[cite: 2]
+        // Combine using CardCombiner
         string comboId = CardCombiner.CombineCards(_slot1Card.CardID, _slot2Card.CardID);
 
         if (!string.IsNullOrEmpty(comboId))
@@ -152,6 +240,7 @@ public partial class CardPicker : Node2D
             card.QueueFree();
         }
         _spawnedDeckCards.Clear();
+        _originalPositions.Clear();
     }
 
     private void CleanupAndClose()

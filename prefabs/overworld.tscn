@@ -68,7 +68,3 @@ metadata/_edit_use_anchors_ = true
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
 [node name="Picker" parent="." instance=ExtResource("10_stbt5")]
-offset_left = 962.0
-offset_top = 551.0
-offset_right = 962.0
-offset_bottom = 551.0

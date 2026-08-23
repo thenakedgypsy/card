@@ -80,9 +80,13 @@ public static class CardCombiner
         // 6. Perform full merge across all base cards
         Godot.Collections.Dictionary<string, Variant> combinedData = MergeAllCardData(baseDataList);
     
+        // NEW: Save the ID of the first base card to tell the game which art to load
+        // Because allBaseCards is sorted alphabetically, this will always be consistent!
+        combinedData["artId"] = allBaseCards[0]; 
+
         // Cache in memory
         DynamicCards[combinationId] = combinedData;
-    
+
         return combinationId;
     }
 
@@ -151,7 +155,7 @@ public static class CardCombiner
             if (card.ContainsKey("name")) names.Add(card["name"].ToString());
 
             // Cost summation
-            if (card.ContainsKey("cost")) totalCost += Convert.ToInt32(card["cost"]);
+            if (card.ContainsKey("cost")) totalCost += card["cost"].AsInt32();
 
             // Summon HP summation
             if (card.ContainsKey("health"))
@@ -227,8 +231,8 @@ public static class CardCombiner
     {
         if (source.ContainsKey(key))
         {
-            int valTarget = target.ContainsKey(key) ? Convert.ToInt32(target[key]) : 0;
-            int valSource = Convert.ToInt32(source[key]);
+            int valTarget = target.ContainsKey(key) ? target[key].AsInt32() : 0;
+            int valSource = source[key].AsInt32();
             target[key] = valTarget + valSource;
         }
     }

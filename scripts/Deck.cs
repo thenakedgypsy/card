@@ -12,6 +12,8 @@ public partial class Deck : Cardpile
 		AddCard("blockOfIce");
 		AddCard("earthturret");
 		AddCard("fireball");
+		AddCard("fireturret");
+		AddCard("fireball");
 		AddCard("windwall");
 	}
 
