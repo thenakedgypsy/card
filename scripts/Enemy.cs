@@ -24,7 +24,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     [Export] public bool AttacksSummons = false;
     [Export] public int AttackRange = 1;
     [Export] public string SummonGroupName = "Summons";
-
+    public Card.Element Element = Card.Element.Earth;
+    [Export] public string EnemyGroupName = "Enemies";
     public int RemainingMovement { get; private set; }
     public bool HasAttackedThisTurn { get; private set; }
     public bool WasPathBlocked { get; private set; }
@@ -41,6 +42,8 @@ public partial class Enemy : CharacterBody2D, IHealth
     // Split hover states to avoid race conditions between Mouse.cs and SpellTargeter.cs
     private bool _isMouseHovered = false;
     private bool _isAoEHovered = false;
+
+    
 
     private List<Vector2I> _plannedPath = new List<Vector2I>();
 
@@ -122,10 +125,8 @@ public partial class Enemy : CharacterBody2D, IHealth
 
     public void PlanMove(Node2D playerCore)
     {
-        GD.Print("plan called");
         _plannedPath.Clear(); 
         WasPathBlocked = false; 
-        GD.Print($"{IsConfused}");
 
         // Early exit if stunned, dead, or out of movement[cite: 1]
         if (IsStunned || RemainingMovement <= 0 || CurrentHealth <= 0 || !IsInstanceValid(this)) 
@@ -148,6 +149,7 @@ public partial class Enemy : CharacterBody2D, IHealth
                 targetCell = _turnManager.WorldToCell(nearestSummon.GlobalPosition); 
             }
         }
+    
 
         List<Vector2I> path = _turnManager.FindPath(myCell, targetCell); 
 
@@ -269,8 +271,16 @@ public partial class Enemy : CharacterBody2D, IHealth
     {
         if (IsStunned || HasAttackedThisTurn || CurrentHealth <= 0 || !IsInstanceValid(this))
             return;
+       
 
         Node2D attackTarget = GetTargetToAttack(playerCore);
+        var NearestEnemy = GetNearestEnemyTarget();
+
+        if (IsConfused && NearestEnemy != null)
+        {
+            GD.Print("Enemy taking damage");
+            //NearestEnemy.TakeDamage(AttackDamage, Element);
+        }
 
         if (attackTarget != null)
         {
@@ -365,6 +375,36 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
 
         return nearest;
+    }
+
+    private Enemy GetNearestEnemyTarget()
+    {
+        var enemies = GetTree().GetNodesInGroup(EnemyGroupName);
+        var distances = new Dictionary<Enemy, int>();
+        List<Dictionary<Enemy, int>> allEnemyDistances = new List<Dictionary<Enemy, int>>();
+        int maxDist = 1;
+        Enemy chosenEnemy = null;
+
+        foreach(Node node in enemies)
+        {
+            Enemy enemy = node as Enemy;
+            float dist = GlobalPosition.DistanceTo(enemy.GlobalPosition);
+
+            //list out all enemies and their distance - ones with the least gets hit
+            //will need a min distance check like summon
+
+            //i can just get all enemies in a certain range
+            //if next to multiple enemies - will have to choose one / could be random
+            if (GetRouteDistanceTo(enemy, false) == maxDist)
+            {
+                chosenEnemy = enemy;
+                GD.Print($"chosen enemy! {chosenEnemy.AttackDamage}");
+
+            }
+
+        }
+
+        return chosenEnemy;
     }
 
     public async Task FlashYellowAsync()
