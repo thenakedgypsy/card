@@ -111,6 +111,12 @@ public partial class StatusEffect : Node2D
         GD.Print($"_triggerSlow {TurnsLeftActive} turns left. Move speed {slowAmount}");
 
     }
+
+    private void _checkForSlow()
+    {
+        int curEnemyMoveDistance = _getEnemyTarget().MoveDistance; 
+        int defaultEnemyMoveDistance = 4; 
+    }
     private void _triggerStun()
     {
         //removed the damage from here. can be applied via a seperate effect. 
