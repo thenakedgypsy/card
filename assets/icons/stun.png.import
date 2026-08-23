@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://cuxkuyv7wgw0a"
-path="res://.godot/imported/stun.png-5b5fe5f640cfe8948fe392575ad81d5b.ctex"
+path="res://.godot/imported/Stun.png-8cc93c2ac4e1184343a1e7b5ef423c0a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/stun.png"
-dest_files=["res://.godot/imported/stun.png-5b5fe5f640cfe8948fe392575ad81d5b.ctex"]
+source_file="res://assets/icons/Stun.png"
+dest_files=["res://.godot/imported/Stun.png-8cc93c2ac4e1184343a1e7b5ef423c0a.ctex"]
 
 [params]
 

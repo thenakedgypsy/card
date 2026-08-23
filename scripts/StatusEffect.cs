@@ -75,10 +75,7 @@ public partial class StatusEffect : Node2D
                     _triggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
-                    if (_canApplySlow())
-                    {
-                        GD.Print("CAN APPLY SLOW"); _triggerSlow();
-                    } 
+                    if (_canApplySlow()) _triggerSlow();
                     break;
                 case StatusEffect.Type.Confuse:
                     break;
