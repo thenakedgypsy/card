@@ -224,6 +224,25 @@ public static class CardCombiner
             }
         }
 
+        if (highestRarity != "Legendary")
+        {
+            switch (highestRarity)
+            {
+                case "Common":
+                    highestRarity = "Uncommon";
+                    break;
+                case "Uncommon":
+                    highestRarity = "Rare";
+                    break;
+                case "Rare":
+                    highestRarity = "Epic";
+                    break;
+                case "Epic":
+                    highestRarity = "Legendary";
+                    break;
+            }
+        }
+
         // Apply calculated root properties
         result["cost"] = totalCost;
         result["element"] = primaryElement;
