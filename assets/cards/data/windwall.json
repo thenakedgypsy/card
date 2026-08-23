@@ -1,0 +1,12 @@
+{
+  "name": "Wind Wall",
+  "type": "Summon",
+  "cost": 1,
+  "element": "Wind",
+  "rarity": "Rare",
+  "effectType": "Summon",
+  "health": 25, 
+  "range": 0,
+  "attacksEnemies": false,
+  "effects":[] 
+}
