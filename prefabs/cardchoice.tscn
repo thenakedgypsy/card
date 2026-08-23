@@ -9,3 +9,11 @@ script = ExtResource("1_4pkia")
 CardPrefab = ExtResource("2_ahm44")
 
 [node name="BG" parent="." instance=ExtResource("3_ylytr")]
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+offset_left = -185.0
+offset_top = -336.0
+offset_right = 100.0
+offset_bottom = -313.0
+scale = Vector2(2.04451, 4.72907)
+text = "PICK A CARD TO GAIN"
