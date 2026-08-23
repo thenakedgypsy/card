@@ -1,6 +1,5 @@
 [gd_scene load_steps=13 format=3 uid="uid://iua0l5tdn75t"]
 
-[ext_resource type="Texture2D" uid="uid://b6koki6d4iaw3" path="res://icon.svg" id="1_geqo8"]
 [ext_resource type="Script" path="res://scripts/CoreDef.cs" id="1_pbm1q"]
 [ext_resource type="PackedScene" uid="uid://dehim58bbift2" path="res://prefabs/Hand.tscn" id="2_hgopt"]
 [ext_resource type="PackedScene" uid="uid://c1hk6eotc374n" path="res://prefabs/Mouse.tscn" id="3_171fx"]
@@ -12,18 +11,17 @@
 [ext_resource type="PackedScene" uid="uid://ciwyjb20oblvq" path="res://prefabs/Board.tscn" id="9_po3xl"]
 [ext_resource type="PackedScene" uid="uid://dules16lpku10" path="res://prefabs/Enemy.tscn" id="10_5tjbw"]
 [ext_resource type="PackedScene" uid="uid://cf2730r1hoxub" path="res://prefabs/player_core.tscn" id="11_sr32x"]
+[ext_resource type="PackedScene" uid="uid://c2pp7lktn8w66" path="res://prefabs/BG.tscn" id="12_loun3"]
 
 [node name="CoreDef" type="Node2D" groups=["ActiveDef"]]
 scale = Vector2(1.00062, 1)
 script = ExtResource("1_pbm1q")
 
-[node name="TextureRect" type="TextureRect" parent="."]
-z_index = -1
-z_as_relative = false
-offset_right = 1921.0
-offset_bottom = 1080.0
-mouse_filter = 2
-texture = ExtResource("1_geqo8")
+[node name="BG" parent="." instance=ExtResource("12_loun3")]
+position = Vector2(930.423, 558)
+
+[node name="BG2" parent="." instance=ExtResource("12_loun3")]
+position = Vector2(930.423, 558)
 
 [node name="Mouse" parent="." instance=ExtResource("3_171fx")]
 position = Vector2(4, 5)
