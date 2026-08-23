@@ -1,12 +1,19 @@
 {
-  "name": "Wind Wall",
+  "name": "Wind Bomb",
   "type": "Summon",
-  "cost": 1,
+  "cost": 2,
   "element": "Wind",
-  "rarity": "Rare",
+  "rarity": "Epic",
   "effectType": "Summon",
-  "health": 25, 
-  "range": 0,
-  "attacksEnemies": false,
-  "effects":[] 
+  "health": 1, 
+  "range": 1,
+  "attacksEnemies": true,
+  "effects":
+  [
+    {
+      "effectType": "EnemyDamage",
+      "damage": 1,
+      "splashTiles": 25
+    }
+  ] 
 }

@@ -31,7 +31,7 @@ public static class CardTextBuilder
         LoadTerms();
 
         string dataPath = $"res://assets/cards/data/{cardID}.json";
-        var data = LoadJson(dataPath);
+        var data = CardCombiner.GetCardData(cardID) ?? new Godot.Collections.Dictionary<string,Variant>(LoadJson(dataPath));
 
         if (data == null) return string.Empty;
 
@@ -50,7 +50,7 @@ public static class CardTextBuilder
         return string.Empty;
     }
 
-    private static string BuildSummonText(string name, Dictionary data)
+    private static string BuildSummonText(string name, Godot.Collections.Dictionary<string, Variant> data)
     {
         // Read directly from the root data dictionary now instead of nested effectData
         int health = data.ContainsKey("health") ? (int)data["health"] : 0;
@@ -158,7 +158,7 @@ public static class CardTextBuilder
         return _terms.ContainsKey(key) ? _terms[key].ToString() : key;
     }
 
-    private static Dictionary LoadJson(string path)
+    private static Godot.Collections.Dictionary LoadJson(string path)
     {
         if (!FileAccess.FileExists(path)) return null;
         using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);

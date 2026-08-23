@@ -78,21 +78,21 @@ public partial class Card : Node2D
     }
 
     private void InstantiateData(string cardID)
-    {     //lang stuffs
-        string dataPath = $"res://assets/cards/data/{cardID}.json";
-
-        
-
-        // Load both JSON files
-        var data = LoadJson(dataPath);
-
+    {     
+        var data = CardCombiner.GetCardData(cardID);
+        //lang stuffs
 
         if (data == null)
         {
-            GD.PrintErr($"Missing card data: {dataPath}");
-            return;
+            string dataPath = $"res://assets/cards/data/{cardID}.json";
+            // Load both JSON files
+            data = LoadJson(dataPath);
+            if (data == null)
+            {
+                GD.PrintErr($"Missing card data: {dataPath}");
+                return;
+            }
         }
-
 
         // ===== Gameplay data =====
 
@@ -176,8 +176,18 @@ public partial class Card : Node2D
 
     private void InstantiateArt(string cardID)
     {
-        // ... (Keep EXACTLY as it was in your original code) ...
-        string path = $"res://assets/cards/art/{cardID}.png";
+        // Fetch the data via CardCombiner
+        var data = CardCombiner.GetCardData(cardID);
+        
+        // Default to using the cardID, but override it if an "artId" exists
+        string artToLoad = cardID;
+        if (data != null && data.ContainsKey("artId"))
+        {
+            artToLoad = data["artId"].ToString();
+        }
+
+        // Load using the resolved art ID
+        string path = $"res://assets/cards/art/{artToLoad}.png";
 
         Texture2D texture = GD.Load<Texture2D>(path);
         Texture2D frame = GD.Load<Texture2D>($"res://assets/cards/cardFrames/{element}.png");
@@ -186,6 +196,7 @@ public partial class Card : Node2D
         _art.Texture = texture;
         _frame.Texture = frame;
         _rarityFrame.Texture = rarityFrameTexture;
+        
         int presetIndex = _rarity switch
         {
             Rarity.Common => 1,
@@ -201,7 +212,7 @@ public partial class Card : Node2D
             _rarityShader = (ShaderMaterial)shaderMat.Duplicate();
             _rarityFrame.Material = _rarityShader;
         }
-        GD.Print("Adding shader to frame at rarity ", presetIndex);
+        
         _rarityShader.SetShaderParameter("rarity_preset", presetIndex);
     }
 
@@ -351,7 +362,7 @@ public partial class Card : Node2D
         _isScaledUp = false;
     }
 
-    public Godot.Collections.Dictionary LoadJson(string path)
+    public Godot.Collections.Dictionary<string, Variant> LoadJson(string path)
     {
         if (!FileAccess.FileExists(path)) return null;
         using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
@@ -362,7 +373,7 @@ public partial class Card : Node2D
             GD.PrintErr($"JSON parse error in {path}: {json.GetErrorMessage()}");
             return null;
         }
-        return json.Data.AsGodotDictionary();
+        return json.Data.AsGodotDictionary<string, Variant>();
     }
 
     public void _on_area_2d_input_event(Node viewport, InputEvent @event, int shapeIdx)

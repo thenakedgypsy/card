@@ -92,6 +92,20 @@ public partial class Hand : Node2D // No longer inherits from Cardpile
         }
     }
 
+    public void ReturnHandToDeck()
+    {
+        Deck deck = GetTree().GetFirstNodeInGroup("Deck") as Deck;
+        foreach (Card card in cardsInHand)
+        {
+            if (GodotObject.IsInstanceValid(card))
+            {
+                deck.AddCard(card.CardID);
+            }
+        }
+        cardsInHand.Clear();
+        _pendingRemoval.Clear();
+    }
+
     public int GetNumCards()
     {
         return cardsInHand.Count;

@@ -10,6 +10,7 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	{
 		Choice,
 		CoreDefence,
+		CardCombine,
 		CardGain,
 		EnergyGain
 	}
@@ -19,6 +20,8 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	public bool isEnergy;
 	[Export]
 	public bool isCardGain;
+	[Export]
+	public bool isCardCombine;
 	private bool _visitable = true;
 	private bool _visisted;
 	private Type _type;
@@ -47,6 +50,10 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		else if (isCardGain)
 		{
 			buildNode(Type.CardGain);
+		}
+		else if (isCardCombine)
+		{
+			buildNode(Type.CardCombine);
 		}
 	}
 
@@ -102,8 +109,13 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 				break;
 			case Type.CardGain:
 				LoadCardChoice();
-				GD.Print("CC Node Built");
+				GD.Print("Choice Node Built");
 				break;
+			case Type.CardCombine:
+				LoadCardCombine();
+				GD.Print("Combine Node Built");
+				break;
+
 		}
 	}
 
@@ -125,6 +137,15 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		}
 
 		return sceneData;
+	}
+
+	public void LoadCardCombine()
+	{
+		_title = "Card Combine"; //needs lang lookup
+		_tooltip = "Combine any two cards of the same element";
+
+		_sprite.Texture = GD.Load<Texture2D>("res://assets/nodes/combine.png");
+		_scene = GD.Load<PackedScene>("res://prefabs/picker.tscn");
 	}
 	
 	public void LoadCoreDefence()
@@ -178,6 +199,11 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 				GD.Print("Card Choice Node Instantiating");
 				Cardchoice cardNode = _scene.Instantiate() as Cardchoice;
 				_overworld.AddChild(cardNode);
+				break;
+			case Type.CardCombine:
+				GD.Print("Card Combiner Node Instantiating");
+				CardPicker picker = _scene.Instantiate() as CardPicker;
+				_overworld.AddChild(picker);
 				break;
 		}
 		
