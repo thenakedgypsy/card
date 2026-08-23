@@ -40,10 +40,9 @@ public partial class StatusEffect : Node2D
         
         if (data.ContainsKey("statusType") && Enum.TryParse(data["statusType"].ToString(), out StatusEffect.Type parsedStatusType))
         TypeName = parsedStatusType;
-        GD.Print("Status setup", data);
+        //GD.Print("Status setup", data);
         InstantiateSprite();
 
-        GD.Print($"power = {Power} Turns left {TurnsLeftActive} status type {TypeName}");
     }
 
     public void InstantiateSprite()
@@ -76,7 +75,10 @@ public partial class StatusEffect : Node2D
                     _triggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
-                    _triggerSlow();
+                    if (_canApplySlow())
+                    {
+                        GD.Print("CAN APPLY SLOW"); _triggerSlow();
+                    } 
                     break;
                 case StatusEffect.Type.Confuse:
                     break;
@@ -107,15 +109,19 @@ public partial class StatusEffect : Node2D
         _getEnemyTarget().IsSlowed = true;
         _getEnemyTarget().MoveDistance = slowAmount;
         _getEnemyTarget().Set("RemainingMovement", slowAmount);
-
-        GD.Print($"_triggerSlow {TurnsLeftActive} turns left. Move speed {slowAmount}");
-
     }
 
-    private void _checkForSlow()
+    private bool _canApplySlow()
     {
         int curEnemyMoveDistance = _getEnemyTarget().MoveDistance; 
-        int defaultEnemyMoveDistance = 4; 
+        int defaultEnemyMoveDistance = _getEnemyTarget().DefaultMoveDistance;
+
+        if (curEnemyMoveDistance < defaultEnemyMoveDistance)
+        {
+            return false;
+        }
+
+        return true;
     }
     private void _triggerStun()
     {
