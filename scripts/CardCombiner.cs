@@ -319,7 +319,7 @@ public static class CardCombiner
             {
                 1 => coreName,
                 2 => $"Hybridised {coreName}",
-                3 => $"Twisted {coreName} Link",
+                3 => $"Turbo-Twisted {coreName}",
                 4 => $"Unstable {coreName} Anomaly",
                 _ => $"{coreName} Final Form"
             };
