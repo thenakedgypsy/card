@@ -81,25 +81,40 @@ public static class CardCombiner
         Godot.Collections.Dictionary<string, Variant> combinedData = MergeAllCardData(baseDataList);
 
 
-        // Find the art of the rarest card
         string bestArtId = allBaseCards[0];
         string highestRaritySeen = "Common";
+        bool foundSummonArt = false;
 
         for (int i = 0; i < allBaseCards.Count; i++)
         {
-            string r = baseDataList[i].GetValueOrDefault("rarity", "Common").ToString();
-            string newRarity = GetHigherRarity(highestRaritySeen, r);
+            var currentBaseData = baseDataList[i];
+            string type = currentBaseData.GetValueOrDefault("type", "Spell").ToString();
+            string r = currentBaseData.GetValueOrDefault("rarity", "Common").ToString();
+            
+            bool isSummonType = (type == "Summon");
 
-            // If the new rarity is strictly higher, update our target art
-            if (newRarity != highestRaritySeen)
+            // If we haven't found a summon art yet, but this card is a summon, take it immediately.
+            // Or, if both are summons (or neither are), use the rarity rule to pick the best one.
+            if (isSummonType && !foundSummonArt)
             {
-                highestRaritySeen = newRarity;
+                foundSummonArt = true;
+                highestRaritySeen = r;
                 bestArtId = allBaseCards[i];
+            }
+            else if (isSummonType == foundSummonArt)
+            {
+                string newRarity = GetHigherRarity(highestRaritySeen, r);
+                if (newRarity != highestRaritySeen || !foundSummonArt)
+                {
+                    highestRaritySeen = newRarity;
+                    bestArtId = allBaseCards[i];
+                    if (isSummonType) foundSummonArt = true;
+                }
             }
         }
 
-        // Assign the most rare card's art
-        combinedData["artId"] = bestArtId;;
+        // Assign the resolved art ID
+        combinedData["artId"] = bestArtId;
 
         // Cache in memory
         DynamicCards[combinationId] = combinedData;
