@@ -1,8 +1,9 @@
-[gd_scene load_steps=9 format=4 uid="uid://ciwyjb20oblvq"]
+[gd_scene load_steps=11 format=4 uid="uid://ciwyjb20oblvq"]
 
 [ext_resource type="Script" path="res://scripts/Board.cs" id="2_wiy5p"]
 [ext_resource type="Texture2D" uid="uid://btt8a4sdgl2gq" path="res://assets/environs/grassland.png" id="2_yi2w0"]
 [ext_resource type="Texture2D" uid="uid://x0qgqpf57rhj" path="res://assets/environs/beach.png" id="3_i1twc"]
+[ext_resource type="Texture2D" uid="uid://cj55id2biid8q" path="res://assets/environs/cloud.png" id="4_0apl4"]
 [ext_resource type="Texture2D" uid="uid://oa7wwktevi3s" path="res://assets/environs/volcano.png" id="4_invgk"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_s67ph"]
@@ -41,6 +42,18 @@ texture_region_size = Vector2i(80, 53)
 3:0/0 = 0
 3:0/0/custom_data_0 = true
 
+[sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_ckxwl"]
+texture = ExtResource("4_0apl4")
+texture_region_size = Vector2i(80, 53)
+0:0/0 = 0
+0:0/0/custom_data_0 = true
+1:0/0 = 0
+1:0/0/custom_data_0 = true
+2:0/0 = 0
+2:0/0/custom_data_0 = true
+3:0/0 = 0
+3:0/0/custom_data_0 = true
+
 [sub_resource type="TileSet" id="TileSet_pr8hy"]
 tile_shape = 1
 tile_layout = 5
@@ -51,6 +64,7 @@ custom_data_layer_0/type = 1
 sources/0 = SubResource("TileSetAtlasSource_s67ph")
 sources/1 = SubResource("TileSetAtlasSource_vykrx")
 sources/2 = SubResource("TileSetAtlasSource_5whph")
+sources/3 = SubResource("TileSetAtlasSource_ckxwl")
 
 [node name="Board" type="TileMapLayer" groups=["Board"]]
 y_sort_enabled = true
