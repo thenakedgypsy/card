@@ -207,7 +207,7 @@ public static class CardCombiner
             // Cost summation
             if (card.ContainsKey("cost")) totalCost += card["cost"].AsInt32();
 
-            // --- NEW: Check for Summon Types and preserve specific Summon properties ---
+            // Check for Summon Types and preserve specific Summon properties
             if (card.GetValueOrDefault("type", "").ToString() == "Summon")
             {
                 isSummon = true;
@@ -229,7 +229,6 @@ public static class CardCombiner
             {
                 attacksEnemies = true;
             }
-            // --------------------------------------------------------------------------
 
             // Merge Effects (This will safely stack the spell effects into the summon's effect list)
             List<Godot.Collections.Dictionary<string, Variant>> cardEffects = ExtractEffectsList(card);
@@ -258,12 +257,19 @@ public static class CardCombiner
             }
         }
 
+        // --- NEW: If a 0-range summon has any effect added, give it range 1 and set attacksEnemies to true ---
+        if (isSummon && mergedEffects.Count > 0 && maxRange == 0)
+        {
+            maxRange = 1;
+            attacksEnemies = true;
+        }
+
         // Apply calculated root properties
         result["cost"] = totalCost;
         result["element"] = primaryElement;
         result["rarity"] = highestRarity;
 
-        // --- NEW: Force the type to Summon if any constituent card was a Summon ---
+        // Force the type to Summon if any constituent card was a Summon
         result["type"] = isSummon ? "Summon" : primaryType;
 
         if (isSummon)
@@ -272,7 +278,7 @@ public static class CardCombiner
             result["effectType"] = "Summon";
 
             // Apply the preserved properties so the Summon spawner doesn't break
-            if (maxRange > 0) result["range"] = maxRange;
+            result["range"] = maxRange;
             result["attacksEnemies"] = attacksEnemies;
         }
 
