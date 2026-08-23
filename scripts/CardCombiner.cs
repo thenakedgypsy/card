@@ -79,10 +79,27 @@ public static class CardCombiner
     
         // 6. Perform full merge across all base cards
         Godot.Collections.Dictionary<string, Variant> combinedData = MergeAllCardData(baseDataList);
-    
-        // NEW: Save the ID of the first base card to tell the game which art to load
-        // Because allBaseCards is sorted alphabetically, this will always be consistent!
-        combinedData["artId"] = allBaseCards[0]; 
+
+
+        // Find the art of the rarest card
+        string bestArtId = allBaseCards[0];
+        string highestRaritySeen = "Common";
+
+        for (int i = 0; i < allBaseCards.Count; i++)
+        {
+            string r = baseDataList[i].GetValueOrDefault("rarity", "Common").ToString();
+            string newRarity = GetHigherRarity(highestRaritySeen, r);
+
+            // If the new rarity is strictly higher, update our target art
+            if (newRarity != highestRaritySeen)
+            {
+                highestRaritySeen = newRarity;
+                bestArtId = allBaseCards[i];
+            }
+        }
+
+        // Assign the most rare card's art
+        combinedData["artId"] = bestArtId;;
 
         // Cache in memory
         DynamicCards[combinationId] = combinedData;
@@ -138,57 +155,93 @@ public static class CardCombiner
     private static Godot.Collections.Dictionary<string, Variant> MergeAllCardData(List<Godot.Collections.Dictionary<string, Variant>> cards)
     {
         var result = new Godot.Collections.Dictionary<string, Variant>();
-
+    
         List<string> names = new List<string>();
         int totalCost = 0;
+        
+        // --- Summon Tracking Variables ---
         int totalHealth = 0;
         bool isSummon = false;
+        int maxRange = 0;
+        bool attacksEnemies = false;
+        // ---------------------------------
+    
         string highestRarity = "Common";
         string primaryType = cards[0].GetValueOrDefault("type", "Spell").ToString();
         string primaryElement = cards[0].GetValueOrDefault("element", "Neutral").ToString();
-
+    
         List<Godot.Collections.Dictionary<string, Variant>> mergedEffects = new List<Godot.Collections.Dictionary<string, Variant>>();
-
+    
         foreach (var card in cards)
         {
-            // Name concatenation
+            string rarestName = cards[0].GetValueOrDefault("name", "Unknown").ToString();
+    
             if (card.ContainsKey("name")) names.Add(card["name"].ToString());
-
-            // Cost summation
-            if (card.ContainsKey("cost")) totalCost += card["cost"].AsInt32();
-
-            // Summon HP summation
-            if (card.ContainsKey("health"))
-            {
-                isSummon = true;
-                totalHealth += Convert.ToInt32(card["health"]);
-            }
-
+            
             // Rarity upgrade check
             string r = card.GetValueOrDefault("rarity", "Common").ToString();
-            highestRarity = GetHigherRarity(highestRarity, r);
-
-            // Merge Effects
+            string checkRarity = GetHigherRarity(highestRarity, r);
+            if (checkRarity != highestRarity)
+            {
+                highestRarity = checkRarity;
+                if (card.ContainsKey("name")) rarestName = card["name"].ToString();
+            }
+    
+            result["name"] = GenerateEscalatingTitle(names.Count, rarestName);
+    
+            // Cost summation
+            if (card.ContainsKey("cost")) totalCost += card["cost"].AsInt32();
+    
+            // --- NEW: Check for Summon Types and preserve specific Summon properties ---
+            if (card.GetValueOrDefault("type", "").ToString() == "Summon")
+            {
+                isSummon = true;
+            }
+    
+            if (card.ContainsKey("health"))
+            {
+                isSummon = true; // Fallback check just in case
+                totalHealth += card["health"].AsInt32();
+            }
+    
+            if (card.ContainsKey("range"))
+            {
+                int rValue = card["range"].AsInt32();
+                if (rValue > maxRange) maxRange = rValue;
+            }
+    
+            if (card.ContainsKey("attacksEnemies") && card["attacksEnemies"].AsBool())
+            {
+                attacksEnemies = true;
+            }
+            // --------------------------------------------------------------------------
+    
+            // Merge Effects (This will safely stack the spell effects into the summon's effect list)
             List<Godot.Collections.Dictionary<string, Variant>> cardEffects = ExtractEffectsList(card);
             foreach (var effect in cardEffects)
             {
                 MergeSingleEffectIntoList(mergedEffects, effect);
             }
         }
-
+    
         // Apply calculated root properties
-        result["name"] = string.Join(" & ", names);
         result["cost"] = totalCost;
-        result["type"] = primaryType;
         result["element"] = primaryElement;
         result["rarity"] = highestRarity;
-
+        
+        // --- NEW: Force the type to Summon if any constituent card was a Summon ---
+        result["type"] = isSummon ? "Summon" : primaryType;
+    
         if (isSummon)
         {
             result["health"] = totalHealth;
             result["effectType"] = "Summon";
+            
+            // Apply the preserved properties so the Summon spawner doesn't break
+            if (maxRange > 0) result["range"] = maxRange;
+            result["attacksEnemies"] = attacksEnemies;
         }
-
+    
         // Output Array of effects for Godot JSON compliance
         var godotEffectsArray = new Godot.Collections.Array<Godot.Collections.Dictionary<string, Variant>>();
         foreach (var eff in mergedEffects)
@@ -196,8 +249,20 @@ public static class CardCombiner
             godotEffectsArray.Add(eff);
         }
         result["effects"] = godotEffectsArray;
-
+    
         return result;
+    }
+
+    private static string GenerateEscalatingTitle(int comboCount, string coreName)
+    {
+        return comboCount switch
+        {
+            1 => coreName,
+            2 => $"Fusion Enhanced {coreName}",
+            3 => $"Greater {coreName} Cluster",
+            4 => $"Unstable {coreName} Anomaly",
+            _ => $"Omni-{coreName} Cataclysm"
+        };
     }
 
     private static void MergeSingleEffectIntoList(

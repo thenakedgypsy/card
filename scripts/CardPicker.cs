@@ -10,6 +10,7 @@ public partial class CardPicker : Node2D
     
     // Exported button that the player must press to execute the combo
     [Export] public Button CombineButton;
+    [Export] public Button CloseButton;
 
     // Grid layout configuration for displaying deck cards on screen
     [Export] public int CardsPerRow = 6;
@@ -51,6 +52,15 @@ public partial class CardPicker : Node2D
         else
         {
             GD.PrintErr("CardPicker: CombineButton is not assigned in the inspector!");
+        }
+        // Setup the close button
+        if (CloseButton != null)
+        {
+            CloseButton.Pressed += CleanupAndClose;
+        }
+        else
+        {
+            GD.PrintErr("CardPicker: CloseButton is not assigned in the inspector!");
         }
 
         DisplayDeckCards();
