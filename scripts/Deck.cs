@@ -15,10 +15,9 @@ public partial class Deck : Cardpile
 		AddCard("earthturret");
 		AddCard("fireball");
 		AddCard("fireball");
-		// AddCard("windturret");
-		// AddCard("windturret");
-		AddCard("confuse");
-		AddCard("confuse");
+		AddCard("windturret");
+		AddCard("windturret");
+
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
