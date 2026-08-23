@@ -211,7 +211,8 @@ public partial class TurnManager : Node
                 distances[enemy] = enemy.GetRouteDistanceTo(_playercore, ignoreSummons: true);
             }
         }
-
+        
+        //
         enemies.Sort((a, b) => distances[a].CompareTo(distances[b]));
 
         foreach (var enemy in enemies)
