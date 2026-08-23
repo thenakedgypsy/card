@@ -44,6 +44,7 @@ public partial class Card : Node2D
     private CardEffect _effect;
     private Rarity _rarity;
     private ShaderMaterial _rarityShader;
+    private Overworld _overworld;
     
 
     public override void _Ready()
@@ -53,6 +54,7 @@ public partial class Card : Node2D
         // Removed _discard and _hand fetches. The card doesn't need to know about them anymore.
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
         _energyManager = GetTree().GetFirstNodeInGroup("EnergyManager") as EnergyManager;
+        _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
        
         _art = GetNode<Sprite2D>("Art");
         _text = GetNode<RichTextLabel>("Text");
@@ -63,6 +65,11 @@ public partial class Card : Node2D
         _rarityFrame = GetNode<Sprite2D>("Rarity");
       
         _title.Text = cardName = "Uninstantiated Card";
+    }
+
+    public override void _Process(double delta)
+    {
+        CheckRedOutMana();
     }
     
     // =========================
@@ -76,6 +83,27 @@ public partial class Card : Node2D
         InstantiateArt(cardID);
         // Destination routing logic removed. The new CardManager handles adding to Hand.
     }
+
+    public void CheckRedOutMana()
+    {
+        if (_overworld.InScene && _overworld.sceneType == OverworldNode.Type.CoreDefence)
+        {
+            if (_energyManager.CurrentEnergy[element] < cost)
+            {
+                _costDisplay.Text = "[color=red]" + cost;
+            }
+            else
+            {
+                _costDisplay.Text = "[color=white]" + cost;
+            }
+        }
+        else
+        {
+            _costDisplay.Text = "[color=white]" + cost;
+        }
+    }
+    
+
 
     private void InstantiateData(string cardID)
     {     

@@ -9,6 +9,8 @@ public partial class Overworld : Node2D
 	public bool InScene = false;
 	[Export]
 	public int roundNum = 0;
+
+	public OverworldNode.Type sceneType;
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{

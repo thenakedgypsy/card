@@ -179,6 +179,7 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 	{
 		GD.Print("Attempting to instantiate");
 		_overworld.InScene = true;
+		_overworld.sceneType = _type;
 		_visisted = true;
 		_visitable = false;
 		_sprite.SelfModulate = new Color(0.8f, 0.8f, 1f, 0.2f);
