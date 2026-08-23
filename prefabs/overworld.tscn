@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://ct6wgkudn7xcc"]
+[gd_scene load_steps=10 format=3 uid="uid://ct6wgkudn7xcc"]
 
 [ext_resource type="Script" path="res://scripts/Overworld.cs" id="1_c53fq"]
 [ext_resource type="PackedScene" uid="uid://bip30mlmq0a8n" path="res://prefabs/overworld_generator.tscn" id="2_7jqe3"]
@@ -9,7 +9,6 @@
 [ext_resource type="PackedScene" uid="uid://bk0gyewh610yl" path="res://prefabs/deck.tscn" id="2_dx411"]
 [ext_resource type="PackedScene" uid="uid://bpccxuobqmat4" path="res://prefabs/card_pile_display.tscn" id="2_egrbe"]
 [ext_resource type="PackedScene" uid="uid://cewtx1wpr1mdy" path="res://prefabs/card_pile_display_butotn.tscn" id="9_c7xy2"]
-[ext_resource type="PackedScene" uid="uid://brqkl1d8go5ho" path="res://prefabs/picker.tscn" id="10_stbt5"]
 
 [node name="Overworld" type="Node2D" groups=["Overworld"]]
 script = ExtResource("1_c53fq")
@@ -66,5 +65,3 @@ padding = 209.0
 metadata/_edit_use_anchors_ = true
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
-
-[node name="Picker" parent="." instance=ExtResource("10_stbt5")]

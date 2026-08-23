@@ -255,6 +255,8 @@ public partial class CardPicker : Node2D
 
     private void CleanupAndClose()
     {
+        Overworld overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
+        overworld.InScene = false;
         ClearSpawnedCards();
         QueueFree();
     }

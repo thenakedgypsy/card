@@ -51,16 +51,25 @@ public partial class NodeGenerator : Node2D
                 OverworldNode node = NodePrefab.Instantiate<OverworldNode>();
                 node.Position = new Vector2(col * XSpacing, startY + row * YSpacing);
 
-                if (col < InitialSafeNodes)
+                if (col == 0)
+                {
+                    node.isCardGain = true;
+                }
+                else if (col == 1)
+                {
+                    node.isEnergy = true;
+                }
+                else if (col < InitialSafeNodes)
                 {
                     if (_rng.RandiRange(0, 1) == 0) node.isEnergy = true;
                     else node.isCardGain = true;
                 }
                 else
-                {
-                    int rand = _rng.RandiRange(0, 2);
+                {                                       //to add new node type to generator, add it here
+                    int rand = _rng.RandiRange(0, 4);  //add one to the max arg, and add a new case that sets its type true (HORRIB)
                     if (rand == 0) node.isEnergy = true;
                     else if (rand == 1) node.isCardGain = true;
+                    else if (rand == 2) node.isCardCombine = true;
                     else node.isDefence = true;
                 }
 
