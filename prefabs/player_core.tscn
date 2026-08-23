@@ -1,21 +1,20 @@
 [gd_scene load_steps=4 format=3 uid="uid://cf2730r1hoxub"]
 
 [ext_resource type="Script" path="res://scripts/PlayerCore.cs" id="1_gkhtc"]
-[ext_resource type="Texture2D" uid="uid://clmq0ttk0uj2h" path="res://assets/cores/mushroomCore.png" id="2_dr5yr"]
+[ext_resource type="Texture2D" uid="uid://b1rnhoema3g77" path="res://assets/cores/placeholder.png" id="2_kfdy5"]
 [ext_resource type="PackedScene" uid="uid://nm1d2agawpwo" path="res://prefabs/healthbar.tscn" id="3_d16v3"]
 
 [node name="PlayerCore" type="Node2D" groups=["Core"]]
 z_index = 1
-scale = Vector2(1.63963, 1.75559)
 script = ExtResource("1_gkhtc")
 Health = 420.0
 
 [node name="Sprite2D" type="Sprite2D" parent="."]
-position = Vector2(-9.23671, -44.1247)
-texture = ExtResource("2_dr5yr")
+position = Vector2(0, -21)
+texture = ExtResource("2_kfdy5")
 
 [node name="HealthBar" parent="." instance=ExtResource("3_d16v3")]
-offset_left = -76.2367
-offset_top = -111.074
-offset_right = -12.2367
-offset_bottom = -99.0738
+offset_left = -45.742
+offset_top = -72.91
+offset_right = 18.258
+offset_bottom = -60.9098
