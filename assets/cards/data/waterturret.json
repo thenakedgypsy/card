@@ -3,17 +3,17 @@
   "type": "Summon",
   "cost": 2,
   "element": "Water",
-  "rarity": "Common",
+  "rarity": "Rare",
   "effectType": "Summon",
-  "health": 30,
-  "range": 2,
+  "health": 3,
+  "range": 8,
   "attacksEnemies": true,
   "effects" : 
   [
     {
       "effectType": "EnemyDamage",
-      "damage": 4,
-      "splashTiles": 1
+      "damage": 2,
+      "splashTiles": 2
     }
   ]
 }

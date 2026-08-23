@@ -3,9 +3,9 @@
   "type": "Summon",
   "cost": 2,
   "element": "Wind",
-  "rarity": "Rare",
+  "rarity": "Epic",
   "effectType": "Summon",
-  "health": 25, 
+  "health": 1, 
   "range": 1,
   "attacksEnemies": true,
   "effects":

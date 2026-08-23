@@ -3,7 +3,7 @@
   "type": "Summon",
   "cost": 1,
   "element": "Water",
-  "rarity": "Uncommon",
+  "rarity": "Common",
   "effectType": "Summon",
   "health": 15, 
   "range": 0,

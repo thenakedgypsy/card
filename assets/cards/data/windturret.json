@@ -5,7 +5,7 @@
   "element": "Wind",
   "rarity": "Common",
   "effectType": "Summon",
-  "health": 30,
+  "health": 1,
   "range": 4,
   "attacksEnemies": true,
   "effects" :
@@ -14,19 +14,6 @@
 		  "effectType": "EnemyDamage",
 		  "damage": 1,
 		  "splashTiles": 1
-		},
-		{
-	  	  "effectType": "StatusEffect",
-	  	  "statusType": "Stun",
-	  	  "turnsActive": 1,
-		  "splashTiles": 0
-		},
-		{
-	  	  "effectType": "StatusEffect",
-	  	  "statusType": "Burn",
-		  "damage": 5,
-	  	  "turnsActive": 3,
-		  "splashTiles": 0
 		}
 	]
 }

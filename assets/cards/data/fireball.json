@@ -3,11 +3,11 @@
   "type": "Spell",
   "cost": 1,
   "element": "Fire",
-  "rarity": "Uncommon",
+  "rarity": "Common",
   "effects": [
     {
       "effectType": "EnemyDamage",
-      "damage": 4,
+      "damage": 2,
       "splashTiles": 1
     }
   ]

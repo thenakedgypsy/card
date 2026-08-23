@@ -3,13 +3,13 @@
   "type": "Spell",
   "cost": 1,
   "element": "Earth",
-  "rarity": "Common",
+  "rarity": "Uncommon",
   "effects":
   [
     {
       "effectType": "StatusEffect",
       "statusType": "Stun",
-      "turnsActive": 1
+      "turnsActive": 2
     }
   ]
 }
