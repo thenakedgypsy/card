@@ -80,21 +80,38 @@ public partial class SummonSpawner : Node2D
     public void Setup(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string summonID)
     {
         _sprite = GetNode<Sprite2D>("Sprite2D");
-        string path = $"res://assets/summons/{summonID}.png";
+        
+        // --- NEW ART FALLBACK LOGIC ---
+        string artToLoad = summonID;
+        if (data != null && data.ContainsKey("artId"))
+        {
+            artToLoad = data["artId"].ToString();
+        }
+
+        string path = $"res://assets/summons/{artToLoad}.png";
         Texture2D texture = GD.Load<Texture2D>(path);
+
+        if (texture == null)
+        {
+            GD.PrintErr($"SummonSpawner: Failed to load texture at {path}");
+        }
+        // ------------------------------
     
         _sprite.Texture = texture;
         _sprite.SelfModulate = new Color(1f, 1f, 1f, 0.5f);
     
         // Match the visual offset logic from Summon.cs
-        Vector2 spriteSize = texture.GetSize() * _sprite.Scale;
-        if (_sprite.Centered)
+        if (texture != null) // Add a null check to prevent crashes if art is missing
         {
-            _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
-        }
-        else
-        {
-            _sprite.Offset = new Vector2(0, 16f - spriteSize.Y);
+            Vector2 spriteSize = texture.GetSize() * _sprite.Scale;
+            if (_sprite.Centered)
+            {
+                _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+            }
+            else
+            {
+                _sprite.Offset = new Vector2(0, 16f - spriteSize.Y);
+            }
         }
     
         _data = data;

@@ -194,9 +194,21 @@ public partial class Summon : Node2D, IHealth
 			GD.PushWarning($"Summon missing effects[] in {summonID} json");
 		}
 
-        string path = $"res://assets/summons/{summonID}.png";
+        // --- NEW ART FALLBACK LOGIC ---
+        string artToLoad = summonID;
+        if (data != null && data.ContainsKey("artId"))
+        {
+            artToLoad = data["artId"].ToString();
+        }
 
+        string path = $"res://assets/summons/{artToLoad}.png";
         Texture2D texture = GD.Load<Texture2D>(path);
+        
+        if (texture == null)
+        {
+            GD.PrintErr($"Summon: Failed to load texture at {path}");
+        }
+        // ------------------------------
 
 		_sprite.Texture = texture;
 

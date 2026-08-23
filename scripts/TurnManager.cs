@@ -24,6 +24,7 @@ public partial class TurnManager : Node
     private EnergyManager _energyManager;
     private Node2D _playercore;
     private Hand _hand;
+    private bool _isBattleEnding = false;
 
     [Export] private float enemyTurnDelay = 0.001f;
     [Export] private float actionSpacingDelay = 0.02f;
@@ -61,12 +62,12 @@ public partial class TurnManager : Node
         _overworld = GetTree().GetFirstNodeInGroup("Overworld") as Overworld;
         _cardManager = GetTree().GetFirstNodeInGroup("CardManager") as CardManager;
     }
+    
 
     public void Setup(int numEnemies)
     {
         GD.Print("SETUP CALLED");
         
-        // Re-bind scene nodes destroyed in previous battles
         FetchReferences();
 
         if (_overworld == null || _board == null)
@@ -102,11 +103,10 @@ public partial class TurnManager : Node
 
         energyPlayedThisTurn = 0;
 
-        // Safety limit prevents main thread soft-locking if deck runs out or _hand drops
         int maxDraws = 10;
-        while (_hand != null && _hand.GetNumCards() < 5 && maxDraws > 0)
+        while (_hand != null && GodotObject.IsInstanceValid(_hand) && _hand.GetNumCards() < 5 && maxDraws > 0)
         {
-            if (_cardManager != null)
+            if (_cardManager != null && GodotObject.IsInstanceValid(_cardManager))
             {
                 _cardManager.DrawCard();
             }
@@ -120,6 +120,8 @@ public partial class TurnManager : Node
 
     public async void BeginEnemyTurn()
     {
+        if (_isBattleEnding) return;
+
         await ToSignal(GetTree().CreateTimer(enemyTurnDelay), SceneTreeTimer.SignalName.Timeout);
 
         State = GameState.EnemyTurn;
@@ -131,17 +133,25 @@ public partial class TurnManager : Node
             .Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0)
             .ToList();
 
-
         if (enemies.Count == 0)
         {
+            _isBattleEnding = true; 
             GD.Print("All enemies defeated! Victory.");
             State = GameState.CleanupStep;
-            
-            // Close battle scene & notify Overworld
+
+            if (_cardManager != null && GodotObject.IsInstanceValid(_cardManager))
+            {
+                _cardManager.Reset();
+            }
+
+            _hand = null;
+            _playercore = null;
+            _board = null;
+            _cardManager = null;
+
             _overworld.InScene = false;
-            
-            // Queue free the CoreDef container scene
-            GetParent().QueueFree(); 
+
+            GetParent().CallDeferred("queue_free");
             return;
         }
         
@@ -150,28 +160,23 @@ public partial class TurnManager : Node
         {
             OccupyCell(WorldToCell(enemy.GlobalPosition));         
             enemy.ResetTurnState();
-            enemy.TryTriggerStatusEffect(); // Evaluates status effects / IsStunned[cite: 1]
+            enemy.TryTriggerStatusEffect();
         }
 
-        // Rebake nav AFTER status effects are triggered so stunned enemies act as solid walls
         RebakeNav();
 
-        // 1. Separate active (moving) enemies from stunned enemies
         var activeEnemies = enemies.Where(e => !e.IsStunned).ToList();
 
-        // 2. Only execute movement for non-stunned enemies
         await ExecuteEnemyTurnPhase(activeEnemies);
 
-        // 3. Attack phase (Stunned enemies will automatically skip attacks via IsStunned check)[cite: 1]
         foreach (Enemy enemy in enemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0))
         {
-            if (_playercore != null)
+            if (_playercore != null && GodotObject.IsInstanceValid(_playercore))
             {
-                await enemy.ExecuteAttackPhaseAsync(_playercore); //[cite: 1]
+                await enemy.ExecuteAttackPhaseAsync(_playercore);
             }
         }
 
-        // 4. Secondary movement phase for active enemies with remaining movement
         var remainingEnemies = activeEnemies.Where(e => GodotObject.IsInstanceValid(e) && e.CurrentHealth > 0 && e.RemainingMovement > 0).ToList();
         if (remainingEnemies.Count > 0)
         {
@@ -189,11 +194,6 @@ public partial class TurnManager : Node
 
     private async Task ExecuteEnemyTurnPhase(List<Enemy> enemies)
     {
-
-        //do first? Going off how poison works in slay the spire (start if enemy turn)
-    
-
-        // 1. Evaluate distances considering summons as blockers
         bool allFullyBlocked = true;
         var distances = new Dictionary<Enemy, int>();
 
@@ -330,7 +330,6 @@ public partial class TurnManager : Node
             }
         }
 
-        // Block cells occupied by summons[cite: 2]
         var summons = GetTree().GetNodesInGroup("Summons"); 
         foreach (Node node in summons)
         {
@@ -341,7 +340,6 @@ public partial class TurnManager : Node
             }
         }
 
-        // NEW: Block cells occupied by stunned enemies so moving enemies path around them
         var enemies = GetTree().GetNodesInGroup("Enemies");
         foreach (Node node in enemies)
         {

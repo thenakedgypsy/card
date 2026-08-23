@@ -7,12 +7,12 @@ public partial class CardManager : Node
     private Deck _deck;
     private Discard _discard;
     private Hand _hand;
+    
     private Hand ActiveHand
     {
         get
         {
-            // If we don't have the reference yet, find it now
-            if (_hand == null)
+            if (_hand == null || !GodotObject.IsInstanceValid(_hand))
             {
                 _hand = GetTree().GetFirstNodeInGroup("Hand") as Hand;
             }
@@ -24,8 +24,7 @@ public partial class CardManager : Node
     {
         get
         {
-            // If we don't have the reference yet, find it now
-            if (_discard == null)
+            if (_discard == null || !GodotObject.IsInstanceValid(_discard))
             {
                 _discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
             }
@@ -37,7 +36,6 @@ public partial class CardManager : Node
     {
         _deck = GetTree().GetFirstNodeInGroup("Deck") as Deck;
         _discard = GetTree().GetFirstNodeInGroup("Discard") as Discard;
-
     }
 
     /// <summary>
@@ -46,45 +44,53 @@ public partial class CardManager : Node
     /// </summary>
     public void Reset()
     {
-        // Ensure deck reference is valid
-        if (_deck == null)
+        if (_deck == null || !GodotObject.IsInstanceValid(_deck))
         {
             _deck = GetTree().GetFirstNodeInGroup("Deck") as Deck;
         }
 
-        // Use ActiveDiscard to safely grab discard if it's currently null
-        if (ActiveDiscard != null && ActiveDiscard.GetNumCards() > 0)
+        var discard = ActiveDiscard;
+        if (discard != null && GodotObject.IsInstanceValid(discard) && discard.GetNumCards() > 0)
         {
             GD.Print("Resetting game: moving all cards from discard back to deck...");
-            _deck.AddCards(ActiveDiscard.GetCards());
-            ActiveDiscard.Clear();
+            _deck.AddCards(discard.GetCards());
+            discard.Clear();
         }
 
-        foreach (Node child in ActiveHand.GetChildren())
+        var hand = ActiveHand;
+        if (hand != null && GodotObject.IsInstanceValid(hand))
         {
-            if (child is Card card)
+            foreach (Node child in hand.GetChildren())
             {
-                _deck.AddCard(card.CardID);
-                card.QueueFree();
+                if (child is Card card && GodotObject.IsInstanceValid(card))
+                {
+                    _deck.AddCard(card.CardID);
+                    card.QueueFree();
+                }
             }
         }
 
-        if (_deck != null)
+        if (_deck != null && GodotObject.IsInstanceValid(_deck))
         {
             _deck.Shuffle();
         }
 
-        // Reset our cached references to hand and discard
         _hand = null;
         _discard = null;
     }
 
     public void DrawCard()
     {
+        if (_deck == null || !GodotObject.IsInstanceValid(_deck))
+        {
+            _deck = GetTree().GetFirstNodeInGroup("Deck") as Deck;
+        }
+
         // 1. Check if deck is empty and needs a reshuffle
         if (_deck.GetNumCards() == 0)
         {
-            if (ActiveDiscard.GetNumCards() == 0)
+            var discard = ActiveDiscard;
+            if (discard == null || !GodotObject.IsInstanceValid(discard) || discard.GetNumCards() == 0)
             {
                 GD.Print("Both Deck and Discard are empty! Cannot draw.");
                 return;
@@ -92,11 +98,8 @@ public partial class CardManager : Node
 
             GD.Print("Deck is empty! Shuffling discard pile into deck...");
             
-            // Move all cards from discard to deck
-            _deck.AddCards(ActiveDiscard.GetCards());
-            ActiveDiscard.Clear();
-            
-            // Shuffle the replenished deck
+            _deck.AddCards(discard.GetCards());
+            discard.Clear();
             _deck.Shuffle();
         }
 
@@ -105,33 +108,52 @@ public partial class CardManager : Node
         
         // 3. Create the Godot node
         Card newCard = CardPrefab.Instantiate<Card>();
-        ActiveHand.AddChild(newCard); 
-        
-        // 4. Hydrate the ID and data
-        newCard.Generate(drawnId);
-        
-        // 5. Subscribe to the signals
-        newCard.CardPlayed += OnCardPlayed;
-        newCard.CardDiscarded += OnCardDiscarded;
+        var hand = ActiveHand;
+        if (hand != null && GodotObject.IsInstanceValid(hand))
+        {
+            hand.AddChild(newCard); 
+            
+            // 4. Hydrate the ID and data
+            newCard.Generate(drawnId);
+            
+            // 5. Subscribe to the signals
+            newCard.CardPlayed += OnCardPlayed;
+            newCard.CardDiscarded += OnCardDiscarded;
 
-        // 6. Send to the visual hand
-        ActiveHand.AddCard(newCard);
+            // 6. Send to the visual hand
+            hand.AddCard(newCard);
+        }
     }
 
     private void OnCardPlayed(Card card)
     {
-        // Add string ID to discard
-        ActiveDiscard.AddCard(card.CardID);
+        var discard = ActiveDiscard;
+        if (discard != null && GodotObject.IsInstanceValid(discard))
+        {
+            discard.AddCard(card.CardID);
+        }
         
-        // Clean up the Godot node
-        ActiveHand.RemoveCard(card);
+        var hand = ActiveHand;
+        if (hand != null && GodotObject.IsInstanceValid(hand))
+        {
+            hand.RemoveCard(card);
+        }
         card.QueueFree();
     }
 
     private void OnCardDiscarded(Card card)
     {
-        ActiveDiscard.AddCard(card.CardID);
-        ActiveHand.RemoveCard(card);
+        var discard = ActiveDiscard;
+        if (discard != null && GodotObject.IsInstanceValid(discard))
+        {
+            discard.AddCard(card.CardID);
+        }
+        
+        var hand = ActiveHand;
+        if (hand != null && GodotObject.IsInstanceValid(hand))
+        {
+            hand.RemoveCard(card);
+        }
         card.QueueFree();
     }
 }
