@@ -12,6 +12,15 @@ public partial class Board : TileMapLayer
 	[Export] public int MaxPathWidth = 2;
 	[Export] public Vector2 ScreenOffset = Vector2.Zero;
 
+	// Hardcoded base tile coordinates for all sources
+	private static readonly Vector2I[] BaseTileCoords = new Vector2I[]
+	{
+		new Vector2I(0, 0),
+		new Vector2I(1, 0),
+		new Vector2I(2, 0),
+		new Vector2I(3, 0)
+	};
+
 	public override void _Ready()
 	{
 		_mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
@@ -67,6 +76,39 @@ public partial class Board : TileMapLayer
 	{
 		Random rng = new Random(seed);
 		var usedCells = GetUsedCells();
+
+		// ============================================================
+		// 0. SCAN TILESET & APPLY RANDOM BASE TILE FROM A RANDOM SOURCE ID
+		// ============================================================
+		if (TileSet != null && TileSet.GetSourceCount() > 0)
+		{
+			List<int> validSourceIds = new List<int>();
+
+			for (int i = 0; i < TileSet.GetSourceCount(); i++)
+			{
+				int sourceId = TileSet.GetSourceId(i);
+				if (TileSet.GetSource(sourceId) is TileSetAtlasSource)
+				{
+					validSourceIds.Add(sourceId);
+				}
+			}
+
+			if (validSourceIds.Count > 0)
+			{
+				// Pick a random SourceID (TileID)
+				int chosenSourceId = validSourceIds[rng.Next(validSourceIds.Count)];
+
+				// Repopulate every scene tile with a random tile from (0,0), (1,0), (2,0), (3,0)
+				foreach (Vector2I cell in usedCells)
+				{
+					Vector2I randomTileCoords = BaseTileCoords[rng.Next(BaseTileCoords.Length)];
+					SetCell(cell, chosenSourceId, randomTileCoords);
+				}
+			}
+		}
+
+		// Refresh used cells to reflect the newly assigned tiles
+		usedCells = GetUsedCells();
 
 		// 1. Scan tiles and cache their properties and walkability
 		var tileInfoDict = new Dictionary<Vector2I, (int sourceId, Vector2I atlasCoords, int alternativeTile)>();
@@ -136,7 +178,7 @@ public partial class Board : TileMapLayer
 			maxY = centerY + halfDist;
 		}
 
-		// Find the center point of the rectangle and position the layer in the middle of the screen
+		// Position the layer in the middle of the screen
 		Vector2I rectCenterCell = new Vector2I((minX + maxX) / 2, (minY + maxY) / 2);
 		Vector2 localCenter = MapToLocal(rectCenterCell);
 		Vector2 screenSize = GetViewportRect().Size;
@@ -150,7 +192,7 @@ public partial class Board : TileMapLayer
 			}
 		}
 
-		// 4. Devise multiple distinct non-diagonal paths between p1 and p2 using penalty-based A* routing
+		// 4. Devise multiple distinct non-diagonal paths using penalty-based A* routing
 		HashSet<Vector2I> allPathCells = new HashSet<Vector2I>();
 		List<List<Vector2I>> generatedPaths = new List<List<Vector2I>>();
 		Dictionary<Vector2I, float> cellPenalties = new Dictionary<Vector2I, float>();
@@ -166,7 +208,6 @@ public partial class Board : TileMapLayer
 				foreach (var cell in path)
 				{
 					allPathCells.Add(cell);
-					// Heavily penalize used cells for subsequent paths to force distinct non-overlapping routes
 					if (cell != p1 && cell != p2)
 					{
 						if (!cellPenalties.ContainsKey(cell)) cellPenalties[cell] = 0f;
@@ -176,7 +217,6 @@ public partial class Board : TileMapLayer
 			}
 			else
 			{
-				// Fallback direct line if A* fails
 				var directPath = GetDirectLine(p1, p2);
 				generatedPaths.Add(directPath);
 				foreach (var cell in directPath) allPathCells.Add(cell);
@@ -193,7 +233,7 @@ public partial class Board : TileMapLayer
 			}
 		}
 
-		// 6. Thicken paths at random points along the path up to MaxPathWidth by re-adding tiles
+		// 6. Thicken paths at random points along the path up to MaxPathWidth
 		int maxThickness = Mathf.Max(1, MaxPathWidth);
 		int defaultSource = 0;
 		Vector2I defaultAtlas = new Vector2I(0, 0);

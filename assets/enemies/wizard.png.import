@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dpec6j857dbmr"
-path="res://.godot/imported/windturret.png-4cab00f747bb723b8b7890bac8a2c265.ctex"
+uid="uid://0y0r8ogf8kuy"
+path="res://.godot/imported/wizard.png-598a4d992de99320c9c38be9673ffeba.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/summons/windturret.png"
-dest_files=["res://.godot/imported/windturret.png-4cab00f747bb723b8b7890bac8a2c265.ctex"]
+source_file="res://assets/enemies/wizard.png"
+dest_files=["res://.godot/imported/wizard.png-598a4d992de99320c9c38be9673ffeba.ctex"]
 
 [params]
 
