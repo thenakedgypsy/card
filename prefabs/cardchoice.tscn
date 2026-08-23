@@ -2,18 +2,18 @@
 
 [ext_resource type="Script" path="res://scripts/Cardchoice.cs" id="1_4pkia"]
 [ext_resource type="PackedScene" uid="uid://wfxyj66j7o6w" path="res://prefabs/Card.tscn" id="2_ahm44"]
-[ext_resource type="Texture2D" uid="uid://b6koki6d4iaw3" path="res://icon.svg" id="3_0vhcj"]
+[ext_resource type="PackedScene" uid="uid://c2pp7lktn8w66" path="res://prefabs/BG.tscn" id="3_ylytr"]
 
 [node name="CardChoice" type="Node2D"]
 script = ExtResource("1_4pkia")
 CardPrefab = ExtResource("2_ahm44")
 
-[node name="TextureRect" type="TextureRect" parent="."]
-z_index = -1
-z_as_relative = false
-offset_left = -958.0
-offset_top = -536.0
-offset_right = 963.0
-offset_bottom = 544.0
-mouse_filter = 2
-texture = ExtResource("3_0vhcj")
+[node name="BG" parent="." instance=ExtResource("3_ylytr")]
+
+[node name="RichTextLabel" type="RichTextLabel" parent="."]
+offset_left = -185.0
+offset_top = -336.0
+offset_right = 100.0
+offset_bottom = -313.0
+scale = Vector2(2.04451, 4.72907)
+text = "PICK A CARD TO GAIN"

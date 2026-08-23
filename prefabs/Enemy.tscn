@@ -1,11 +1,96 @@
-[gd_scene load_steps=5 format=3 uid="uid://dules16lpku10"]
+[gd_scene load_steps=17 format=3 uid="uid://dules16lpku10"]
 
 [ext_resource type="Script" path="res://scripts/Enemy.cs" id="1_dng6c"]
-[ext_resource type="Texture2D" uid="uid://d3eb3fxcxwjyc" path="res://assets/enemies/placeholder.png" id="2_r8a2w"]
+[ext_resource type="Texture2D" uid="uid://c4m4msu7owm3o" path="res://assets/enemies/enemy.png" id="2_oodl8"]
 [ext_resource type="PackedScene" uid="uid://nm1d2agawpwo" path="res://prefabs/healthbar.tscn" id="3_ax228"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_s5750"]
 radius = 30.0167
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wu2li"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(0, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wwaqy"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(64, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_v1v3y"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(128, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_iv3uj"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(192, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_63l0a"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(256, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4lnfl"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(320, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h8dti"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(384, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_h5rtv"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(448, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_vb7pm"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(512, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_k8tf6"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(576, 0, 64, 72)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5hyrq"]
+atlas = ExtResource("2_oodl8")
+region = Rect2(640, 0, 64, 72)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_k43uu"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wu2li")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wwaqy")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_v1v3y")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_iv3uj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_63l0a")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4lnfl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h8dti")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_h5rtv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_vb7pm")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_k8tf6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5hyrq")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 8.0
+}]
 
 [node name="Enemy" type="CharacterBody2D" groups=["Enemies"]]
 z_index = 1
@@ -29,8 +114,11 @@ avoidance_enabled = true
 radius = 73.11
 time_horizon_obstacles = 0.35
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-texture = ExtResource("2_r8a2w")
+[node name="Sprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_k43uu")
+animation = &"idle"
+autoplay = "idle"
+frame_progress = 0.415844
 offset = Vector2(0, -16)
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]

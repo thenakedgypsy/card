@@ -1,0 +1,47 @@
+[gd_scene load_steps=3 format=3 uid="uid://c2pp7lktn8w66"]
+
+[ext_resource type="Texture2D" uid="uid://bb7nvkgp55ngc" path="res://assets/environs/waterBG.png" id="1_c7mqi"]
+[ext_resource type="Texture2D" uid="uid://cun3hnrn5lub7" path="res://assets/environs/BGBOTTOM.png" id="2_kbwdg"]
+
+[node name="BG" type="Node2D"]
+
+[node name="TextureRect" type="TextureRect" parent="."]
+z_index = -1
+z_as_relative = false
+offset_left = -962.997
+offset_top = -684.0
+offset_right = -282.997
+offset_bottom = -104.0
+mouse_filter = 2
+texture = ExtResource("1_c7mqi")
+
+[node name="TextureRect4" type="TextureRect" parent="."]
+z_index = -1
+z_as_relative = false
+offset_left = 338.196
+offset_top = -604.0
+offset_right = 1018.2
+offset_bottom = -24.0
+mouse_filter = 2
+texture = ExtResource("1_c7mqi")
+
+[node name="TextureRect7" type="TextureRect" parent="."]
+z_index = -1
+z_as_relative = false
+offset_left = -313.4
+offset_top = -644.0
+offset_right = 366.6
+offset_bottom = -64.0
+mouse_filter = 2
+texture = ExtResource("1_c7mqi")
+
+[node name="TextureRect11" type="TextureRect" parent="."]
+z_index = -1
+z_as_relative = false
+offset_left = -1026.0
+offset_top = -181.0
+offset_right = -346.0
+offset_bottom = 399.0
+scale = Vector2(3.02586, 1.7161)
+mouse_filter = 2
+texture = ExtResource("2_kbwdg")

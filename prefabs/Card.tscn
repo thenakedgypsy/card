@@ -52,12 +52,12 @@ drag_and_drop_selection_enabled = false
 
 [node name="Cost" type="RichTextLabel" parent="."]
 offset_left = 26.0
-offset_top = -48.8
-offset_right = 72.0
-offset_bottom = -4.8
+offset_top = -50.0
+offset_right = 66.0
+offset_bottom = 16.0
 scale = Vector2(0.168059, 0.180852)
 mouse_filter = 2
-theme_override_font_sizes/normal_font_size = 33
+theme_override_font_sizes/normal_font_size = 49
 bbcode_enabled = true
 text = "2"
 scroll_active = false
