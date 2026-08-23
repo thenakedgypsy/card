@@ -62,9 +62,14 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (resetMovement)
         {
             // Only reset stun if no active StatusEffect child exists
-            if (!HasActiveStunOrSlowEffects())
+            if (!HasActiveStunEffects())
             {
                 IsStunned = false;
+                MoveDistance = DefaultMoveDistance;
+            }
+            if (!HasActiveSlowEffects())
+            {
+                IsSlowed = false;
                 MoveDistance = DefaultMoveDistance;
             }
 
@@ -79,14 +84,14 @@ public partial class Enemy : CharacterBody2D, IHealth
         SetBlockedVisualState(false);
     }
 
-    private bool HasActiveStunOrSlowEffects()
+    private bool HasActiveStunEffects()
     {
         foreach (Node child in GetChildren())
         {
             if (child is StatusEffect)
             {
                 StatusEffect status = child as StatusEffect;
-                if (status.TypeName == StatusEffect.Type.Stun || status.TypeName == StatusEffect.Type.Slow)
+                if (status.TypeName == StatusEffect.Type.Stun)
                 {
                     return true;
                 }
@@ -95,7 +100,22 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
         return false;
     }
-
+    private bool HasActiveSlowEffects()
+        {
+            foreach (Node child in GetChildren())
+            {
+                if (child is StatusEffect)
+                {
+                    StatusEffect status = child as StatusEffect;
+                    if (status.TypeName == StatusEffect.Type.Slow)
+                    {
+                        return true;
+                    }
+                    
+                }
+            }
+            return false;
+        }
     // --- STEP 1: POSITION CALCULATIONS ---
 
     public void PlanMove(Node2D playerCore)
