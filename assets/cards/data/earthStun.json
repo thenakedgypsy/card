@@ -9,8 +9,7 @@
     {
       "effectType": "StatusEffect",
       "statusType": "Stun",
-      "turnsActive": 1,
-      "power": 0
+      "turnsActive": 1
     }
   ]
 }

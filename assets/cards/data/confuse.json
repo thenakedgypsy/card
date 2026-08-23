@@ -1,0 +1,15 @@
+{
+  "name": "Confuse",
+  "type": "Spell",
+  "cost": 1,
+  "element": "Water",
+  "rarity": "Common",
+  "effects": 
+  [
+    {
+      "effectType": "StatusEffect",
+      "statusType": "Confuse",
+      "turnsActive": 2
+    }
+  ]
+}

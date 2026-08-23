@@ -16,8 +16,7 @@
       "statusType": "Burn",
       "damage" : 2,
       "turnsActive": 3,
-      "splashTiles" : 0,
-      "power": 0
+      "splashTiles" : 0
     }
   ]
 }

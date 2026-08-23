@@ -9,7 +9,6 @@ public partial class StatusEffect : Node2D
         Burn,
         Slow,
         Confuse,
-        Haste,
         Stun,
         Disarm
     }
@@ -31,7 +30,7 @@ public partial class StatusEffect : Node2D
         
         Element = ele;
         TurnsLeftActive = data["turnsActive"].ToString().ToInt();
-        Power = data["power"].ToString().ToInt();
+        if (data.ContainsKey("power")) Power = data["power"].ToString().ToInt();
 
         if (data.ContainsKey("damage"))
         {
@@ -72,14 +71,12 @@ public partial class StatusEffect : Node2D
             switch (TypeName)
             {
                 case StatusEffect.Type.Burn:
-                    _triggerBurn();
                     break;
                 case StatusEffect.Type.Slow:
                     if (_canApplySlow()) _triggerSlow();
                     break;
                 case StatusEffect.Type.Confuse:
-                    break;
-                case StatusEffect.Type.Haste:
+                    _triggerConfuse();
                     break;
                 case StatusEffect.Type.Stun:
                     _triggerStun();
@@ -95,9 +92,12 @@ public partial class StatusEffect : Node2D
         }
     }
 
-    private void _triggerBurn()
+    private void _triggerConfuse()
     {
-        //leaving this in for now incase other mechanics happen
+        if (!_getEnemyTarget().IsConfused) _getEnemyTarget().IsConfused = true;
+
+
+        GD.Print("CONFUSE THIS ONE");
     }
     private void _triggerSlow()
     {
@@ -122,14 +122,9 @@ public partial class StatusEffect : Node2D
     }
     private void _triggerStun()
     {
-        //removed the damage from here. can be applied via a seperate effect. 
-        //using a bool rather than modulating.
         _getEnemyTarget().IsStunned = true;
         _getEnemyTarget().MoveDistance = 0;
         _getEnemyTarget().Set("RemainingMovement", 0);
-
-
-        GD.Print($"_triggerStun {TurnsLeftActive} turns left.");
     }
 
     private void _enemyTakeDamage()
