@@ -175,7 +175,7 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		_scene = GD.Load<PackedScene>("res://prefabs/cardchoice.tscn");
 	}
 
-	public void InstantiateSceneFromNode()
+	public async void InstantiateSceneFromNode()
 	{
 		GD.Print("Attempting to instantiate");
 		_overworld.InScene = true;
@@ -184,6 +184,9 @@ public partial class OverworldNode : Node2D // will be a node in the overworld t
 		_visitable = false;
 		_sprite.SelfModulate = new Color(0.8f, 0.8f, 1f, 0.2f);
 		_overworld.roundNum += 1;
+
+		await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
+
 		switch (_type)
 		{
 			case Type.CoreDefence:
