@@ -1,14 +1,14 @@
 {
   "name": "Earth Shatter",
   "type": "Spell",
-  "cost": 4,
+  "cost": 2,
   "element": "Earth",
   "rarity": "Epic",
   "effects":
   [
     {
       "effectType": "EnemyDamage",
-      "damage": 12,
+      "damage": 6,
       "splashTiles": 2
     }
   ]
