@@ -221,7 +221,7 @@ time_horizon_obstacles = 0.35
 sprite_frames = SubResource("SpriteFrames_k43uu")
 animation = &"attacker_idle"
 autoplay = "shield_idle"
-frame_progress = 0.424575
+frame_progress = 0.11564
 offset = Vector2(0, -16)
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]
