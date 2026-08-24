@@ -9,9 +9,9 @@ public partial class CardEffect : Node2D
         EnemyDamage,
         StatusEffect,
         Summon,
-        SummonModify,
+        SummonModify, //can include chance based modification
         CoreModify,
-        DeckModify      
+        DeckModify,
     }
 
     public Card.Element element;
@@ -52,7 +52,7 @@ public partial class CardEffect : Node2D
         }
         else
         {
-            _AttackEnemy();
+            _TargetEnemy();
             QueueFree();
         }
     }
@@ -69,7 +69,7 @@ public partial class CardEffect : Node2D
         GD.Print($"Summoning a summon with {health} hp");
     }
 
-    private void _AttackEnemy()
+    private void _TargetEnemy()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
         if (scene == null) return;
