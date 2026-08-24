@@ -5,7 +5,7 @@
   "element": "Earth",
   "rarity": "Common",
   "effectType": "Summon",
-  "health": 10,
+  "health": 12,
   "range": 10,
   "attacksEnemies": true,
   "effects": 

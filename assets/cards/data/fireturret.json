@@ -5,7 +5,7 @@
   "element": "Fire",
   "rarity": "Rare", 
   "effectType": "Summon",
-  "health": 10,
+  "health": 12,
   "range": 1,
   "attacksEnemies": true,
   "effects":[

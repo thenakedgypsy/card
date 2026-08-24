@@ -201,21 +201,25 @@ public partial class Enemy : CharacterBody2D, IHealth
         for (int i = 0; i < path.Count && stepsToTake < RemainingMovement; i++) 
         {
             Vector2I checkCell = path[i]; 
-
-            // Stop if another active enemy is occupying/reserving the cell[cite: 1]
-            if (_turnManager.IsEnemyOccupied(checkCell)) 
-                break; 
-
+        
+            // Stop if a summon blocks the path (since we aren't passing through them)
             if (WasPathBlocked && _turnManager.IsCellOccupiedBySummon(checkCell)) 
                 break; 
-
+        
+            // Stop if we reached the target[cite: 1]
             if (checkCell == targetCell) 
                 break; 
-
+        
             stepsToTake++; 
         }
-
-        Vector2I destinationCell = myCell; 
+        
+        // NEW LOGIC: Backtrack if the final intended landing cell is occupied/reserved
+        while (stepsToTake > 0 && _turnManager.IsEnemyOccupied(path[stepsToTake - 1]))
+        {
+            stepsToTake--;
+        }
+        
+        Vector2I destinationCell = myCell;; 
 
         if (stepsToTake > 0) 
         {

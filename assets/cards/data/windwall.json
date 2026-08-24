@@ -5,7 +5,7 @@
   "element": "Wind",
   "rarity": "Epic",
   "effectType": "Summon",
-  "health": 1, 
+  "health": 12, 
   "range": 1,
   "attacksEnemies": true,
   "effects":
