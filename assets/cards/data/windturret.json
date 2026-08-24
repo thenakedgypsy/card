@@ -5,7 +5,7 @@
   "element": "Wind",
   "rarity": "Common",
   "effectType": "Summon",
-  "health": 1,
+  "health": 12,
   "range": 4,
   "attacksEnemies": true,
   "effects" :

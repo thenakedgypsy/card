@@ -202,7 +202,10 @@ collision_layer = 2
 collision_mask = 2
 script = ExtResource("1_dng6c")
 RestDuration = 0.24
+DefaultMoveDistance = 5
+Health = 8
 AttackDamage = 5
+AttackRange = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 visible = false
@@ -221,7 +224,7 @@ time_horizon_obstacles = 0.35
 sprite_frames = SubResource("SpriteFrames_k43uu")
 animation = &"attacker_idle"
 autoplay = "shield_idle"
-frame_progress = 0.11564
+frame_progress = 0.557952
 offset = Vector2(0, -16)
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]
