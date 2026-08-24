@@ -11,14 +11,17 @@ public partial class Deck : Cardpile
         base._Ready();
 		AddCard("blockOfIce");
 		AddCard("blockOfIce");
-		AddCard("earthturret");
-		AddCard("earthturret");
+		// AddCard("earthturret");
+		// AddCard("earthturret");
 		AddCard("fireball");
 		AddCard("fireball");
-		AddCard("windturret");
-		AddCard("windturret");
-		//AddCard("confuse");
-		//AddCard("confuse");
+		// AddCard("windturret");
+		// AddCard("windturret");
+			AddCard("frostShock");
+		AddCard("frostShock");
+
+			AddCard("confuse");
+		AddCard("confuse");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.

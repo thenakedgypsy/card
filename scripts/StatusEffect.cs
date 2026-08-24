@@ -90,6 +90,7 @@ public partial class StatusEffect : Node2D
         }
         else
         {
+            GD.Print("QUEUE FREE");
             QueueFree(); 
         }
     }
@@ -97,9 +98,6 @@ public partial class StatusEffect : Node2D
     private void _triggerConfuse()
     {
         if (!_getEnemyTarget().IsConfused) _getEnemyTarget().IsConfused = true;
-
-
-        GD.Print("CONFUSE THIS ONE");
     }
     private void _triggerSlow()
     {
@@ -136,4 +134,7 @@ public partial class StatusEffect : Node2D
             _getEnemyTarget().TakeDamage(Damage, Element);
         }
     }
+
+    public void RemoveStatus() => QueueFree();
+
 }

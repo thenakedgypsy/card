@@ -62,7 +62,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         CurrentHealth = Health;
     }
 
-    public void ResetTurnState(bool resetMovement = true)
+    public async Task ResetTurnState(bool resetMovement = true)
     {
         if (resetMovement)
         {
@@ -76,6 +76,11 @@ public partial class Enemy : CharacterBody2D, IHealth
             {
                 IsSlowed = false;
                 MoveDistance = DefaultMoveDistance;
+            }
+            if (!HasActiveConfusedEffect())
+            {
+                IsConfused = false;
+                // GD.Print("Reset confused");
             }
 
             RemainingMovement = MoveDistance;
@@ -106,21 +111,39 @@ public partial class Enemy : CharacterBody2D, IHealth
         return false;
     }
     private bool HasActiveSlowEffects()
+    {
+        foreach (Node child in GetChildren())
         {
-            foreach (Node child in GetChildren())
+            if (child is StatusEffect)
             {
-                if (child is StatusEffect)
+                StatusEffect status = child as StatusEffect;
+                if (status.TypeName == StatusEffect.Type.Slow)
                 {
-                    StatusEffect status = child as StatusEffect;
-                    if (status.TypeName == StatusEffect.Type.Slow)
-                    {
-                        return true;
-                    }
-                    
+                    return true;
                 }
+                
             }
-            return false;
         }
+        return false;
+    }
+
+     private bool HasActiveConfusedEffect()
+    {
+        foreach (Node child in GetChildren())
+        {
+            if (child is StatusEffect)
+            {
+                StatusEffect status = child as StatusEffect;
+                if (status.TypeName == StatusEffect.Type.Confuse)
+                {
+                    GD.Print($"Confused: {IsConfused}");
+                    return true;
+                }
+                
+            }
+        }
+        return false;
+    }
     // --- STEP 1: POSITION CALCULATIONS ---
 
     public void PlanMove(Node2D playerCore)
@@ -278,8 +301,8 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         if (IsConfused && NearestEnemy != null)
         {
-            GD.Print("Enemy taking damage");
-            //NearestEnemy.TakeDamage(AttackDamage, Element);
+            GD.Print("Enemy taking CONFUSED damage");
+            NearestEnemy.TakeDamage(AttackDamage, Element);
         }
 
         if (attackTarget != null)
@@ -398,8 +421,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             if (GetRouteDistanceTo(enemy, false) == maxDist)
             {
                 chosenEnemy = enemy;
-                GD.Print($"chosen enemy! {chosenEnemy.AttackDamage}");
-
             }
 
         }
@@ -521,8 +542,10 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         foreach (Node child in enemyChildren)
         {
-            if (child is StatusEffect statusEffect)
+            if (child is StatusEffect statusEffect )
             {
+                GD.Print($"Try trigger status: {statusEffect.TypeName} is confused?: {IsConfused} turnsleft: {statusEffect.TurnsLeftActive} current Movement{MoveDistance}");
+
                 statusEffect.TriggerStatusEffect();
             }
         }

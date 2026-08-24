@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://bkdm0c5jw86hy"
-path="res://.godot/imported/Confuse.png-9346585318c33a325f757c5a27563c64.ctex"
+path="res://.godot/imported/confuse.png-f5394abace4b0336ac13d53d6b47a675.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/icons/Confuse.png"
-dest_files=["res://.godot/imported/Confuse.png-9346585318c33a325f757c5a27563c64.ctex"]
+source_file="res://assets/icons/confuse.png"
+dest_files=["res://.godot/imported/confuse.png-f5394abace4b0336ac13d53d6b47a675.ctex"]
 
 [params]
 
