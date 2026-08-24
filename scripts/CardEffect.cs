@@ -69,6 +69,12 @@ public partial class CardEffect : Node2D
         GD.Print($"Summoning a summon with {health} hp");
     }
 
+    private void _TargetSummon()
+    {
+        //stub - should target a summon using a spell targeter? 
+        //Can we refactor TargetEnemy to just be target and the targeter itself can handle this logic? 
+    }
+
     private void _TargetEnemy()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
