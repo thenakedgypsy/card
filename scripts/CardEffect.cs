@@ -10,6 +10,7 @@ public partial class CardEffect : Node2D
         StatusEffect,
         Summon,
         SummonModify, //can include chance based modification
+        SummonTimer,
         CoreModify,
         DeckModify,
     }
