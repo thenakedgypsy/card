@@ -56,7 +56,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         
         _sprite = GetNode<AnimatedSprite2D>("Sprite2D");
         Random random = new Random();
-        _sprite.Frame = random.Next(11);
+        _sprite.Frame = random.Next(17);
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
         CurrentHealth = Health;
