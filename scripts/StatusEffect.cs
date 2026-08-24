@@ -66,7 +66,6 @@ public partial class StatusEffect : Node2D
 
     public void TriggerStatusEffect()
     {
-        GD.Print("Triggering status");
         if (TurnsLeftActive > 0 )
         {
             TurnsLeftActive--;
@@ -90,7 +89,6 @@ public partial class StatusEffect : Node2D
         }
         else
         {
-            GD.Print("QUEUE FREE");
             QueueFree(); 
         }
     }

@@ -80,7 +80,6 @@ public partial class Enemy : CharacterBody2D, IHealth
             if (!HasActiveConfusedEffect())
             {
                 IsConfused = false;
-                // GD.Print("Reset confused");
             }
 
             RemainingMovement = MoveDistance;
@@ -136,7 +135,6 @@ public partial class Enemy : CharacterBody2D, IHealth
                 StatusEffect status = child as StatusEffect;
                 if (status.TypeName == StatusEffect.Type.Confuse)
                 {
-                    GD.Print($"Confused: {IsConfused}");
                     return true;
                 }
                 
@@ -301,7 +299,6 @@ public partial class Enemy : CharacterBody2D, IHealth
 
         if (IsConfused && NearestEnemy != null)
         {
-            GD.Print("Enemy taking CONFUSED damage");
             NearestEnemy.TakeDamage(AttackDamage, Element);
         }
 
@@ -544,8 +541,6 @@ public partial class Enemy : CharacterBody2D, IHealth
         {
             if (child is StatusEffect statusEffect )
             {
-                GD.Print($"Try trigger status: {statusEffect.TypeName} is confused?: {IsConfused} turnsleft: {statusEffect.TurnsLeftActive} current Movement{MoveDistance}");
-
                 statusEffect.TriggerStatusEffect();
             }
         }
