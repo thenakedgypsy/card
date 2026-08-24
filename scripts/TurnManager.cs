@@ -84,6 +84,10 @@ public partial class TurnManager : Node
         for(int i = 0; i < numEnemies; i++)
         {
             Enemy enemy = enemyScene.Instantiate<Enemy>();
+            if (rng.Next(101) < 25)
+            {
+                enemy.AttacksSummons = true;
+            }
             _board.AddChild(enemy);
         }
 

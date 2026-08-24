@@ -5,7 +5,7 @@
   "element": "Water",
   "rarity": "Rare",
   "effectType": "Summon",
-  "health": 3,
+  "health": 12,
   "range": 8,
   "attacksEnemies": true,
   "effects" : 
