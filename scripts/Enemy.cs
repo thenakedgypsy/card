@@ -55,8 +55,13 @@ public partial class Enemy : CharacterBody2D, IHealth
         AddToGroup("Enemy");
         
         _sprite = GetNode<AnimatedSprite2D>("Sprite2D");
-        Random random = new Random();
-        _sprite.Frame = random.Next(17);
+        Random random = new Random();       
+        if (this.AttacksSummons)
+        {
+            _sprite.Animation = "attacker_idle";
+            _sprite.Play();
+        }
+        _sprite.Frame = random.Next(8);
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
         CurrentHealth = Health;
@@ -256,7 +261,7 @@ public partial class Enemy : CharacterBody2D, IHealth
         if (!GodotObject.IsInstanceValid(this))
             return;
     
-        Vector2 spriteSize = _sprite.SpriteFrames.GetFrameTexture("idle", 0).GetSize() * _sprite.Scale;
+        Vector2 spriteSize = _sprite.SpriteFrames.GetFrameTexture(AttacksSummons? "attacker_idle" : "shield_idle", 0).GetSize() * _sprite.Scale;
         _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
     
         if (RestDuration > 0)

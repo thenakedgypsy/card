@@ -1,11 +1,44 @@
-[gd_scene load_steps=23 format=3 uid="uid://dules16lpku10"]
+[gd_scene load_steps=32 format=3 uid="uid://dules16lpku10"]
 
 [ext_resource type="Script" path="res://scripts/Enemy.cs" id="1_dng6c"]
+[ext_resource type="Texture2D" uid="uid://cwb886hfr6t6j" path="res://assets/enemies/attackeridle.png" id="2_e2wlh"]
 [ext_resource type="Texture2D" uid="uid://c4m4msu7owm3o" path="res://assets/enemies/enemy.png" id="2_oodl8"]
 [ext_resource type="PackedScene" uid="uid://nm1d2agawpwo" path="res://prefabs/healthbar.tscn" id="3_ax228"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_s5750"]
 radius = 30.0167
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_srsyj"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(0, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qt4m1"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(64, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_cwbf2"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(128, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7gti1"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(192, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_nodf8"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(256, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_clxp2"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(320, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0iho4"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(384, 0, 64, 80)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_l4umy"]
+atlas = ExtResource("2_e2wlh")
+region = Rect2(448, 0, 64, 80)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bvdu3"]
 atlas = ExtResource("2_oodl8")
@@ -79,6 +112,35 @@ region = Rect2(1024, 0, 64, 80)
 animations = [{
 "frames": [{
 "duration": 1.0,
+"texture": SubResource("AtlasTexture_srsyj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qt4m1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_cwbf2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7gti1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_nodf8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_clxp2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0iho4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_l4umy")
+}],
+"loop": true,
+"name": &"attacker_idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
 "texture": SubResource("AtlasTexture_bvdu3")
 }, {
 "duration": 1.0,
@@ -141,7 +203,6 @@ collision_mask = 2
 script = ExtResource("1_dng6c")
 RestDuration = 0.24
 AttackDamage = 5
-AttackRange = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 visible = false
@@ -158,9 +219,9 @@ time_horizon_obstacles = 0.35
 
 [node name="Sprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_k43uu")
-animation = &"shield_idle"
+animation = &"attacker_idle"
 autoplay = "shield_idle"
-frame_progress = 0.382288
+frame_progress = 0.701377
 offset = Vector2(0, -16)
 
 [node name="HealthBar" parent="." instance=ExtResource("3_ax228")]
@@ -170,7 +231,7 @@ offset_left = -24.0
 offset_top = -86.0
 offset_right = 40.0
 offset_bottom = -74.0
-scale = Vector2(0.778852, 0.392908)
+scale = Vector2(0.811105, 0.554525)
 
 [node name="Area2D" type="Area2D" parent="."]
 position = Vector2(0, -31)
