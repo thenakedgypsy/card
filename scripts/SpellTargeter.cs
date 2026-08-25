@@ -22,6 +22,8 @@ public partial class SpellTargeter : Node2D
         _readyToTarget = true;
         _mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
+
+        if (_turnManager != null) _turnManager.IsResolving = true;
     }
 
     public override void _Process(double delta)
@@ -36,6 +38,7 @@ public partial class SpellTargeter : Node2D
 
     public override void _ExitTree()
     {
+        if (_turnManager != null) _turnManager.IsResolving = false;
         ClearHighlights();
     }
 

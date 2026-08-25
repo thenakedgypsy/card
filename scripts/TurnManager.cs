@@ -20,6 +20,7 @@ public partial class TurnManager : Node
 
     private int energyPlayedThisTurn;
     [Export] private int energyPlayLimit;
+    public bool IsResolving { get; set; } = false;
 
     private EnergyManager _energyManager;
     private Node2D _playercore;
