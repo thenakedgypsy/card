@@ -9,7 +9,7 @@ public partial class CardEffect : Node2D
         EnemyDamage,
         StatusEffect,
         Summon,
-        SummonModify, //can include chance based modification
+        SummonModify, // can include chance based modification
         SummonTimer,
         CoreModify,
         DeckModify,
@@ -53,7 +53,7 @@ public partial class CardEffect : Node2D
         }
         else
         {
-            _TargetEnemy();
+            _SpawnTargeter();
             QueueFree();
         }
     }
@@ -70,13 +70,7 @@ public partial class CardEffect : Node2D
         GD.Print($"Summoning a summon with {health} hp");
     }
 
-    private void _TargetSummon()
-    {
-        //stub - should target a summon using a spell targeter? 
-        //Can we refactor TargetEnemy to just be target and the targeter itself can handle this logic? 
-    }
-
-    private void _TargetEnemy()
+    private void _SpawnTargeter()
     {
         PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
         if (scene == null) return;
@@ -85,7 +79,6 @@ public partial class CardEffect : Node2D
         Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         mouse?.AddChild(targeter);
 
-        // Pass the full array of spell effects to targeter
         targeter.Setup(element, _effectsList, cardID);
     }
 }
