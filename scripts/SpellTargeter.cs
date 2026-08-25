@@ -134,19 +134,11 @@ public partial class SpellTargeter : Node2D
                 {
                     switch (effectType)
                     {
-                        case CardEffect.EffectType.EnemyDamage: // Deals damage to summon if targeted
                         case CardEffect.EffectType.SummonModify:
-                            summon.TakeDamage(damage);
+                            //effect here
                             break;
-
-                        case CardEffect.EffectType.StatusEffect:
-                            if (statusScene != null)
-                            {
-                                StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
-                                statusEffect.Setup(effectData, _element);
-                                summon.AddChild(statusEffect);
-                                statusEffect.OnApplied();
-                            }
+                        case CardEffect.EffectType.SummonTimer:
+                            //effect here
                             break;
                     }
                 }
