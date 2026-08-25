@@ -63,8 +63,23 @@ public partial class Enemy : CharacterBody2D, IHealth
         }
         _sprite.Frame = random.Next(8);
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
-
+    
         CurrentHealth = Health;
+    
+        // Fix initial Y-axis offset before any movement occurs
+        CallDeferred(nameof(UpdateSpriteOffset));
+    }
+    
+    private void UpdateSpriteOffset()
+    {
+        if (_sprite == null || _sprite.SpriteFrames == null) return;
+    
+        string animName = AttacksSummons ? "attacker_idle" : "shield_idle";
+        if (_sprite.SpriteFrames.HasAnimation(animName))
+        {
+            Vector2 spriteSize = _sprite.SpriteFrames.GetFrameTexture(animName, 0).GetSize() * _sprite.Scale;
+            _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+        }
     }
 
     public void ResetTurnState(bool resetMovement = true)
