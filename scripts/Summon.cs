@@ -329,7 +329,7 @@ public partial class Summon : Node2D, IHealth
 			_healthBar.Position = new Vector2(-barSize.X * 0.5f, topOfSprite - padding - barSize.Y);
 		}
 
-		// --- AREA2D CIRCLE COLLISION RESIZING ---
+		// --- AREA2D CAPSULTE COLLISION RESIZING ---
 		Area2D area = GetNodeOrNull<Area2D>("Area2D");
 		if (area != null)
 		{
@@ -340,13 +340,13 @@ public partial class Summon : Node2D, IHealth
 		        CapsuleShape2D newCapsule = collisionShape.Shape is CapsuleShape2D capsuleShape
 		            ? capsuleShape.Duplicate() as CapsuleShape2D
 		            : new CapsuleShape2D();
-		
+
 		        float radius = spriteSize.X * 0.5f;
 		        float height = Mathf.Max(spriteSize.Y, radius * 2f); // Godot enforces height >= 2 * radius
-		
+
 		        newCapsule.Radius = radius;
 		        newCapsule.Height = height;
-		
+
 		        collisionShape.Shape = newCapsule;
 		        collisionShape.Scale = Vector2.One;
 		        collisionShape.GlobalPosition = GlobalPosition + new Vector2(0, -50);
