@@ -53,7 +53,7 @@ public partial class Enemy : CharacterBody2D, IHealth
     public override void _Ready()
     {
         AddToGroup("Enemy");
-        
+
         _sprite = GetNode<AnimatedSprite2D>("Sprite2D");
         Random random = new Random();       
         if (this.AttacksSummons)
@@ -65,6 +65,21 @@ public partial class Enemy : CharacterBody2D, IHealth
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 
         CurrentHealth = Health;
+
+        // fix initial Y-axis offset before any movement occurs because they REFUSE to be organised - BAD soldiers
+        CallDeferred(nameof(UpdateSpriteOffset));
+    }
+
+    private void UpdateSpriteOffset()
+    {
+        if (_sprite == null || _sprite.SpriteFrames == null) return;
+
+        string animName = AttacksSummons ? "attacker_idle" : "shield_idle";
+        if (_sprite.SpriteFrames.HasAnimation(animName))
+        {
+            Vector2 spriteSize = _sprite.SpriteFrames.GetFrameTexture(animName, 0).GetSize() * _sprite.Scale;
+            _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+        }
     }
 
     public async Task ResetTurnState(bool resetMovement = true)

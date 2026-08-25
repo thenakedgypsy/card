@@ -1,6 +1,6 @@
 using Godot;
-using Godot.Collections;
 using System;
+using Godot.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -24,13 +24,17 @@ public partial class Summon : Node2D, IHealth
 	private TurnManager _turnManager;
 	private List<Godot.Collections.Dictionary<string, Variant>> _attackEffects = new();
 
-	// Called when the node enters the scene tree for the first time.
+	// Hover logic
+	private bool _isMouseHovered = false;
+	private bool _isAoEHovered = false;
+
 	public override void _Ready()
 	{
 		_turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
 		_sprite = GetNode<Sprite2D>("Sprite2D");
-    	_healthBar = GetNode<HealthBar>("HealthBar");
+		_healthBar = GetNode<HealthBar>("HealthBar");
 		_line = GetNodeOrNull<Line2D>("Line2D");
+
 		if (_line == null)
 		{
 			_line = new Line2D();
@@ -42,48 +46,100 @@ public partial class Summon : Node2D, IHealth
 			_line.Visible = false;
 			AddChild(_line);
 		}
+
+		AddToGroup("Summons");
 	}
 
-	// Called every frame. 'delta' is the elapsed time since the previous frame.
 	public override void _Process(double delta)
 	{
 	}
 
+	// --- HOVER & VISUAL HIGHLIGHT LOGIC ---
+
+	public void SetHovered(bool hovered)
+	{
+		_isAoEHovered = hovered;
+		UpdateVisualState();
+	}
+
+	public void SetMouseHovered(bool hovered)
+	{
+		_isMouseHovered = hovered;
+		UpdateVisualState();
+	}
+
+	public void UpdateVisualState()
+	{
+		if (_sprite == null || !GodotObject.IsInstanceValid(_sprite))
+			return;
+
+		bool isHighlighted = _isMouseHovered || _isAoEHovered;
+		_sprite.SelfModulate = isHighlighted ? Colors.Yellow : Colors.White;
+	}
+
+	public void MouseOver()
+	{
+		SetMouseHovered(true);
+		Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+		if (mouse != null) mouse.SetHoveredSummon(this);
+	}
+
+	public void MouseOff()
+	{
+		SetMouseHovered(false);
+		Mouse mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
+		if (mouse != null && mouse.GetHoveredSummon() == this)
+		{
+			mouse.SetHoveredSummon(null);
+		}
+	}
+
+	private void _on_area_2d_mouse_entered()
+	{
+		MouseOver();
+	}
+
+	private void _on_area_2d_mouse_exited()
+	{
+		MouseOff();
+	}
+
+	public bool IsHovered() => _isMouseHovered || _isAoEHovered;
+
+	// --- DRAW LINE & ATTACK LOGIC ---
+
 	public async void DrawLineBetween(Vector2 target, float width = 2f)
 	{
-	    if (_line == null)
-	        return;
+		if (_line == null)
+			return;
 
-	    // Cleaned up color selection using a switch expression
-	    Color color = Element switch
-	    {
-	        Card.Element.Fire => Colors.Red,
-	        Card.Element.Water => Colors.Blue,
-	        Card.Element.Earth => Colors.Green,
-	        Card.Element.Wind => Colors.LightBlue,
-	        _ => Colors.Gray
-	    };
+		Color color = Element switch
+		{
+			Card.Element.Fire => Colors.Red,
+			Card.Element.Water => Colors.Blue,
+			Card.Element.Earth => Colors.Green,
+			Card.Element.Wind => Colors.LightBlue,
+			_ => Colors.Gray
+		};
 
-	    // 1. Calculate top of sprite in global coordinates (including scale)
-	    float spriteHeight = (_sprite.Texture?.GetHeight() ?? 0f) * _sprite.Scale.Y;
-	    Vector2 spriteTop = _sprite.GlobalPosition + new Vector2(0, -(spriteHeight - 32));
+		float spriteHeight = (_sprite.Texture?.GetHeight() ?? 0f) * _sprite.Scale.Y;
+		Vector2 spriteTop = _sprite.GlobalPosition + new Vector2(0, -(spriteHeight - 32));
 
-	    // 2. Convert global positions to local positions relative to this node
-	    Vector2 localStart = spriteTop - GlobalPosition;
-	    Vector2 localEnd = target - GlobalPosition;
+		Vector2 localStart = spriteTop - GlobalPosition;
+		Vector2 localEnd = target - GlobalPosition;
 
-	    _line.Points = new Vector2[] { localStart, localEnd };
-	    _line.Width = width;
-	    _line.DefaultColor = color;
-	    _line.ZIndex = 100;
-	    _line.Visible = true;
+		_line.Points = new Vector2[] { localStart, localEnd };
+		_line.Width = width;
+		_line.DefaultColor = color;
+		_line.ZIndex = 100;
+		_line.Visible = true;
 
-	    int requestId = ++_drawLineRequestId;
-	    await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
-	    if (requestId == _drawLineRequestId)
-	    {
-	        ClearDrawLine();
-	    }
+		int requestId = ++_drawLineRequestId;
+		await ToSignal(GetTree().CreateTimer(0.15f), SceneTreeTimer.SignalName.Timeout);
+		if (requestId == _drawLineRequestId)
+		{
+			ClearDrawLine();
+		}
 	}
 
 	public void ClearDrawLine()
@@ -133,25 +189,25 @@ public partial class Summon : Node2D, IHealth
 
 	private async Task Attack(Enemy enemy)
 	{
-	    if (!GodotObject.IsInstanceValid(enemy)) return;
+		if (!GodotObject.IsInstanceValid(enemy)) return;
 
-	    GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
-	    FlashRed();        
-	    DrawLineBetween(enemy.GlobalPosition, 5f);    
+		GD.Print($"[{Name}] ATTACK → '{enemy.Name}'");
+		FlashRed();        
+		DrawLineBetween(enemy.GlobalPosition, 5f);    
 
-	    if (_attackEffects.Count > 0)
-	    {
-	        PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
-	        SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
+		if (_attackEffects.Count > 0)
+		{
+			PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
+			SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
 
-	        GetParent().AddChild(targeter);
-	        await targeter.SetupAutoCast(Element, _attackEffects, Name, enemy);
+			GetParent().AddChild(targeter);
+			await targeter.SetupAutoCast(Element, _attackEffects, Name, enemy);
 			GD.Print("Autocasting ", _attackEffects);
-	    }
-	    else
-	    {
-	        enemy.TakeDamage(AttackDamage, Element);                
-	    }               
+		}
+		else
+		{
+			enemy.TakeDamage(AttackDamage, Element);                
+		}               
 	}
 
 	private void EndTurn()
@@ -160,55 +216,51 @@ public partial class Summon : Node2D, IHealth
 	}
 
 	public async void FlashRed()
-    {
-        Color original = SelfModulate;
-        Tween tween = CreateTween();
-        // Flash red
-        tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.1f);
-        // Return to original color
-        tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
-        await ToSignal(tween, Tween.SignalName.Finished);
-    }
+	{
+		Color original = SelfModulate;
+		Tween tween = CreateTween();
+		tween.TweenProperty(_sprite, "self_modulate", Colors.Red, 0.1f);
+		tween.TweenProperty(_sprite, "self_modulate", original, 0.1f);
+		await ToSignal(tween, Tween.SignalName.Finished);
+	}
 
 	public void Generate(Card.Element ele, Godot.Collections.Dictionary<string, Variant> data, string summonID)
 	{
-	    Element = ele;
-	    Health = data.ContainsKey("health") ? data["health"].AsInt32() : 10;
-	    CurrentHealth = Health;
-	    AttackRange = data.ContainsKey("range") ? data["range"].AsInt32() : 1;
-	    AttacksEnemies = data.ContainsKey("attacksEnemies") && data["attacksEnemies"].AsBool();
-	    Name = summonID;
-	
-	    _attackEffects.Clear();
-	
-	    if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
-	    {
-	        var rawEffects = data["effects"].AsGodotArray();
-	        foreach (var item in rawEffects)
-	        {
-	            _attackEffects.Add(item.AsGodotDictionary<string, Variant>());
-	        }
-	    }
+		Element = ele;
+		Health = data.ContainsKey("health") ? data["health"].AsInt32() : 10;
+		CurrentHealth = Health;
+		AttackRange = data.ContainsKey("range") ? data["range"].AsInt32() : 1;
+		AttacksEnemies = data.ContainsKey("attacksEnemies") && data["attacksEnemies"].AsBool();
+		Name = summonID;
+
+		_attackEffects.Clear();
+
+		if (data.ContainsKey("effects") && data["effects"].VariantType == Variant.Type.Array)
+		{
+			var rawEffects = data["effects"].AsGodotArray();
+			foreach (var item in rawEffects)
+			{
+				_attackEffects.Add(item.AsGodotDictionary<string, Variant>());
+			}
+		}
 		else
 		{
 			GD.PushWarning($"Summon missing effects[] in {summonID} json");
 		}
 
-        // --- NEW ART FALLBACK LOGIC ---
-        string artToLoad = summonID;
-        if (data != null && data.ContainsKey("artId"))
-        {
-            artToLoad = data["artId"].ToString();
-        }
+		string artToLoad = summonID;
+		if (data != null && data.ContainsKey("artId"))
+		{
+			artToLoad = data["artId"].ToString();
+		}
 
-        string path = $"res://assets/summons/{artToLoad}.png";
-        Texture2D texture = GD.Load<Texture2D>(path);
-        
-        if (texture == null)
-        {
-            GD.PrintErr($"Summon: Failed to load texture at {path}");
-        }
-        // ------------------------------
+		string path = $"res://assets/summons/{artToLoad}.png";
+		Texture2D texture = GD.Load<Texture2D>(path);
+		
+		if (texture == null)
+		{
+			GD.PrintErr($"Summon: Failed to load texture at {path}");
+		}
 
 		_sprite.Texture = texture;
 
@@ -227,10 +279,10 @@ public partial class Summon : Node2D, IHealth
 		fdn.Appear(value, Card.Element.Earth);
 
 		FlashRed();
-	
-	    if (CurrentHealth <= 0)
-	    {
-	        GD.Print("IS DESTROYED");
+
+		if (CurrentHealth <= 0)
+		{
+			GD.Print("IS DESTROYED");
 
 			RemoveFromGroup("Summons");
 
@@ -239,58 +291,66 @@ public partial class Summon : Node2D, IHealth
 				TurnManager.Instance.RebakeNav();
 			}
 
-	        // Prevent double-death logic
-	        SetProcess(false);
-	        SetPhysicsProcess(false);
-	
-	        // Optional: stop collisions if you have them
-	        SetDeferred("monitoring", false);
-	
-	        // Safely remove from tree at end of frame
-	        CallDeferred(Node.MethodName.QueueFree);
-	    }
+			SetProcess(false);
+			SetPhysicsProcess(false);
+			SetDeferred("monitoring", false);
+			CallDeferred(Node.MethodName.QueueFree);
+		}
 	}
 
-	public float GetMaxHealth()
-	{
-		return Health;
-	}
-
-	public float GetCurrentHealth()
-	{
-		return CurrentHealth;
-	}
+	public float GetMaxHealth() => Health;
+	public float GetCurrentHealth() => CurrentHealth;
 
 	private void UpdateVisualBounds()
 	{
-	    if (_sprite.Texture == null)
-	        return;
-	
-	    // Actual displayed size
-	    Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
-	
-	    // 1. Calculate correct offset so the bottom 16px sit below origin
-	    if (_sprite.Centered)
-	    {
-	        _sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
-	    }
-	    else
-	    {
-	        _sprite.Offset = new Vector2(0, 16f - spriteSize.Y);
-	    }
-	
-	    // 2. Position HealthBar dynamically relative to top of the sprite
-	    if (_healthBar != null)
-	    {
-	        Vector2 barSize = _healthBar.Size * _healthBar.Scale;
-	        const float padding = 4f;
-	
-	        // Find the top edge of the sprite relative to Node2D origin
-	        float topOfSprite = _sprite.Centered 
-	            ? _sprite.Offset.Y - (spriteSize.Y * 0.5f) 
-	            : _sprite.Offset.Y;
-	
-	        _healthBar.Position = new Vector2(-barSize.X * 0.5f, topOfSprite - padding - barSize.Y);
-	    }
+		if (_sprite.Texture == null)
+			return;
+
+		Vector2 spriteSize = _sprite.Texture.GetSize() * _sprite.Scale;
+
+		if (_sprite.Centered)
+		{
+			_sprite.Offset = new Vector2(0, 16f - (spriteSize.Y * 0.5f));
+		}
+		else
+		{
+			_sprite.Offset = new Vector2(0, 16f - spriteSize.Y);
+		}
+
+		if (_healthBar != null)
+		{
+			Vector2 barSize = _healthBar.Size * _healthBar.Scale;
+			const float padding = 4f;
+
+			float topOfSprite = _sprite.Centered 
+				? _sprite.Offset.Y - (spriteSize.Y * 0.5f) 
+				: _sprite.Offset.Y;
+
+			_healthBar.Position = new Vector2(-barSize.X * 0.5f, topOfSprite - padding - barSize.Y);
+		}
+
+		// --- AREA2D CAPSULTE COLLISION RESIZING ---
+		Area2D area = GetNodeOrNull<Area2D>("Area2D");
+		if (area != null)
+		{
+		    CollisionShape2D collisionShape = area.GetNodeOrNull<CollisionShape2D>("CollisionShape2D");
+		    if (collisionShape != null)
+		    {
+		        // Duplicate if it's already a capsule, or instantiate a new one if switching shape types
+		        CapsuleShape2D newCapsule = collisionShape.Shape is CapsuleShape2D capsuleShape
+		            ? capsuleShape.Duplicate() as CapsuleShape2D
+		            : new CapsuleShape2D();
+
+		        float radius = spriteSize.X * 0.5f;
+		        float height = Mathf.Max(spriteSize.Y, radius * 2f); // Godot enforces height >= 2 * radius
+
+		        newCapsule.Radius = radius;
+		        newCapsule.Height = height;
+
+		        collisionShape.Shape = newCapsule;
+		        collisionShape.Scale = Vector2.One;
+		        collisionShape.GlobalPosition = GlobalPosition + new Vector2(0, -50);
+		    }
+		}
 	}
 }

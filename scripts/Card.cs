@@ -320,9 +320,15 @@ public partial class Card : Node2D
         EmitSignal(SignalName.CardPlayed, this);
     }
 
+// Card.cs
     public bool CanPlay()
     {
-        // ... (Keep EXACTLY as it was) ...
+        if (_turnManager.IsResolving)
+        {
+            GD.Print("WARN: Cannot play card, another action is resolving.");
+            return false; 
+        }
+
         if (_turnManager.State == TurnManager.GameState.PlayerTurn)
         {
             if (type == CardType.Energy)
