@@ -8,7 +8,7 @@ public partial class Deck : Cardpile
 	// Called when the node enters the scene tree for the first time.
 	public override void _Ready()
 	{
-        base._Ready();
+		base._Ready();
 		AddCard("blockOfIce");
 		AddCard("blockOfIce");
 		AddCard("earthturret");
@@ -17,8 +17,6 @@ public partial class Deck : Cardpile
 		AddCard("fireball");
 		AddCard("windturret");
 		AddCard("windturret");
-		//AddCard("confuse");
-		//AddCard("confuse");
 	}
 
 	// Called every frame. 'delta' is the elapsed time since the previous frame.
