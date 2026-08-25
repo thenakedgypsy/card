@@ -1,0 +1,20 @@
+{
+  "name": "Wind Turret Temp",
+  "type": "Summon",
+  "cost": 1,
+  "element": "Wind",
+  "rarity": "Common",
+  "effectType": "Summon",
+  "health": 12,
+  "range": 4,
+  "attacksEnemies": true,
+  "turnsActive": 1,
+  "effects" :
+	[
+		{
+		  "effectType": "EnemyDamage",
+		  "damage": 1,
+		  "splashTiles": 1
+		}
+	]
+}

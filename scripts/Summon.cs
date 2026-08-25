@@ -15,6 +15,8 @@ public partial class Summon : Node2D, IHealth
 
 	public int Health;
 	public int CurrentHealth;
+	
+	public int? TurnsActive = null;
 	public Card.Element Element;
 	private Sprite2D _sprite;
 	private HealthBar _healthBar;
@@ -175,6 +177,7 @@ public partial class Summon : Node2D, IHealth
 	    Element = ele;
 	    Health = data.ContainsKey("health") ? data["health"].AsInt32() : 10;
 	    CurrentHealth = Health;
+			if (data.ContainsKey("turnsActive")) TurnsActive = data["turnsActive"].ToString().ToInt();
 	    AttackRange = data.ContainsKey("range") ? data["range"].AsInt32() : 1;
 	    AttacksEnemies = data.ContainsKey("attacksEnemies") && data["attacksEnemies"].AsBool();
 	    Name = summonID;

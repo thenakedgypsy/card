@@ -295,10 +295,19 @@ public partial class TurnManager : Node
             if (i > 0) await ToSignal(GetTree().CreateTimer(actionSpacingDelay), SceneTreeTimer.SignalName.Timeout);
 
             Summon summon = summons[i];
+            if(summon.TurnsActive != null && summon.TurnsActive > 0)
+            {
+                summon.TurnsActive--;
+            }
+            else if(summon.TurnsActive != null)
+            {
+                summon.QueueFree();
+            }
             _summonsActing++;
             _summonsStarted++;
             summon.TurnFinished += OnSummonFinishedTurn;
             await summon.TakeTurn();
+            
         }
     }
 

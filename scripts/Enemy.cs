@@ -407,10 +407,7 @@ public partial class Enemy : CharacterBody2D, IHealth
             if (GetRouteDistanceTo(enemy, false) == maxDist)
             {
                 chosenEnemy = enemy;
-                GD.Print($"chosen enemy! {chosenEnemy.AttackDamage}");
-
             }
-
         }
 
         return chosenEnemy;

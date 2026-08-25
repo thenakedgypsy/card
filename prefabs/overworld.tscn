@@ -1,10 +1,10 @@
 [gd_scene load_steps=11 format=3 uid="uid://ct6wgkudn7xcc"]
 
 [ext_resource type="Script" path="res://scripts/Overworld.cs" id="1_c53fq"]
-[ext_resource type="PackedScene" uid="uid://bip30mlmq0a8n" path="res://prefabs/overworld_generator.tscn" id="2_7jqe3"]
+[ext_resource type="PackedScene" path="res://prefabs/overworld_generator.tscn" id="2_7jqe3"]
 [ext_resource type="PackedScene" uid="uid://cjcmdn2c2kjp" path="res://prefabs/EnergyManager.tscn" id="2_bcbot"]
 [ext_resource type="PackedScene" uid="uid://b1nsph6bbh083" path="res://prefabs/CardManager.tscn" id="2_cuurq"]
-[ext_resource type="PackedScene" uid="uid://38ynssqcnbnp" path="res://prefabs/CardPool.tscn" id="2_d22b5"]
+[ext_resource type="PackedScene" path="res://prefabs/CardPool.tscn" id="2_d22b5"]
 [ext_resource type="Script" path="res://scripts/SeedTracker.cs" id="2_dessn"]
 [ext_resource type="PackedScene" uid="uid://bk0gyewh610yl" path="res://prefabs/deck.tscn" id="2_dx411"]
 [ext_resource type="PackedScene" uid="uid://bpccxuobqmat4" path="res://prefabs/card_pile_display.tscn" id="2_egrbe"]
