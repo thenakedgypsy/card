@@ -14,14 +14,16 @@ public partial class SpellTargeter : Node2D
     private Mouse _mouse;
     private TurnManager _turnManager;
 
-    private HashSet<Enemy> _highlightedEnemies = new();
-    private Enemy _lastHoveredTarget;
+    private HashSet<Node2D> _highlightedTargets = new();
+    private Node2D _lastHoveredTarget;
 
     public override void _Ready()
     {
         _readyToTarget = true;
         _mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
+
+        if (_turnManager != null) _turnManager.IsResolving = true;
     }
 
     public override void _Process(double delta)
@@ -36,6 +38,7 @@ public partial class SpellTargeter : Node2D
 
     public override void _ExitTree()
     {
+        if (_turnManager != null) _turnManager.IsResolving = false;
         ClearHighlights();
     }
 
@@ -53,7 +56,7 @@ public partial class SpellTargeter : Node2D
         _readyToTarget = true;
     }
 
-    public async Task SetupAutoCast(Card.Element ele, List<Godot.Collections.Dictionary<string, Variant>> effects, string cardID, Enemy primaryTarget)
+    public async Task SetupAutoCast(Card.Element ele, List<Godot.Collections.Dictionary<string, Variant>> effects, string cardID, Node2D primaryTarget)
     {
         _effects = effects;
         _cardID = cardID;
@@ -71,7 +74,7 @@ public partial class SpellTargeter : Node2D
     {
         if (Input.IsActionJustPressed("lClick"))
         {
-            Enemy target = CheckTarget();
+            Node2D target = CheckTarget();
             if (target != null)
             {
                 _ = CastAsync(target);
@@ -83,7 +86,7 @@ public partial class SpellTargeter : Node2D
         }
     }
 
-    private async Task CastAsync(Enemy primaryTarget)
+    private async Task CastAsync(Node2D primaryTarget)
     {
         _readyToTarget = false;
         ClearHighlights();
@@ -99,31 +102,45 @@ public partial class SpellTargeter : Node2D
                 continue;
 
             int damage = effectData.ContainsKey("damage") ? effectData["damage"].AsInt32() : 0;
-
-            // Fetch splashTiles dynamically for THIS specific effect
             int splashTiles = effectData.TryGetValue("splashTiles", out Variant splash) ? splash.AsInt32() : 0;
-            HashSet<Enemy> targets = GetAoETargets(primaryTarget, splashTiles);
+            string targetType = GetTargetType(effectData);
 
-            foreach (Enemy target in targets)
+            HashSet<Node2D> targets = GetAoETargets(primaryTarget, splashTiles, targetType);
+
+            foreach (Node2D target in targets)
             {
-                if (!IsInstanceValid(target) || target.CurrentHealth <= 0) continue;
+                if (!IsInstanceValid(target)) continue;
 
-                switch (effectType)
+                if (target is Enemy enemy && enemy.CurrentHealth > 0)
                 {
-                    case CardEffect.EffectType.EnemyDamage:
-                        target.TakeDamage(damage, _element);
-                        break;
-                        
-                    case CardEffect.EffectType.StatusEffect:
-                        if (statusScene != null)
-                        {
-                            StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
-                            //GD.Print("Setting up status with data: ", effectData);
-                            statusEffect.Setup(effectData, _element);
-                            target.AddChild(statusEffect);
-                            statusEffect.OnApplied();
-                        }
-                        break;
+                    switch (effectType)
+                    {
+                        case CardEffect.EffectType.EnemyDamage:
+                            enemy.TakeDamage(damage, _element);
+                            break;
+                            
+                        case CardEffect.EffectType.StatusEffect:
+                            if (statusScene != null)
+                            {
+                                StatusEffect statusEffect = statusScene.Instantiate() as StatusEffect;
+                                statusEffect.Setup(effectData, _element);
+                                enemy.AddChild(statusEffect);
+                                statusEffect.OnApplied();
+                            }
+                            break;
+                    }
+                }
+                else if (target is Summon summon && summon.CurrentHealth > 0)
+                {
+                    switch (effectType)
+                    {
+                        case CardEffect.EffectType.SummonModify:
+                            //effect here
+                            break;
+                        case CardEffect.EffectType.SummonTimer:
+                            //effect here
+                            break;
+                    }
                 }
             }
 
@@ -136,33 +153,72 @@ public partial class SpellTargeter : Node2D
         QueueFree();
     }
 
-    private Enemy CheckTarget() => _mouse.GetHoveredEnemy();
-
-    private HashSet<Enemy> GetAoETargets(Enemy primaryTarget, int splashTiles)
+    private string GetTargetType(Godot.Collections.Dictionary<string, Variant> effectData)
     {
-        HashSet<Enemy> targets = new();
+        if (effectData.TryGetValue("targetType", out Variant tt))
+        {
+            return tt.AsString();
+        }
+        return "Enemy";
+    }
+
+    private string GetPrimaryTargetType()
+    {
+        if (_effects.Count > 0)
+        {
+            return GetTargetType(_effects[0]);
+        }
+        return "Enemy";
+    }
+
+    private Node2D CheckTarget()
+    {
+        if (_mouse == null) return null;
+
+        string targetType = GetPrimaryTargetType();
+        switch (targetType)
+        {
+            case "Summon":
+                return _mouse.GetHoveredSummon();
+            case "Any":
+            case "Both":
+                return (Node2D)_mouse.GetHoveredEnemy() ?? _mouse.GetHoveredSummon();
+            case "Enemy":
+            default:
+                return _mouse.GetHoveredEnemy();
+        }
+    }
+
+    private HashSet<Node2D> GetAoETargets(Node2D primaryTarget, int splashTiles, string targetType)
+    {
+        HashSet<Node2D> targets = new();
         if (!IsInstanceValid(primaryTarget)) return targets;
 
         targets.Add(primaryTarget);
 
         if (splashTiles > 0 && _turnManager != null)
         {
-            Vector2I primaryCell = primaryTarget.CurrentCell;
-            var allEnemies = GetTree().GetNodesInGroup("Enemy");
+            Vector2I primaryCell = _turnManager.WorldToCell(primaryTarget.GlobalPosition);
+            
+            List<Node> candidates = new();
+            if (targetType == "Enemy" || targetType == "Any" || targetType == "Both")
+                candidates.AddRange(GetTree().GetNodesInGroup("Enemy"));
+            if (targetType == "Summon" || targetType == "Any" || targetType == "Both")
+                candidates.AddRange(GetTree().GetNodesInGroup("Summons"));
 
-            foreach (Node node in allEnemies)
+            foreach (Node node in candidates)
             {
-                if (node is Enemy enemy && enemy != primaryTarget && enemy.CurrentHealth > 0)
+                if (node is Node2D targetNode && targetNode != primaryTarget && IsInstanceValid(targetNode))
                 {
-                    Vector2I enemyCell = enemy.CurrentCell;
-                    int dx = primaryCell.X - enemyCell.X;
-                    int dy = primaryCell.Y - enemyCell.Y;
+                    Vector2I nodeCell = _turnManager.WorldToCell(targetNode.GlobalPosition);
+                    int dx = primaryCell.X - nodeCell.X;
+                    int dy = primaryCell.Y - nodeCell.Y;
 
                     int screenX = Mathf.Abs(dx - dy);
                     int screenY = Mathf.Abs(dx + dy);
                     int dist = (screenX + screenY) / 2;
                     
-                    if (dist <= splashTiles) targets.Add(enemy);
+                    if (dist <= splashTiles) targets.Add(targetNode);
                 }
             }
         }
@@ -185,33 +241,40 @@ public partial class SpellTargeter : Node2D
 
     private void UpdateHighlights()
     {
-        Enemy primaryTarget = CheckTarget();
+        Node2D primaryTarget = CheckTarget();
         if (primaryTarget == _lastHoveredTarget && IsInstanceValid(_lastHoveredTarget)) return;
         _lastHoveredTarget = primaryTarget;
 
-        // Uses max splash radius across all card effects so any potential target is highlighted
-        HashSet<Enemy> newHighlights = GetAoETargets(primaryTarget, GetMaxSplashTiles());
+        HashSet<Node2D> newHighlights = GetAoETargets(primaryTarget, GetMaxSplashTiles(), GetPrimaryTargetType());
 
-        foreach (var enemy in _highlightedEnemies)
+        foreach (var target in _highlightedEnemiesToSet(_highlightedTargets))
         {
-            if (!newHighlights.Contains(enemy) && IsInstanceValid(enemy)) enemy.SetHovered(false);
+            if (!newHighlights.Contains(target) && IsInstanceValid(target)) SetTargetHovered(target, false);
         }
 
-        foreach (var enemy in newHighlights)
+        foreach (var target in newHighlights)
         {
-            if (IsInstanceValid(enemy)) enemy.SetHovered(true);
+            if (IsInstanceValid(target)) SetTargetHovered(target, true);
         }
 
-        _highlightedEnemies = newHighlights;
+        _highlightedTargets = newHighlights;
+    }
+
+    private List<Node2D> _highlightedEnemiesToSet(HashSet<Node2D> set) => new List<Node2D>(set);
+
+    private void SetTargetHovered(Node2D target, bool hovered)
+    {
+        if (target is Enemy enemy) enemy.SetHovered(hovered);
+        else if (target is Summon summon) summon.SetHovered(hovered);
     }
 
     private void ClearHighlights()
     {
-        foreach (var enemy in _highlightedEnemies)
+        foreach (var target in _highlightedTargets)
         {
-            if (IsInstanceValid(enemy)) enemy.SetHovered(false);
+            if (IsInstanceValid(target)) SetTargetHovered(target, false);
         }
-        _highlightedEnemies.Clear();
+        _highlightedTargets.Clear();
     }
 
     private async void FlashRed()

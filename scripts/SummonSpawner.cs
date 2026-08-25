@@ -21,6 +21,8 @@ public partial class SummonSpawner : Node2D
         _mouse = GetTree().GetFirstNodeInGroup("Mouse") as Mouse;
         _turnManager = GetTree().GetFirstNodeInGroup("TurnManager") as TurnManager;
         _board = GetTree().GetFirstNodeInGroup("Board") as Board;
+
+        if (_turnManager != null) _turnManager.IsResolving = true;
     }
 
     public override void _Process(Double delta)
@@ -39,6 +41,11 @@ public partial class SummonSpawner : Node2D
 
     }
 
+    public override void _ExitTree()
+    {
+        if (_turnManager != null) _turnManager.IsResolving = false;
+    }
+
     public void CheckInput()
     {
         if (Input.IsActionJustPressed("lClick") && CheckPlacement())
@@ -55,11 +62,27 @@ public partial class SummonSpawner : Node2D
     public bool CheckPlacement()
     {
         Vector2I cell = _turnManager.WorldToCell(GetGlobalMousePosition());
-        if (_board.IsCellWalkable(cell) && !_turnManager.IsSolidCell(cell) && !_turnManager.IsEnemyOccupied(cell))
+
+        // Basic map/solid checks
+        if (!_board.IsCellWalkable(cell) || _turnManager.IsSolidCell(cell))
         {
-            return true;
+            return false;
         }
-        return false;
+
+        // Direct check against live enemies in the world
+        var enemies = GetTree().GetNodesInGroup("Enemies");
+        foreach (Node node in enemies)
+        {
+            if (node is Enemy enemy && GodotObject.IsInstanceValid(enemy) && enemy.CurrentHealth > 0)
+            {
+                if (enemy.CurrentCell == cell)
+                {
+                    return false; // Cell has an active enemy on it
+                }
+            }
+        }
+
+        return true;
     }
 
     public async void FlashRed()

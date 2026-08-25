@@ -8,6 +8,11 @@ public partial class Mouse : Node2D
     private bool OverBoard;
     private Enemy HoveredEnemy;
 
+    private Summon _hoveredSummon;
+
+    public void SetHoveredSummon(Summon summon) => _hoveredSummon = summon;
+    public Summon GetHoveredSummon() => _hoveredSummon;
+
     public override void _Ready()
     {
         AddToGroup("Mouse");
@@ -117,6 +122,8 @@ public partial class Mouse : Node2D
             _activeCard = null;
         }
     }
+
+
 
     // =========================
     // CARD PICKING
