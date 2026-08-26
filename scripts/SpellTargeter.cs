@@ -134,10 +134,11 @@ public partial class SpellTargeter : Node2D
                 {
                     switch (effectType)
                     {
+                        //todo - buff/timer for summons
                         case CardEffect.EffectType.SummonModify:
                             //effect here
                             break;
-                        case CardEffect.EffectType.SummonTimer:
+                        case CardEffect.EffectType.StopEffect:
                             //effect here
                             break;
                     }

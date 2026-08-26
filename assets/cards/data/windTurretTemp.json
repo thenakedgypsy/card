@@ -16,5 +16,9 @@
 		  "damage": 1,
 		  "splashTiles": 1
 		}
+    ,{
+		  "effectType": "StopEffect",
+		  "turnsActive": 2
+		}
 	]
 }

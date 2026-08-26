@@ -3,6 +3,7 @@ using System;
 using Godot.Collections;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 
 public partial class Summon : Node2D, IHealth
 {
@@ -16,7 +17,6 @@ public partial class Summon : Node2D, IHealth
 	public int Health;
 	public int CurrentHealth;
 	
-	public int? TurnsActive = null;
 	public Card.Element Element;
 	private Sprite2D _sprite;
 	private HealthBar _healthBar;
@@ -25,6 +25,8 @@ public partial class Summon : Node2D, IHealth
 	private int _drawLineRequestId = 0;
 	private TurnManager _turnManager;
 	private List<Godot.Collections.Dictionary<string, Variant>> _attackEffects = new();
+	private bool isStoppingEffects = false;
+	private int stopEffectTurnsActive = 0;
 
 	// Hover logic
 	private bool _isMouseHovered = false;
@@ -181,9 +183,15 @@ public partial class Summon : Node2D, IHealth
 			}
 		}
 
-		if (nearestEnemy != null && minDistance <= AttackRange)
+		
+		if (nearestEnemy != null && minDistance <= AttackRange && !isStoppingEffects)
 		{
+			--stopEffectTurnsActive;
 			await Attack(nearestEnemy);
+		}
+		if(stopEffectTurnsActive == 0)
+		{
+			isStoppingEffects = false;
 		}
 
 		EndTurn();
@@ -199,6 +207,8 @@ public partial class Summon : Node2D, IHealth
 
 		if (_attackEffects.Count > 0)
 		{
+			//if it is an effect - do this otherwise attack enemy with damage
+			//could have a for loop to check for stop effect status
 			PackedScene scene = GD.Load<PackedScene>("res://prefabs/SpellTargeter.tscn");
 			SpellTargeter targeter = scene.Instantiate() as SpellTargeter;
 
@@ -208,6 +218,7 @@ public partial class Summon : Node2D, IHealth
 		}
 		else
 		{
+			//towers have a base attack of 1? so if no effects - do 1 damage?
 			enemy.TakeDamage(AttackDamage, Element);                
 		}               
 	}
@@ -242,7 +253,23 @@ public partial class Summon : Node2D, IHealth
 			var rawEffects = data["effects"].AsGodotArray();
 			foreach (var item in rawEffects)
 			{
-				_attackEffects.Add(item.AsGodotDictionary<string, Variant>());
+				Godot.Collections.Dictionary godotItem = item.AsGodotDictionary();
+				GD.Print($"Godot item = {godotItem["effectType"]} raw item = {item}");
+
+				if (godotItem.ContainsKey("effectType") && godotItem["effectType"].AsString() == "StopEffect")
+				{
+					//do i make it more strict to check if turnsactive is a key to be safe?
+					var itemStopEffectTurnsActive = godotItem["turnsActive"].AsString().ToInt();
+					
+					if(itemStopEffectTurnsActive > 0) {
+						stopEffectTurnsActive = itemStopEffectTurnsActive;
+						isStoppingEffects = true;
+					}
+				}
+				else
+				{
+					_attackEffects.Add(item.AsGodotDictionary<string, Variant>());
+				}
 			}
 		}
 		else

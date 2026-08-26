@@ -10,9 +10,11 @@ public partial class CardEffect : Node2D
         StatusEffect,
         Summon,
         SummonModify, // can include chance based modification
-        SummonTimer,
+        BuffEffect, //Making them generic for now - may be summon exclusive later
+        StopEffect,
         CoreModify,
         DeckModify,
+        Timer
     }
 
     public Card.Element element;
