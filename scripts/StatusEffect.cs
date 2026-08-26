@@ -66,7 +66,6 @@ public partial class StatusEffect : Node2D
 
     public void TriggerStatusEffect()
     {
-        GD.Print("Triggering status");
         if (TurnsLeftActive > 0 )
         {
             TurnsLeftActive--;
@@ -97,9 +96,6 @@ public partial class StatusEffect : Node2D
     private void _triggerConfuse()
     {
         if (!_getEnemyTarget().IsConfused) _getEnemyTarget().IsConfused = true;
-
-
-        GD.Print("CONFUSE THIS ONE");
     }
     private void _triggerSlow()
     {
@@ -136,4 +132,7 @@ public partial class StatusEffect : Node2D
             _getEnemyTarget().TakeDamage(Damage, Element);
         }
     }
+
+    public void RemoveStatus() => QueueFree();
+
 }
