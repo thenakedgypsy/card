@@ -183,10 +183,14 @@ public partial class Summon : Node2D, IHealth
 			}
 		}
 
-		
-		if (nearestEnemy != null && minDistance <= AttackRange && !isStoppingEffects)
+		if (isStoppingEffects && stopEffectTurnsActive > 0)
 		{
 			--stopEffectTurnsActive;
+		}
+
+		GD.Print($"Take turn - isStoppingEffects = {isStoppingEffects} stopEffectTurnsActive = {stopEffectTurnsActive}");
+		if (nearestEnemy != null && minDistance <= AttackRange && !isStoppingEffects)
+		{
 			await Attack(nearestEnemy);
 		}
 		if(stopEffectTurnsActive == 0)
@@ -254,7 +258,7 @@ public partial class Summon : Node2D, IHealth
 			foreach (var item in rawEffects)
 			{
 				Godot.Collections.Dictionary godotItem = item.AsGodotDictionary();
-				GD.Print($"Godot item = {godotItem["effectType"]} raw item = {item}");
+				GD.Print($"Called?? Godot item = {godotItem["effectType"]} raw item = {item}");
 
 				if (godotItem.ContainsKey("effectType") && godotItem["effectType"].AsString() == "StopEffect")
 				{
