@@ -156,6 +156,8 @@ public partial class Summon : Node2D, IHealth
 
 	public async Task TakeTurn()
 	{
+		if (isStoppingEffects && stopEffectTurnsActive > 0) --stopEffectTurnsActive;
+		
 		if (!AttacksEnemies)
 		{
 			EndTurn();
@@ -182,13 +184,10 @@ public partial class Summon : Node2D, IHealth
 				}
 			}
 		}
-
-		if (isStoppingEffects && stopEffectTurnsActive > 0)
-		{
-			--stopEffectTurnsActive;
-		}
-
 		GD.Print($"Take turn - isStoppingEffects = {isStoppingEffects} stopEffectTurnsActive = {stopEffectTurnsActive}");
+
+	
+
 		if (nearestEnemy != null && minDistance <= AttackRange && !isStoppingEffects)
 		{
 			await Attack(nearestEnemy);
